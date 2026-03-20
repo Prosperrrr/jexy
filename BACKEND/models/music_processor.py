@@ -57,14 +57,14 @@ class MusicProcessor:
             stems_dir = os.path.join(job_dir, "stems")
             os.makedirs(stems_dir, exist_ok=True)
             
-            # Step 1: Separate stems (longest step - 70% of time)
+            # Step 1: Separate stems
             print("Step 1/3: Separating stems with Demucs...")
             self._update_progress(job_id, 10, "Separating audio stems...")
             stem_paths = self.separate_stems(audio_path, stems_dir, job_id)
             self._update_progress(job_id, 70, "Stems separated successfully!")
             print(" Stems separated successfully!")
             
-            # Step 2: Transcribe lyrics from vocals (20% of time)
+            # Step 2: Transcribe lyrics from vocals
             print("\nStep 2/3: Transcribing lyrics with Whisper...")
             self._update_progress(job_id, 75, "Transcribing lyrics...")
             vocals_path = stem_paths['vocals']['path'] if isinstance(stem_paths['vocals'], dict) else stem_paths['vocals']
@@ -72,7 +72,7 @@ class MusicProcessor:
             self._update_progress(job_id, 90, "Lyrics transcribed!")
             print(" Lyrics transcribed!")
             
-            # Step 3: Analyze audio (10% of time)
+            # Step 3: Analyze audio 
             print("\nStep 3/3: Analyzing audio...")
             self._update_progress(job_id, 95, "Analyzing audio properties...")
             analysis = self.analyze_audio(audio_path)

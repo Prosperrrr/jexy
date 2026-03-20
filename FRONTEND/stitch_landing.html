@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Jexy - Academic AI Audio Research</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#64748b", // Slate-500 for a neutral academic tone
+              accent: "#0ea5e9", // Sky-500 for subtle tech highlights
+              "background-light": "#ffffff",
+              "background-dark": "#0a0a0a", // Almost black
+              "surface-light": "#f8fafc", 
+              "surface-dark": "#171717", 
+              "border-light": "#e2e8f0",
+              "border-dark": "#262626",
+            },
+            fontFamily: {
+              display: ["Space Grotesk", "sans-serif"],
+              sans: ["Inter", "sans-serif"],
+              mono: ["ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "Liberation Mono", "Courier New", "monospace"],
+            },
+            borderRadius: {
+              DEFAULT: "0.5rem", 
+              'full': '9999px',
+            },
+            animation: {
+                'float': 'float 6s ease-in-out infinite',
+                'float-delayed': 'float 6s ease-in-out 3s infinite',
+                'float-slow': 'float 8s ease-in-out infinite',
+                'spin-slow': 'spin 12s linear infinite',
+            },
+            keyframes: {
+                float: {
+                    '0%, 100%': { transform: 'translateY(0)' },
+                    '50%': { transform: 'translateY(-20px)' },
+                }
+            }
+          },
+        },
+      };
+    </script>
+<style>
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .dark .glass-panel {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }.orb-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.8);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .dark .orb {
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.8);
+        }
+        .orb:hover {
+            transform: scale(1.1) translateY(-5px);
+            z-index: 10;
+            background: white;
+        }
+        .dark .orb:hover {
+            background: #1e293b;
+        }
+    </style>
+</head>
+<body class="font-sans bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 transition-colors duration-300 antialiased selection:bg-slate-200 dark:selection:bg-slate-800">
+<nav class="fixed w-full z-50 pt-4 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex justify-center items-center h-20"><div class="flex justify-between items-center h-16 bg-white dark:bg-zinc-900 px-8 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm w-full">
+<!-- Far Left: Logo -->
+<div class="flex-1 flex justify-start">
+<span class="font-display font-bold text-2xl tracking-tight text-slate-900 dark:text-white">jexy</span>
+</div>
+<!-- Center: Navigation -->
+<div class="flex items-center gap-8">
+<a class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white transition-colors" href="#">Models</a>
+<a class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white transition-colors" href="#">Workflow</a>
+<a class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white transition-colors" href="#">Documentation</a>
+</div>
+<!-- Far Right: Actions -->
+<div class="flex-1 flex justify-end items-center gap-6">
+<a aria-label="GitHub" class="text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white transition-colors flex items-center" href="#">
+<svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewbox="0 0 24 24">
+<path clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" fill-rule="evenodd"></path>
+</svg>
+</a>
+<a class="bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 text-white dark:text-black px-6 py-2 rounded-full text-sm font-medium transition-all shadow-sm whitespace-nowrap" href="#">
+      Sign in
+    </a>
+</div>
+</div></div>
+</div>
+</nav>
+<section class="relative min-h-[90vh] flex flex-col items-center justify-center overflow-hidden pt-20"><div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none overflow-hidden">
+<div class="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-sky-400/10 blur-[120px] rounded-full animate-pulse"></div>
+<div class="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-indigo-400/10 blur-[120px] rounded-full animate-pulse" style="animation-delay: 2s;"></div>
+</div>
+<div class="orb-container">
+<div class="orb w-24 h-24 md:w-32 md:h-32 left-[15%] top-[20%] animate-float-slow opacity-60" style="background: radial-gradient(circle at 30% 30%, rgba(14, 165, 233, 0.3), rgba(255, 255, 255, 0.9));">
+<span class="material-symbols-outlined text-3xl text-slate-700 dark:text-slate-300">graphic_eq</span>
+</div>
+<div class="orb w-20 h-20 md:w-28 md:h-28 right-[20%] top-[30%] animate-float opacity-50" style="background: radial-gradient(circle at 30% 30%, rgba(168, 85, 247, 0.3), rgba(255, 255, 255, 0.9));">
+<span class="material-symbols-outlined text-3xl text-slate-700 dark:text-slate-300">piano</span>
+</div>
+<div class="orb w-16 h-16 md:w-24 md:h-24 left-[25%] bottom-[20%] animate-float-delayed opacity-40">
+<span class="material-symbols-outlined text-2xl text-slate-700 dark:text-slate-300">category</span>
+</div>
+<div class="orb w-28 h-28 md:w-36 md:h-36 right-[25%] bottom-[15%] animate-float-slow opacity-30" style="background: radial-gradient(circle at 30% 30%, rgba(20, 184, 166, 0.15), rgba(255, 255, 255, 0.8));">
+<span class="material-symbols-outlined text-3xl text-slate-700 dark:text-slate-300">filter_alt</span>
+</div>
+<div class="orb w-14 h-14 md:w-20 md:h-20 left-[10%] top-[50%] animate-float opacity-20 hidden md:flex">
+<span class="material-symbols-outlined text-xl text-slate-700 dark:text-slate-300">code</span>
+</div>
+<div class="orb w-18 h-18 md:w-22 md:h-22 right-[10%] top-[60%] animate-float-delayed opacity-20 hidden md:flex">
+<span class="material-symbols-outlined text-xl text-slate-700 dark:text-slate-300">waves</span>
+</div>
+</div>
+<div class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border dark:border-slate-800 bg-white/50 dark:bg-black/50 backdrop-blur-sm mb-8 border-teal-200/50 shadow-[0_0_15px_rgba(20,184,166,0.1)]"><span class="w-2 h-2 rounded-full animate-pulse bg-teal-400"></span><span class="text-[10px] font-mono font-bold text-teal-600 dark:text-teal-400 tracking-widest uppercase">Open Source Academic Project v0.9.4</span></div>
+<h1 class="text-6xl md:text-8xl font-display font-medium tracking-tighter mb-8 leading-[0.9] text-slate-900 dark:text-white bg-clip-text text-transparent bg-gradient-to-b from-slate-900 to-slate-600 dark:from-white dark:to-slate-400">
+            Audio intelligence,<br/>
+<span class="text-slate-400 dark:text-slate-600">deconstructed.</span>
+</h1>
+<p class="mt-6 text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto font-light leading-relaxed">
+            An experimental pipeline for audio classification, separation, enhancement, and transcription. Powered by YAMNet, Demucs, DeepFilterNet, and Whisper.
+        </p>
+<div class="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
+<button class="group relative px-8 py-4 bg-slate-900 dark:bg-white text-white dark:text-black rounded-full text-lg font-medium overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_20px_rgba(14,165,233,0.3)] bg-gradient-to-r from-slate-900 to-indigo-950 dark:from-white dark:to-blue-50">
+<span class="relative z-10 flex items-center gap-2">
+                    Run Workflow
+                    <span class="material-symbols-outlined text-sm transition-transform group-hover:translate-x-1">arrow_forward</span>
+</span>
+</button>
+<a class="px-8 py-4 rounded-full text-lg font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-transparent hover:border-slate-200 dark:hover:border-slate-800 transition-all flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-xl">article</span>
+                Read the Paper
+            </a>
+</div>
+</div>
+</section>
+<section class="py-24 relative overflow-hidden bg-slate-50 dark:bg-[#0f0f0f]">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+<div class="flex flex-col md:flex-row justify-between items-end mb-16 border-b border-slate-200 dark:border-slate-800 pb-8">
+<div>
+<h2 class="text-4xl font-display font-medium mb-4">The Pipeline</h2>
+<p class="text-slate-500 dark:text-slate-400 font-mono text-sm">
+                    // Automated routing based on content type analysis
+                </p>
+</div>
+<div class="hidden md:block">
+<span class="material-symbols-outlined text-slate-300 dark:text-slate-700 text-4xl text-blue-500/50 dark:text-blue-400/30">schema</span>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+<div class="group relative bg-white dark:bg-[#121212] rounded-3xl p-8 border border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-all hover:shadow-xl hover:-translate-y-1 hover:border-blue-200 dark:hover:border-blue-900/50 hover:shadow-blue-500/5">
+<div class="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center mb-6 text-slate-700 dark:text-slate-300 font-mono text-xs border border-slate-200 dark:border-slate-800 group-hover:text-blue-500 group-hover:border-blue-200 transition-colors">
+                    01
+                </div>
+<h3 class="text-xl font-display font-medium mb-2">Input Analysis</h3>
+<div class="text-xs font-mono text-accent mb-4">Model: YAMNet</div>
+<p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
+                    Audio tensors are analyzed for event classification (speech vs. music vs. noise) to determine the optimal processing route.
+                </p>
+</div>
+<div class="group relative bg-white dark:bg-[#121212] rounded-3xl p-8 border border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-all hover:shadow-xl hover:-translate-y-1 hover:border-blue-200 dark:hover:border-blue-900/50 hover:shadow-blue-500/5">
+<div class="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center mb-6 text-slate-700 dark:text-slate-300 font-mono text-xs border border-slate-200 dark:border-slate-800 group-hover:text-blue-500 group-hover:border-blue-200 transition-colors">
+                    02
+                </div>
+<h3 class="text-xl font-display font-medium mb-2">Stem Separation</h3>
+<div class="text-xs font-mono text-accent mb-4">Model: Demucs v4</div>
+<p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
+                    For musical content, the Hybrid Transformer architecture isolates vocals, drums, bass, and other instruments into discrete streams.
+                </p>
+</div>
+<div class="group relative bg-white dark:bg-[#121212] rounded-3xl p-8 border border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-all hover:shadow-xl hover:-translate-y-1 hover:border-blue-200 dark:hover:border-blue-900/50 hover:shadow-blue-500/5">
+<div class="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center mb-6 text-slate-700 dark:text-slate-300 font-mono text-xs border border-slate-200 dark:border-slate-800 group-hover:text-blue-500 group-hover:border-blue-200 transition-colors">
+                    03
+                </div>
+<h3 class="text-xl font-display font-medium mb-2">Signal Enhancement</h3>
+<div class="text-xs font-mono text-accent mb-4">Model: DeepFilterNet</div>
+<p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
+                    Speech segments undergo complex spectral filtering to attenuate stationary and non-stationary noise while preserving formants.
+                </p>
+</div>
+<div class="group relative bg-white dark:bg-[#121212] rounded-3xl p-8 border border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-all hover:shadow-xl hover:-translate-y-1 hover:border-blue-200 dark:hover:border-blue-900/50 hover:shadow-blue-500/5">
+<div class="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center mb-6 text-slate-700 dark:text-slate-300 font-mono text-xs border border-slate-200 dark:border-slate-800 group-hover:text-blue-500 group-hover:border-blue-200 transition-colors">
+                    04
+                </div>
+<h3 class="text-xl font-display font-medium mb-2">Transcription</h3>
+<div class="text-xs font-mono text-accent mb-4">Model: Whisper v3</div>
+<p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
+                    Final enhanced audio is passed through a transformer-based ASR model for high-accuracy multilingual transcription and timestamping.
+                </p>
+</div>
+</div>
+</div>
+</section>
+<section class="py-24 bg-white dark:bg-black transition-colors duration-300">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+<div>
+<div class="inline-block px-3 py-1 mb-6 border border-slate-200 dark:border-slate-800 rounded-full">
+<span class="text-xs font-mono text-slate-500 uppercase tracking-widest">Analysis: Event Classification</span>
+</div>
+<h2 class="text-3xl md:text-4xl font-display font-medium mb-6 text-slate-900 dark:text-white">YAMNet Analysis</h2>
+<p class="text-lg text-slate-600 dark:text-slate-400 mb-8 font-light leading-relaxed">
+                    Before processing begins, the YAMNet model performs real-time classification of the audio stream. By detecting the presence of speech, music, or environmental noise, the pipeline intelligently routes the signal to the most effective enhancement modules.
+                </p>
+<div class="font-mono text-sm text-slate-500 bg-slate-50 dark:bg-[#0f0f0f] p-4 rounded-lg border border-slate-200 dark:border-slate-800">
+                    &gt; analyzing_stream...
+                    <br/> &gt; primary_class: speech (98.2%)
+                    <br/> &gt; secondary_class: music (1.5%)
+                </div>
+</div>
+<div class="relative">
+<div class="absolute -inset-4 bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-[2rem] blur-xl opacity-50"></div>
+<div class="relative bg-slate-50 dark:bg-[#0f0f0f] rounded-2xl p-8 border border-slate-200 dark:border-slate-800">
+<div class="space-y-8">
+<div>
+<div class="flex justify-between items-center mb-2 text-xs font-mono text-slate-400">
+<span>SPEECH CONFIDENCE</span>
+<span>98%</span>
+</div>
+<div class="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-blue-500 rounded-full w-[98%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-center mb-2 text-xs font-mono text-slate-400">
+<span>MUSIC CONFIDENCE</span>
+<span>1.5%</span>
+</div>
+<div class="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-slate-400 rounded-full w-[1.5%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-center mb-2 text-xs font-mono text-slate-400">
+<span>AMBIENT NOISE</span>
+<span>0.3%</span>
+</div>
+<div class="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-slate-400 rounded-full w-[0.3%]"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section><section class="py-24 bg-white dark:bg-black transition-colors duration-300">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-32">
+<div class="order-2 lg:order-1 relative">
+<div class="absolute -inset-4 bg-gradient-to-r from-slate-200 to-slate-100 dark:from-slate-800 dark:to-slate-900 rounded-[2rem] blur-xl opacity-50"></div>
+<div class="relative bg-slate-50 dark:bg-[#0f0f0f] rounded-2xl p-2 border border-slate-200 dark:border-slate-800">
+<div class="bg-black rounded-xl overflow-hidden relative aspect-video flex items-center justify-center">
+<div class="absolute inset-0 opacity-40">
+<div class="w-full h-full flex items-center justify-center space-x-1">
+<div class="w-1 h-12 bg-slate-700 rounded-full animate-[pulse_1s_ease-in-out_infinite]"></div>
+<div class="w-1 h-16 bg-slate-700 rounded-full animate-[pulse_1.2s_ease-in-out_infinite]"></div>
+<div class="w-1 h-8 bg-slate-700 rounded-full animate-[pulse_0.8s_ease-in-out_infinite]"></div>
+<div class="w-1 h-20 bg-slate-700 rounded-full animate-[pulse_1.5s_ease-in-out_infinite]"></div>
+<div class="w-1 h-10 bg-slate-700 rounded-full animate-[pulse_1.1s_ease-in-out_infinite]"></div>
+</div>
+</div>
+<div class="z-10 grid grid-rows-4 gap-6 w-3/4">
+<div class="flex items-center gap-4">
+<span class="text-[10px] font-mono text-slate-500 w-12 text-right">SRC</span>
+<div class="h-1 bg-slate-800 rounded-full flex-grow relative overflow-hidden"><div class="absolute left-0 top-0 h-full w-full bg-slate-600/30"></div></div>
+</div>
+<div class="flex items-center gap-4">
+<span class="text-[10px] font-mono text-slate-500 w-12 text-right">VOC</span>
+<div class="h-1 bg-slate-800 rounded-full flex-grow relative overflow-hidden"><div class="absolute left-0 top-0 h-full w-3/4 bg-white"></div></div>
+</div>
+<div class="flex items-center gap-4">
+<span class="text-[10px] font-mono text-slate-500 w-12 text-right">DRM</span>
+<div class="h-1 bg-slate-800 rounded-full flex-grow relative overflow-hidden"><div class="absolute left-0 top-0 h-full w-1/2 bg-slate-400"></div></div>
+</div>
+<div class="flex items-center gap-4">
+<span class="text-[10px] font-mono text-slate-500 w-12 text-right">BAS</span>
+<div class="h-1 bg-slate-800 rounded-full flex-grow relative overflow-hidden"><div class="absolute left-0 top-0 h-full w-1/4 bg-slate-600"></div></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="order-1 lg:order-2"><div class="absolute -top-20 -left-20 w-64 h-64 bg-indigo-500/10 blur-[80px] rounded-full pointer-events-none"></div>
+<div class="inline-block px-3 py-1 mb-6 border border-slate-200 dark:border-slate-800 rounded-full">
+<span class="text-xs font-mono text-slate-500 uppercase tracking-widest">Architecture: Hybrid Transformer</span>
+</div>
+<h2 class="text-3xl md:text-4xl font-display font-medium mb-6 text-slate-900 dark:text-white">Source Separation</h2>
+<p class="text-lg text-slate-600 dark:text-slate-400 mb-8 font-light leading-relaxed">
+                    Jexy implements the Demucs v4 architecture, utilizing a U-Net structure with a hybrid spectrogram/waveform domain approach. This dual-path analysis allows for minimal phase artifacts during the reconstruction of isolated stems.
+                </p>
+<div class="font-mono text-sm text-slate-500 bg-slate-50 dark:bg-[#0f0f0f] p-4 rounded-lg border border-slate-200 dark:border-slate-800">
+                    &gt; separating_sources... done (1.2s)<br/>
+                    &gt; artifact_reduction: enabled<br/>
+                    &gt; output_format: flac_24bit
+                </div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+<div class="relative"><div class="absolute -bottom-20 -right-20 w-64 h-64 bg-teal-500/10 blur-[80px] rounded-full pointer-events-none"></div>
+<div class="inline-block px-3 py-1 mb-6 border border-slate-200 dark:border-slate-800 rounded-full">
+<span class="text-xs font-mono text-slate-500 uppercase tracking-widest">Algorithm: Deep Filtering</span>
+</div>
+<h2 class="text-3xl md:text-4xl font-display font-medium mb-6 text-slate-900 dark:text-white">Spectral Denoising</h2>
+<p class="text-lg text-slate-600 dark:text-slate-400 mb-8 font-light leading-relaxed">
+                   Leveraging DeepFilterNet, the system processes audio in the complex frequency domain. It estimates complex ideal ratio masks (cIRM) to effectively suppress environmental noise and reverberation without introducing the musical noise typical of spectral subtraction.
+                </p>
+<ul class="space-y-4 font-mono text-sm text-slate-600 dark:text-slate-400">
+<li class="flex items-center gap-3">
+<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                        ERB-scaled frequency analysis
+                    </li>
+<li class="flex items-center gap-3">
+<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                        Real-time processing capability
+                    </li>
+<li class="flex items-center gap-3">
+<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                        Preservation of speech harmonics
+                    </li>
+</ul>
+</div>
+<div>
+<div class="relative bg-slate-50 dark:bg-[#0f0f0f] rounded-2xl p-8 border border-slate-200 dark:border-slate-800 h-80 flex flex-col justify-between">
+<div class="flex justify-between items-center text-xs font-mono uppercase text-slate-400 mb-4">
+<span>Spectrogram Analysis</span>
+<span>[Input vs Output]</span>
+</div>
+<div class="space-y-6 flex-grow flex flex-col justify-center">
+<div class="space-y-1">
+<div class="flex justify-between text-[10px] text-slate-400 font-mono">
+<span>Input Signal (Noisy)</span>
+<span>-12dB SNR</span>
+</div>
+<div class="h-16 w-full bg-slate-200 dark:bg-slate-900 rounded-md overflow-hidden flex items-end px-1 gap-0.5">
+<div class="w-1 h-4 bg-slate-400"></div><div class="w-1 h-8 bg-slate-400"></div><div class="w-1 h-12 bg-slate-400"></div><div class="w-1 h-6 bg-slate-400"></div>
+<div class="w-1 h-10 bg-slate-400"></div><div class="w-1 h-14 bg-slate-400"></div><div class="w-1 h-8 bg-slate-400"></div><div class="w-1 h-3 bg-slate-400"></div>
+<div class="w-1 h-12 bg-slate-400"></div><div class="w-1 h-15 bg-slate-400"></div><div class="w-1 h-9 bg-slate-400"></div><div class="w-1 h-5 bg-slate-400"></div>
+<div class="w-1 h-8 bg-slate-400"></div><div class="w-1 h-11 bg-slate-400"></div><div class="w-1 h-6 bg-slate-400"></div><div class="w-1 h-2 bg-slate-400"></div>
+<div class="w-1 h-4 bg-slate-400"></div><div class="w-1 h-8 bg-slate-400"></div><div class="w-1 h-12 bg-slate-400"></div><div class="w-1 h-6 bg-slate-400"></div>
+<div class="w-1 h-10 bg-slate-400"></div><div class="w-1 h-14 bg-slate-400"></div><div class="w-1 h-8 bg-slate-400"></div><div class="w-1 h-3 bg-slate-400"></div>
+<div class="w-1 h-12 bg-slate-400"></div><div class="w-1 h-15 bg-slate-400"></div><div class="w-1 h-9 bg-slate-400"></div><div class="w-1 h-5 bg-slate-400"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-[10px] text-slate-400 font-mono">
+<span>Output Signal (Clean)</span>
+<span>+24dB SNR</span>
+</div>
+<div class="h-16 w-full bg-slate-200 dark:bg-slate-900 rounded-md overflow-hidden flex items-end px-1 gap-0.5">
+<div class="w-1 h-0.5 bg-slate-800 dark:bg-slate-200"></div><div class="w-1 h-1 bg-slate-800 dark:bg-slate-200"></div><div class="w-1 h-12 bg-slate-800 dark:bg-slate-200"></div><div class="w-1 h-6 bg-slate-800 dark:bg-slate-200"></div>
+<div class="w-1 h-10 bg-slate-800 dark:bg-slate-200"></div><div class="w-1 h-14 bg-slate-800 dark:bg-slate-200"></div><div class="w-1 h-8 bg-slate-800 dark:bg-slate-200"></div><div class="w-1 h-0.5 bg-slate-800 dark:bg-slate-200"></div>
+<div class="w-1 h-12 bg-slate-800 dark:bg-slate-200"></div><div class="w-1 h-15 bg-slate-800 dark:bg-slate-200"></div><div class="w-1 h-9 bg-slate-800 dark:bg-slate-200"></div><div class="w-1 h-0.5 bg-slate-800 dark:bg-slate-200"></div>
+<div class="w-1 h-1 bg-slate-800 dark:bg-slate-200"></div><div class="w-1 h-0.5 bg-slate-800 dark:bg-slate-200"></div><div class="w-1 h-0.5 bg-slate-800 dark:bg-slate-200"></div><div class="w-1 h-0.5 bg-slate-800 dark:bg-slate-200"></div>
+<div class="w-1 h-0.5 bg-slate-800 dark:bg-slate-200"></div><div class="w-1 h-1 bg-slate-800 dark:bg-slate-200"></div><div class="w-1 h-12 bg-slate-800 dark:bg-slate-200"></div><div class="w-1 h-6 bg-slate-800 dark:bg-slate-200"></div>
+<div class="w-1 h-10 bg-slate-800 dark:bg-slate-200"></div><div class="w-1 h-14 bg-slate-800 dark:bg-slate-200"></div><div class="w-1 h-8 bg-slate-800 dark:bg-slate-200"></div><div class="w-1 h-0.5 bg-slate-800 dark:bg-slate-200"></div>
+<div class="w-1 h-12 bg-slate-800 dark:bg-slate-200"></div><div class="w-1 h-15 bg-slate-800 dark:bg-slate-200"></div><div class="w-1 h-9 bg-slate-800 dark:bg-slate-200"></div><div class="w-1 h-0.5 bg-slate-800 dark:bg-slate-200"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="py-24 bg-white dark:bg-black relative overflow-hidden">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+<div class="text-center mb-16">
+<h2 class="text-4xl font-display font-medium text-slate-900 dark:text-white">Built for every creator</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<!-- Podcasters Card -->
+<div class="group bg-white dark:bg-[#121212] rounded-[2rem] p-10 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-300">
+<div class="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center mb-8">
+<span class="material-symbols-outlined text-orange-500">mic</span>
+</div>
+<h3 class="text-2xl font-display font-medium mb-4 text-slate-900 dark:text-white">Podcasters</h3>
+<p class="text-slate-500 dark:text-slate-400 leading-relaxed mb-8">
+Turn raw interviews into polished episodes. Automatic leveling, noise reduction, and SRT generation for accessible captions.
+</p>
+<a class="inline-flex items-center text-teal-500 font-medium hover:gap-2 transition-all" href="#">
+Learn more <span class="material-symbols-outlined text-sm ml-1">arrow_forward</span>
+</a>
+</div>
+<!-- Musicians Card -->
+<div class="group bg-white dark:bg-[#121212] rounded-[2rem] p-10 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-300">
+<div class="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-8">
+<span class="material-symbols-outlined text-blue-500">piano</span>
+</div>
+<h3 class="text-2xl font-display font-medium mb-4 text-slate-900 dark:text-white">Musicians</h3>
+<p class="text-slate-500 dark:text-slate-400 leading-relaxed mb-8">
+Extract stems from any song to create backing tracks. Perfect for practice, covers, or remix competitions.
+</p>
+<a class="inline-flex items-center text-teal-500 font-medium hover:gap-2 transition-all" href="#">
+Learn more <span class="material-symbols-outlined text-sm ml-1">arrow_forward</span>
+</a>
+</div>
+<!-- Video Editors Card -->
+<div class="group bg-white dark:bg-[#121212] rounded-[2rem] p-10 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-300">
+<div class="w-12 h-12 rounded-full bg-pink-100 dark:bg-pink-900/30 flex items-center justify-center mb-8">
+<span class="material-symbols-outlined text-pink-500">movie</span>
+</div>
+<h3 class="text-2xl font-display font-medium mb-4 text-slate-900 dark:text-white">Video Editors</h3>
+<p class="text-slate-500 dark:text-slate-400 leading-relaxed mb-8">
+Fix bad on-location audio in post. Separate dialogue from background noise without complex EQ automation.
+</p>
+<a class="inline-flex items-center text-teal-500 font-medium hover:gap-2 transition-all" href="#">
+Learn more <span class="material-symbols-outlined text-sm ml-1">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-teal-500/5 blur-[120px] rounded-full pointer-events-none"></div>
+</section><section class="relative py-32 overflow-hidden bg-slate-50 dark:bg-[#0a0a0a] border-t border-slate-200 dark:border-slate-800">
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+<h2 class="text-4xl md:text-5xl font-display font-medium mb-8">Contribute to the research</h2>
+<p class="text-xl text-slate-600 dark:text-slate-400 mb-12 max-w-2xl mx-auto">Jexy is an open-source initiative. We welcome contributions from researchers and developers to improve the models and the pipeline.</p>
+<div class="flex flex-col sm:flex-row justify-center gap-6">
+<a class="bg-black dark:bg-white text-white dark:text-black px-8 py-4 rounded-full text-lg font-medium transition-all hover:scale-105 flex items-center justify-center gap-2" href="#">
+<svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewbox="0 0 24 24"><path clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" fill-rule="evenodd"></path></svg>
+                View on GitHub
+            </a>
+<a class="bg-white dark:bg-transparent text-slate-800 dark:text-white border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 px-8 py-4 rounded-full text-lg font-medium transition-all flex items-center justify-center gap-2" href="#">
+<span class="material-symbols-outlined">library_books</span>
+                Documentation
+            </a>
+</div>
+</div>
+</section>
+<footer class="bg-white dark:bg-black pt-16 pb-8 border-t border-border-light dark:border-border-dark">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="grid grid-cols-1 md:grid-cols-5 gap-8 mb-12">
+<div class="col-span-1 md:col-span-2">
+<div class="flex items-center gap-3 mb-6">
+<span class="font-bold text-lg">Jexy</span>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-sm max-w-xs mb-6 font-light">
+                    Advancing the field of audio AI through open-source collaboration and transparent research.
+                </p>
+</div>
+<div>
+<h4 class="font-medium mb-6 text-slate-900 dark:text-white">Made For</h4>
+<ul class="space-y-3 text-sm text-slate-500 dark:text-slate-400 font-light"><li><a class="hover:text-black dark:hover:text-white transition-colors" href="#">Musicians</a></li><li><a class="hover:text-black dark:hover:text-white transition-colors" href="#">Producers</a></li><li><a class="hover:text-black dark:hover:text-white transition-colors" href="#">Video Editors</a></li><li><a class="hover:text-black dark:hover:text-white transition-colors" href="#">Podcasters</a></li><li><a class="hover:text-black dark:hover:text-white transition-colors" href="#">Students</a></li></ul>
+</div><div>
+<h4 class="font-medium mb-6 text-slate-900 dark:text-white">Project</h4>
+<ul class="space-y-3 text-sm text-slate-500 dark:text-slate-400 font-light">
+<li><a class="hover:text-black dark:hover:text-white transition-colors" href="#">Manifesto</a></li>
+<li><a class="hover:text-black dark:hover:text-white transition-colors" href="#">Roadmap</a></li>
+<li><a class="hover:text-black dark:hover:text-white transition-colors" href="#">Changelog</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-medium mb-6 text-slate-900 dark:text-white">Community</h4>
+<ul class="space-y-3 text-sm text-slate-500 dark:text-slate-400 font-light">
+<li><a class="hover:text-black dark:hover:text-white transition-colors" href="#">GitHub Discussions</a></li>
+<li><a class="hover:text-black dark:hover:text-white transition-colors" href="#">Discord</a></li>
+<li><a class="hover:text-black dark:hover:text-white transition-colors" href="#">Contributing Guide</a></li>
+</ul>
+</div>
+</div>
+<div class="pt-8 border-t border-slate-100 dark:border-slate-900 flex flex-col md:flex-row justify-between items-center gap-4">
+<p class="text-xs text-slate-400 font-mono">© 2026 Jexy Project. Open Source.</p>
+<div class="flex items-center gap-6 text-xs text-slate-400 font-mono">
+<a class="hover:text-slate-800 dark:hover:text-white transition-colors" href="#">Privacy</a>
+</div>
+</div>
+</div>
+</footer>
+<script>
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+</body></html>
