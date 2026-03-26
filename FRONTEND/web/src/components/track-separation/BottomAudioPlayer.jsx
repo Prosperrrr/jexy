@@ -24,7 +24,7 @@ const BottomAudioPlayer = ({
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] md:left-[calc(50%+8rem)] md:w-[calc(100%-20rem)] max-w-5xl z-50">
+    <div className="fixed bottom-[90px] md:bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] md:left-[calc(50%+8rem)] md:w-[calc(100%-20rem)] max-w-5xl z-50">
       <div className="bg-white/80 backdrop-blur-xl border border-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] rounded-[2.5rem] p-4 flex flex-col items-center justify-between ring-1 ring-slate-900/5">
         
         {/* Main Controls Row */}

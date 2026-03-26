@@ -1,32 +1,24 @@
 import React from 'react';
-import { Network, CheckCircle2, ChevronRight, Mic2, Layers, Cpu, Check, Loader2, Play } from 'lucide-react';
+import { Network, CheckCircle2, Mic2, Layers, Cpu, Loader2, Play } from 'lucide-react';
 
-const icons = {
-  ACTIVE: <Play className="w-3.5 h-3.5 fill-current text-white" />,
-  DONE: <Check className="w-4 h-4 text-emerald-500" />,
-  WAITING: <div className="flex space-x-0.5"><div className="w-1 h-1 bg-slate-400 rounded-full"></div><div className="w-1 h-1 bg-slate-400 rounded-full opacity-70"></div><div className="w-1 h-1 bg-slate-400 rounded-full opacity-40"></div></div>,
-  PROCESSING: <Loader2 className="w-4 h-4 text-purple-500 animate-spin" />,
-  QUEUED: <span className="text-[10px] font-bold text-slate-400">...</span>
+const getBadgeClass = (status, pipelineType) => {
+  if (status === 'ACTIVE') return "bg-blue-100/50 text-blue-600 ring-1 ring-blue-200/50 font-semibold px-2.5 py-1";
+  if (status === 'DONE') return "bg-emerald-50 text-emerald-600 font-bold px-2.5 py-1";
+  if (status === 'WAITING') return "bg-amber-50 text-amber-600 font-bold px-2.5 py-1";
+  if (status === 'MUSIC') return "bg-purple-50 text-purple-600 font-bold px-2.5 py-1";
+  if (status === 'SPEECH') return "bg-blue-50 text-blue-600 font-bold px-2.5 py-1";
+  if (status === 'PROCESSING') return pipelineType === 'speech' ? "bg-blue-50 text-blue-600 font-bold px-2.5 py-1" : "bg-purple-50 text-purple-600 font-bold px-2.5 py-1";
+  return "bg-slate-100 text-slate-400 font-bold px-2.5 py-1";
 };
 
-const badgeClasses = {
-  ACTIVE: "bg-blue-100/50 text-blue-600 ring-1 ring-blue-200/50 font-semibold px-2.5 py-1",
-  DONE: "bg-emerald-50 text-emerald-600 font-bold px-2.5 py-1",
-  WAITING: "bg-slate-100 text-slate-400 font-bold px-2.5 py-1",
-  PROCESSING: "bg-purple-50 text-purple-600 font-bold px-2.5 py-1",
-  QUEUED: "bg-slate-100 text-slate-400 font-bold px-2.5 py-1"
-};
-
-const StageIcon = ({ type, status }) => {
+const StageIcon = ({ nodeType, status, pipelineType }) => {
   if (status === 'ACTIVE') {
     return (
-      <div className={`w-10 h-10 rounded-full flex items-center justify-center
-        ${status === 'ACTIVE' ? 'bg-blue-50 text-blue-600 border border-blue-100' : ''}
-      `}>
-        {type === 'yamnet' && <div className="bg-blue-500 text-white w-5 h-5 rounded flex items-center justify-center"><div className="w-2.5 h-2.5 border-[1.5px] border-white rounded-sm"></div></div>}
-        {type === 'confirm' && <Network className="w-5 h-5" />}
-        {type === 'demucs' && <Layers className="w-5 h-5 text-purple-500" />}
-        {type === 'whisper' && <Mic2 className="w-5 h-5" />}
+      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-blue-50 text-blue-600 border border-blue-100">
+        {nodeType === 'yamnet' && <div className="bg-blue-500 text-white w-5 h-5 rounded flex items-center justify-center"><div className="w-2.5 h-2.5 border-[1.5px] border-white rounded-sm"></div></div>}
+        {nodeType === 'confirm' && <Network className="w-5 h-5" />}
+        {nodeType === 'demucs' && <Layers className="w-5 h-5" />}
+        {nodeType === 'whisper' && <Mic2 className="w-5 h-5" />}
       </div>
     );
   }
@@ -38,55 +30,90 @@ const StageIcon = ({ type, status }) => {
       </div>
     );
   }
-  
-  if (status === 'PROCESSING') {
+
+  if (status === 'MUSIC' || status === 'SPEECH') {
+    const isSpeech = status === 'SPEECH';
     return (
-      <div className="w-10 h-10 rounded-full bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-500">
-        <Layers className="w-5 h-5 text-purple-500" />
+      <div className={`w-10 h-10 rounded-full border flex items-center justify-center text-white ${isSpeech ? 'bg-blue-50 border-blue-100 text-blue-500' : 'bg-purple-50 border-purple-100 text-purple-500'}`}>
+        <CheckCircle2 className={`w-5 h-5 fill-current ${isSpeech ? 'text-blue-100' : 'text-purple-100'}`} />
+      </div>
+    );
+  }
+  
+  if (status === 'WAITING') {
+    return (
+      <div className="w-10 h-10 rounded-full bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-500">
+        <div className="relative flex items-center justify-center">
+            <span className="absolute inline-flex h-4 w-4 rounded-full bg-amber-400/80 animate-ping"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === 'PROCESSING') {
+    const isSpeech = pipelineType === 'speech';
+    return (
+      <div className={`w-10 h-10 rounded-full border flex items-center justify-center ${isSpeech ? 'bg-blue-50 border-blue-100 text-blue-500' : 'bg-purple-50 border-purple-100 text-purple-500'}`}>
+        {nodeType === 'demucs' && <Layers className="w-5 h-5" />}
+        {nodeType === 'whisper' && <Mic2 className="w-5 h-5" />}
       </div>
     );
   }
 
   return (
     <div className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400">
-      {type === 'yamnet' && <Cpu className="w-5 h-5" />}
-      {type === 'confirm' && <Network className="w-5 h-5" />}
-      {type === 'demucs' && <Layers className="w-5 h-5" />}
-      {type === 'whisper' && <Mic2 className="w-5 h-5" />}
+      {nodeType === 'yamnet' && <Cpu className="w-5 h-5" />}
+      {nodeType === 'confirm' && <Network className="w-5 h-5" />}
+      {nodeType === 'demucs' && <Layers className="w-5 h-5" />}
+      {nodeType === 'whisper' && <Mic2 className="w-5 h-5" />}
     </div>
   );
 };
 
-
-const ProcessingPipeline = ({ statuses }) => {
-  // statuses = { yamnet: 'ACTIVE', confirm: 'WAITING', demucs: 'QUEUED', whisper: 'QUEUED' }
+const ProcessingPipeline = ({ statuses, type = 'music' }) => {
   const defaultStatuses = {
-    yamnet: 'ACTIVE',
-    confirm: 'WAITING',
-    demucs: 'QUEUED',
-    whisper: 'QUEUED'
+    yamnet: 'READY',
+    confirm: 'READY',
+    demucs: 'READY',
+    whisper: 'READY'
   };
 
   const currentStatuses = statuses || defaultStatuses;
 
   const steps = [
-    { id: 'yamnet', title: 'YAMNet Classification', desc: 'Classifying 521 audio events for routing logic.' },
-    { id: 'confirm', title: 'User Confirmation', desc: 'Heuristic review of identified audio segments.' },
-    { id: 'demucs', title: 'Demucs / DeepFilterNet', desc: 'Signal separation (Vocal/BGM) or neural noise reduction.' },
-    { id: 'whisper', title: 'Whisper Transcription', desc: 'Multi-lingual large-v3 model for high-precision text extraction.' },
+    { 
+      id: 'yamnet', 
+      title: 'YAMNet Classification', 
+      desc: 'Classifying 521 audio events to determine audio type.' 
+    },
+    { 
+      id: 'confirm', 
+      title: 'User Confirmation', 
+      desc: 'Confirm the detected audio type.' 
+    },
+    { 
+      id: 'demucs', 
+      title: 'Demucs / DeepFilterNet', 
+      desc: 'Adaptive processing.' 
+    },
+    { 
+      id: 'whisper', 
+      title: 'Whisper Transcription', 
+      desc: 'Generating transcripts from audio.' 
+    },
   ];
 
   return (
-    <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm flex flex-col shrink-0 h-auto xl:h-[calc(100vh-5rem)] max-h-[700px] xl:max-h-none overflow-y-auto">
-      <div className="flex items-center justify-between mb-8">
+    <div className="bg-white rounded-3xl p-5 md:p-6 border border-slate-100 shadow-sm flex flex-col shrink-0 h-fit w-full">
+      <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-50">
         <div className="flex items-center space-x-3">
-          <Network className="w-5 h-5 text-slate-800" />
-          <h3 className="font-display font-bold text-slate-900">Processing Pipeline</h3>
+          <Network className="w-4 h-4 text-slate-800" />
+          <h3 className="font-display font-bold text-slate-900 text-sm">Processing Pipeline</h3>
         </div>
-        <span className="text-xs font-display font-bold text-slate-400 tracking-wider">SEQUENCE V2.1</span>
       </div>
 
-      <div className="space-y-0 relative">
+      <div className="space-y-0 relative mt-2">
         {steps.map((step, idx) => {
           const status = currentStatuses[step.id];
           const isLast = idx === steps.length - 1;
@@ -94,7 +121,7 @@ const ProcessingPipeline = ({ statuses }) => {
           return (
             <div key={step.id} className="relative">
               {!isLast && (
-                <div className="absolute left-5 top-10 flex flex-col items-center justify-center space-y-1 h-8 opacity-30">
+                <div className="absolute left-[19px] top-10 flex flex-col items-center justify-center space-y-1 h-[26px] opacity-30">
                   <div className="w-0.5 h-1 bg-slate-400"></div>
                   <div className="w-0.5 h-1 bg-slate-400"></div>
                   <div className="w-0.5 h-1 bg-slate-400"></div>
@@ -102,15 +129,17 @@ const ProcessingPipeline = ({ statuses }) => {
                 </div>
               )}
               
-              <div className="flex items-start sm:items-center justify-between py-2 mb-6 gap-2">
-                <div className="flex items-center space-x-4 sm:space-x-6">
-                  <StageIcon type={step.id} status={status} />
-                  <div>
-                    <h4 className="font-display font-bold text-slate-900 text-[15px]">{step.title}</h4>
-                    <p className="text-slate-500 text-sm mt-0.5">{step.desc}</p>
+              <div className="flex items-start justify-between py-1 mb-6 gap-2">
+                <div className="flex items-start space-x-4">
+                  <div className="shrink-0 shadow-sm rounded-full mt-0.5">
+                    <StageIcon nodeType={step.id} status={status} pipelineType={type} />
+                  </div>
+                  <div className="flex flex-col pt-0.5">
+                    <h4 className="font-display font-bold text-slate-800 text-[13px] leading-tight pr-2">{step.title}</h4>
+                    <p className="text-slate-400 text-[11.5px] leading-snug tracking-tight mt-1 max-w-[130px] xl:max-w-none">{step.desc}</p>
                   </div>
                 </div>
-                <div className={`rounded-full text-[10px] tracking-wider uppercase ${badgeClasses[status]}`}>
+                <div className={`shrink-0 rounded-full text-[9px] tracking-wider font-bold uppercase mt-0.5 ${getBadgeClass(status, type)}`}>
                   {status}
                 </div>
               </div>

@@ -106,7 +106,7 @@ export const ConfirmingView = ({ type, confidence, onConfirm, onToggle }) => {
         </div>
       </div>
       
-      <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4 w-full px-4 sm:px-0">
+      <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4 w-full">
         <button 
           onClick={onConfirm}
           className={`font-display w-full sm:w-auto ${isMusic ? 'bg-purple-50 hover:bg-purple-100 text-purple-700' : 'bg-blue-50 hover:bg-blue-100 text-blue-700'} font-bold py-4 px-8 rounded-full transition-colors`}

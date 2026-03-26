@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { auth, googleProvider } from '../lib/firebase';
@@ -6,6 +6,14 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithP
 
 export default function AuthPage() {
   const [isSignIn, setIsSignIn] = useState(true);
+
+  useEffect(() => {
+    // Mirror the Landing Page rendering scale natively exactly on component mount
+    document.documentElement.style.fontSize = '14px';
+    return () => {
+      document.documentElement.style.fontSize = '';
+    };
+  }, []);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
