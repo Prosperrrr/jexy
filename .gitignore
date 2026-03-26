@@ -4,3 +4,19 @@ FRONTEND/UI PAGES/
 # Virtual environment
 BACKEND/venv/
 BACKEND/.venv/
+
+# Frontend
+FRONTEND/web/node_modules/
+FRONTEND/web/dist/
+
+# Environment files
+BACKEND/.env
+FRONTEND/web/.env
+
+# Python
+BACKEND/__pycache__/
+BACKEND/*.pyc
+
+# Uploads and processed files
+BACKEND/uploads/
+BACKEND/processed/
