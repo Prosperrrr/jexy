@@ -29,7 +29,7 @@ const STATES = {
 
 const DashboardPage = () => {
   const navigate = useNavigate();
-  
+
   // State
   const [currentState, setCurrentState] = useState(STATES.IDLE);
   const [file, setFile] = useState(null);
@@ -37,7 +37,7 @@ const DashboardPage = () => {
   const [jobId, setJobId] = useState(null);
   const [confidence, setConfidence] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
-  
+
   // Pipeline Tracking States
   const [pipelineType, setPipelineType] = useState('music');
   const [countdown, setCountdown] = useState(5);
@@ -47,7 +47,7 @@ const DashboardPage = () => {
     try {
       const stored = localStorage.getItem('jexy_completed_job');
       if (stored) setPersistedJob(JSON.parse(stored));
-    } catch(e) {}
+    } catch (e) { }
   }, []);
 
   // Handle file select from IDLE
@@ -55,7 +55,7 @@ const DashboardPage = () => {
     setFile(selectedFile);
     setCurrentState(STATES.UPLOADING);
     setUploadProgress(0);
-    
+
     // Simulate Upload -> POST /api/upload
     let progress = 0;
     const interval = setInterval(() => {
@@ -109,7 +109,7 @@ const DashboardPage = () => {
       }, 4000);
       return () => clearTimeout(timer);
     }
-    
+
     if (currentState === STATES.PROCESSING_MUSIC_TRANSCRIPT) {
       const timer = setTimeout(() => {
         setCurrentState(STATES.COMPLETE);
@@ -218,105 +218,105 @@ const DashboardPage = () => {
         return (
           <div className="space-y-6 animate-in fade-in duration-500">
             {persistedJob && (
-               <div className="bg-slate-900 rounded-3xl p-6 border border-slate-800 flex flex-col sm:flex-row items-center justify-between shadow-2xl relative overflow-hidden group">
-                 <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                 <div className="flex items-center space-x-4 mb-4 sm:mb-0 z-10 w-full sm:w-auto">
-                   <div className="w-12 h-12 bg-white/10 text-white rounded-full flex items-center justify-center shrink-0">
-                     <CheckCircle2 className="w-6 h-6 text-emerald-400" />
-                   </div>
-                   <div className="truncate pr-4">
-                     <h4 className="font-display font-bold text-white text-[15px] truncate">{persistedJob.filename}</h4>
-                     <p className="text-[13px] text-slate-400 font-medium mt-0.5">Processing completed • {persistedJob.type === 'music' ? 'Stem Separation' : 'Speech Denoising'}</p>
-                   </div>
-                 </div>
-                 <div className="flex gap-3 w-full sm:w-auto z-10 shrink-0">
-                   <button onClick={() => navigate('/track-separation')} className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-2.5 rounded-full transition-colors whitespace-nowrap text-sm shadow-[0_0_15px_rgba(37,99,235,0.4)] hover:shadow-[0_0_20px_rgba(37,99,235,0.6)] active:scale-95">
-                     View Results
-                   </button>
-                 </div>
-               </div>
+              <div className="bg-slate-900 rounded-3xl p-6 border border-slate-800 flex flex-col sm:flex-row items-center justify-between shadow-2xl relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="flex items-center space-x-4 mb-4 sm:mb-0 z-10 w-full sm:w-auto">
+                  <div className="w-12 h-12 bg-white/10 text-white rounded-full flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+                  </div>
+                  <div className="truncate pr-4">
+                    <h4 className="font-display font-bold text-white text-[15px] truncate">{persistedJob.filename}</h4>
+                    <p className="text-[13px] text-slate-400 font-medium mt-0.5">Processing completed • {persistedJob.type === 'music' ? 'Stem Separation' : 'Speech Denoising'}</p>
+                  </div>
+                </div>
+                <div className="flex gap-3 w-full sm:w-auto z-10 shrink-0">
+                  <button onClick={() => navigate('/track-separation')} className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-2.5 rounded-full transition-colors whitespace-nowrap text-sm shadow-[0_0_15px_rgba(37,99,235,0.4)] hover:shadow-[0_0_20px_rgba(37,99,235,0.6)] active:scale-95">
+                    View Results
+                  </button>
+                </div>
+              </div>
             )}
             <IdleView onFileSelect={handleFileSelect} />
           </div>
         );
-      
+
       case STATES.UPLOADING:
         return (
-          <UploadingView 
-            progress={uploadProgress} 
-            filename={file?.name || 'audio_file.wav'} 
-            onCancel={cancelUpload} 
+          <UploadingView
+            progress={uploadProgress}
+            filename={file?.name || 'audio_file.wav'}
+            onCancel={cancelUpload}
           />
         );
-      
+
       case STATES.CONFIRMING_MUSIC:
         return (
-          <ConfirmingView 
-            type="music" 
-            confidence={confidence} 
-            onConfirm={startProcessing} 
-            onToggle={toggleClassification} 
+          <ConfirmingView
+            type="music"
+            confidence={confidence}
+            onConfirm={startProcessing}
+            onToggle={toggleClassification}
           />
         );
-      
+
       case STATES.CONFIRMING_SPEECH:
         return (
-          <ConfirmingView 
-            type="speech" 
-            confidence={confidence} 
-            onConfirm={startProcessing} 
-            onToggle={toggleClassification} 
+          <ConfirmingView
+            type="speech"
+            confidence={confidence}
+            onConfirm={startProcessing}
+            onToggle={toggleClassification}
           />
         );
-      
+
       case STATES.PROCESSING_MUSIC_STEMS:
         return (
-          <ProcessingView 
-            title="Stem Separation" 
-            subtitle="Separating raw audio signal into 4 distinct instrument stems using Demucs." 
-            activeTask="Separating Audio Stems" 
+          <ProcessingView
+            title="Stem Separation"
+            subtitle="Separating raw audio signal into 4 distinct instrument stems using Demucs."
+            activeTask="Separating Audio Stems"
             type="music"
-            progress={100} 
-            isIndeterminate={true} 
+            progress={100}
+            isIndeterminate={true}
           />
         );
-        
+
       case STATES.PROCESSING_MUSIC_TRANSCRIPT:
         return (
-          <ProcessingView 
-            title="Neural Transcription" 
-            subtitle="Extracting high-fidelity text from separated vocal stems using the Whisper large-v3 model." 
-            activeTask="Transcribing Audio Stems" 
+          <ProcessingView
+            title="Neural Transcription"
+            subtitle="Extracting high-fidelity text from separated vocal stems using the Whisper large-v3 model."
+            activeTask="Transcribing Audio Stems"
             type="music"
-            progress={100} 
-            isIndeterminate={true} 
+            progress={100}
+            isIndeterminate={true}
           />
         );
-      
+
       case STATES.PROCESSING_SPEECH_DENOISE:
         return (
-          <ProcessingView 
-            title="Speech Denoising" 
-            subtitle="Improving overall quality and reducing background noise using DeepFilterNet." 
-            activeTask="Denoising Audio..." 
+          <ProcessingView
+            title="Speech Denoising"
+            subtitle="Improving overall quality and reducing background noise using DeepFilterNet."
+            activeTask="Denoising Audio..."
             type="speech"
-            progress={100} 
-            isIndeterminate={true} 
+            progress={100}
+            isIndeterminate={true}
           />
         );
-        
+
       case STATES.PROCESSING_SPEECH_TRANSCRIPT:
         return (
-          <ProcessingView 
-            title="Transcribing Audio" 
-            subtitle="Extracting high-fidelity text from the enhanced speech file using the whisper large-v3 model." 
-            activeTask="Transcribing Speech Content" 
+          <ProcessingView
+            title="Transcribing Audio"
+            subtitle="Extracting high-fidelity text from the enhanced speech file using the whisper large-v3 model."
+            activeTask="Transcribing Speech Content"
             type="speech"
-            progress={100} 
-            isIndeterminate={true} 
+            progress={100}
+            isIndeterminate={true}
           />
         );
-      
+
       case STATES.COMPLETE:
         return (
           <div className="flex flex-col items-center justify-center p-12 bg-white/50 backdrop-blur-sm rounded-3xl border border-emerald-100 shadow-[0_20px_40px_-15px_rgba(16,185,129,0.1)] transition-all animate-in fade-in zoom-in duration-500">
@@ -328,7 +328,7 @@ const DashboardPage = () => {
               Your audio has been successfully processed and the session is ready. Redirecting in <b className="text-slate-900 animate-pulse">{countdown}</b> seconds...
             </p>
             <div className="flex items-center space-x-4">
-              <button 
+              <button
                 onClick={() => {
                   localStorage.setItem('jexy_completed_job', JSON.stringify({
                     filename: file?.name || 'Processed Session',
@@ -336,16 +336,16 @@ const DashboardPage = () => {
                     timestamp: new Date().toISOString()
                   }));
                   navigate('/track-separation', { state: { jobId } });
-                }} 
+                }}
                 className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 px-8 rounded-full transition-all shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
               >
                 View Results Now
               </button>
               <button onClick={() => {
                 localStorage.setItem('jexy_completed_job', JSON.stringify({
-                    filename: file?.name || 'Processed Session',
-                    type: pipelineType,
-                    timestamp: new Date().toISOString()
+                  filename: file?.name || 'Processed Session',
+                  type: pipelineType,
+                  timestamp: new Date().toISOString()
                 }));
                 setCurrentState(STATES.IDLE);
               }} className="bg-white hover:bg-slate-50 text-slate-600 font-bold py-3.5 px-6 rounded-full border border-slate-200 transition-all shadow-sm active:scale-95">
@@ -354,10 +354,10 @@ const DashboardPage = () => {
             </div>
           </div>
         );
-      
+
       case STATES.ERROR:
         return <ErrorView error={errorMessage} onRetry={cancelUpload} />;
-        
+
       default:
         return <IdleView onFileSelect={handleFileSelect} />;
     }
@@ -366,7 +366,7 @@ const DashboardPage = () => {
   return (
     <DashboardLayout>
       <div className="max-w-7xl mx-auto flex flex-col xl:flex-row gap-8">
-        
+
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-w-0">
           <div className="mb-8">
@@ -375,7 +375,7 @@ const DashboardPage = () => {
               High-fidelity audio processing pipeline. Upload raw signals for classification, separation, and neural transcription.
             </p>
           </div>
-          
+
           <div className="flex-1 flex flex-col space-y-6">
             {renderView()}
             <SessionHistory />

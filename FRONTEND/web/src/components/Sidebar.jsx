@@ -39,10 +39,9 @@ const Sidebar = () => {
                 key={item.name}
                 to={item.path}
                 className={({ isActive }) =>
-                  `flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors font-medium text-sm ${
-                    isActive
-                      ? 'bg-slate-100 text-slate-900'
-                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                  `flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors font-medium text-sm ${isActive
+                    ? 'bg-slate-100 text-slate-900'
+                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                   }`
                 }
               >
@@ -104,10 +103,9 @@ const Sidebar = () => {
               key={item.name}
               to={item.path}
               className={({ isActive }) =>
-                `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${
-                  isActive
-                    ? 'text-slate-900'
-                    : 'text-slate-400 hover:text-slate-600'
+                `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive
+                  ? 'text-slate-900'
+                  : 'text-slate-400 hover:text-slate-600'
                 }`
               }
             >

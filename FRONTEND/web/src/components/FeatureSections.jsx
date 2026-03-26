@@ -20,7 +20,7 @@ export default function FeatureSections() {
                 <br /> &gt; secondary_class: music (1.5%)
               </div>
             </FadeIn>
-            
+
             <FadeIn direction="left" delay={0.4} className="relative">
               <div className="absolute -inset-4 bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-[2rem] blur-xl opacity-50"></div>
               <div className="relative bg-slate-50 dark:bg-[#0f0f0f] rounded-2xl p-8 border border-slate-200 dark:border-slate-800">
@@ -104,7 +104,7 @@ export default function FeatureSections() {
                 </div>
               </div>
             </FadeIn>
-            
+
             <FadeIn direction="left" delay={0.2} className="order-1 lg:order-2">
               <div className="absolute -top-20 -left-20 w-64 h-64 bg-indigo-500/10 blur-[80px] rounded-full pointer-events-none"></div>
               <div className="inline-block px-3 py-1 mb-6 border border-slate-200 dark:border-slate-800 rounded-full">
@@ -147,7 +147,7 @@ export default function FeatureSections() {
                 </li>
               </ul>
             </FadeIn>
-            
+
             <FadeIn direction="left" delay={0.4}>
               <div className="relative bg-slate-50 dark:bg-[#0f0f0f] rounded-2xl p-8 border border-slate-200 dark:border-slate-800 h-80 flex flex-col justify-between">
                 <div className="flex justify-between items-center text-xs font-mono uppercase text-slate-400 mb-4">
@@ -162,7 +162,7 @@ export default function FeatureSections() {
                     </div>
                     <div className="h-16 w-full bg-slate-200 dark:bg-slate-900 rounded-md overflow-hidden flex items-end px-1 gap-0.5">
                       {/* Using standard HTML generation logic instead of writing out 50 divs manually to save space, but keeping the visual intact */}
-                      {Array.from({length: 28}).map((_, i) => (
+                      {Array.from({ length: 28 }).map((_, i) => (
                         <div key={i} className={`w-1 bg-slate-400`} style={{ height: `${Math.max(2, Math.random() * 16 * 4)}px` }}></div>
                       ))}
                     </div>
@@ -173,8 +173,8 @@ export default function FeatureSections() {
                       <span>+24dB SNR</span>
                     </div>
                     <div className="h-16 w-full bg-slate-200 dark:bg-slate-900 rounded-md overflow-hidden flex items-end px-1 gap-0.5">
-                      {Array.from({length: 28}).map((_, i) => (
-                        <div key={i} className={`w-1 bg-slate-800 dark:bg-slate-200`} style={{ height: `${i%4!==0 ? Math.max(1, Math.random() * 15 * 4) : 2}px` }}></div>
+                      {Array.from({ length: 28 }).map((_, i) => (
+                        <div key={i} className={`w-1 bg-slate-800 dark:bg-slate-200`} style={{ height: `${i % 4 !== 0 ? Math.max(1, Math.random() * 15 * 4) : 2}px` }}></div>
                       ))}
                     </div>
                   </div>

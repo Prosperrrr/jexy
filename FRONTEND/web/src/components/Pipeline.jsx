@@ -17,7 +17,7 @@ export default function Pipeline() {
             </span>
           </div>
         </FadeIn>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <FadeIn delay={0.2} direction="up" className="group relative bg-white dark:bg-[#121212] rounded-3xl p-8 border border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-all hover:shadow-xl hover:-translate-y-1 hover:border-blue-200 dark:hover:border-blue-900/50 hover:shadow-blue-500/5">
             <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center mb-6 text-slate-700 dark:text-slate-300 font-mono text-xs border border-slate-200 dark:border-slate-800 group-hover:text-blue-500 group-hover:border-blue-200 transition-colors">
@@ -29,7 +29,7 @@ export default function Pipeline() {
               Audio tensors are analyzed for event classification (speech vs. music vs. noise) to determine the optimal processing route.
             </p>
           </FadeIn>
-          
+
           <FadeIn delay={0.3} direction="up" className="group relative bg-white dark:bg-[#121212] rounded-3xl p-8 border border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-all hover:shadow-xl hover:-translate-y-1 hover:border-blue-200 dark:hover:border-blue-900/50 hover:shadow-blue-500/5">
             <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center mb-6 text-slate-700 dark:text-slate-300 font-mono text-xs border border-slate-200 dark:border-slate-800 group-hover:text-blue-500 group-hover:border-blue-200 transition-colors">
               02
@@ -40,7 +40,7 @@ export default function Pipeline() {
               For musical content, the Hybrid Transformer architecture isolates vocals, drums, bass, and other instruments into discrete streams.
             </p>
           </FadeIn>
-          
+
           <FadeIn delay={0.4} direction="up" className="group relative bg-white dark:bg-[#121212] rounded-3xl p-8 border border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-all hover:shadow-xl hover:-translate-y-1 hover:border-blue-200 dark:hover:border-blue-900/50 hover:shadow-blue-500/5">
             <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center mb-6 text-slate-700 dark:text-slate-300 font-mono text-xs border border-slate-200 dark:border-slate-800 group-hover:text-blue-500 group-hover:border-blue-200 transition-colors">
               03
@@ -51,7 +51,7 @@ export default function Pipeline() {
               Speech segments undergo complex spectral filtering to attenuate stationary and non-stationary noise while preserving formants.
             </p>
           </FadeIn>
-          
+
           <FadeIn delay={0.5} direction="up" className="group relative bg-white dark:bg-[#121212] rounded-3xl p-8 border border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-all hover:shadow-xl hover:-translate-y-1 hover:border-blue-200 dark:hover:border-blue-900/50 hover:shadow-blue-500/5">
             <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center mb-6 text-slate-700 dark:text-slate-300 font-mono text-xs border border-slate-200 dark:border-slate-800 group-hover:text-blue-500 group-hover:border-blue-200 transition-colors">
               04

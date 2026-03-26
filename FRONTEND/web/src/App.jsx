@@ -11,7 +11,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<AuthPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
-        
+
         {/* Placeholder routes for redirect redirects */}
         <Route path="/track-separation" element={<TrackSeparationPage />} />
         <Route path="/audio-enhancer" element={<Navigate to="/dashboard" replace />} />

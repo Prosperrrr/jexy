@@ -60,7 +60,7 @@ export default function Hero() {
           <span className="material-symbols-outlined text-xl text-slate-700 dark:text-slate-300">waves</span>
         </div>
       </div>
-      
+
       <FadeIn delay={0.2} direction="up" className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-8">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border dark:border-slate-800 bg-white/50 dark:bg-black/50 backdrop-blur-sm mb-6 border-teal-200/50 shadow-[0_0_15px_rgba(20,184,166,0.1)]">
           <span className="w-2 h-2 rounded-full animate-pulse bg-teal-400"></span>
