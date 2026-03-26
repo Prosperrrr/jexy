@@ -46,8 +46,8 @@ const TrackSeparationPage = () => {
   const [currentTime, setCurrentTime] = useState(0);
   const [isLyricsView, setIsLyricsView] = useState(false);
   const [globalVolume, setGlobalVolume] = useState(80);
+  const [isGlobalMuted, setIsGlobalMuted] = useState(false);
   
-  // Stems state for mute/solo and individual volume
   const [stemStates, setStemStates] = useState(
     MOCK_DATA.active_stems.reduce((acc, stem) => {
       acc[stem] = { muted: false, soloed: false, volume: 80 };
@@ -55,7 +55,6 @@ const TrackSeparationPage = () => {
     }, {})
   );
 
-  // Playback simulation timer
   useEffect(() => {
     let interval;
     if (isPlaying) {
@@ -82,15 +81,12 @@ const TrackSeparationPage = () => {
   const toggleSolo = (stem) => {
     setStemStates(prev => {
       const currentlySoloed = prev[stem].soloed;
-      // If we are un-soloing, just un-solo it
       if (currentlySoloed) {
         return { ...prev, [stem]: { ...prev[stem], soloed: false } };
       }
-      
-      // If we are soloing, un-solo everything else, and solo this one
-      const newState = { ...prev };
-      Object.keys(newState).forEach(s => {
-        newState[s].soloed = (s === stem);
+      const newState = {};
+      Object.keys(prev).forEach(s => {
+        newState[s] = { ...prev[s], soloed: (s === stem) };
       });
       return newState;
     });
@@ -103,10 +99,8 @@ const TrackSeparationPage = () => {
     }));
   };
 
-  const handleSeek = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const percent = (e.clientX - rect.left) / rect.width;
-    setCurrentTime(Math.max(0, Math.min(percent, 1)) * MOCK_DATA.metadata.duration);
+  const handleSeek = (timeVal) => {
+    setCurrentTime(Math.max(0, Math.min(timeVal, MOCK_DATA.metadata.duration)));
   };
 
   const handleSkipBack = () => setCurrentTime(prev => Math.max(0, prev - 10));
@@ -114,7 +108,7 @@ const TrackSeparationPage = () => {
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col h-full relative" style={{ paddingBottom: '120px' }}>
+      <div className="flex flex-col h-full relative" style={{ paddingBottom: '160px' }}>
         <Header 
           filename={MOCK_DATA.metadata.filename} 
           bpm={MOCK_DATA.metadata.bpm} 
@@ -123,51 +117,71 @@ const TrackSeparationPage = () => {
         {isLyricsView ? (
           <LyricsView lyrics={MOCK_DATA.metadata.lyrics} currentTime={currentTime} />
         ) : (
-          <div className="flex-1 overflow-x-hidden overflow-y-auto w-full relative">
-            <TimelineRuler duration={MOCK_DATA.metadata.duration} />
-            
-            <div className="relative w-full px-4 sm:px-8 pb-32">
-              {/* Playhead Vertical Line */}
+          <div className="flex-1 overflow-x-hidden overflow-y-auto w-full relative pb-48">
+            <div className="relative w-full px-4 sm:px-8 shrink-0">
+              {/* Timeline Wrapper */}
+              <div className="flex w-full relative pt-6 z-20">
+                <div className="hidden sm:block w-64 shrink-0"></div>
+                <div className="flex-1 relative border-b border-transparent">
+                  <TimelineRuler duration={MOCK_DATA.metadata.duration} />
+                </div>
+              </div>
+              
+              {/* Tracks Stack */}
+              <div className="flex flex-col relative z-10 -mt-2 pb-10">
+                {MOCK_DATA.active_stems.map((stem) => {
+                  const hasSolo = Object.values(stemStates).some(s => s.soloed);
+                  const isEffectivelyMuted = stemStates[stem].muted || (hasSolo && !stemStates[stem].soloed);
+
+                  return (
+                    <StemTrack 
+                      key={stem}
+                      id={stem}
+                      name={formatStemName(stem)}
+                      muted={isEffectivelyMuted}
+                      soloed={stemStates[stem].soloed}
+                      volume={stemStates[stem].volume}
+                      onMuteToggle={() => toggleMute(stem)}
+                      onSoloToggle={() => toggleSolo(stem)}
+                      onVolumeChange={(e) => changeStemVolume(stem, e.target.value)}
+                    />
+                  );
+                })}
+              </div>
+
+              {/* Glowing Playhead Vertical Line overlaying exactly over Timeline and Tracks */}
               {MOCK_DATA.metadata.duration > 0 && (
-                <div 
-                  className="absolute top-0 bottom-10 w-px bg-blue-500 z-30 pointer-events-none"
-                  style={{ left: `calc(2rem + ${(currentTime / MOCK_DATA.metadata.duration) * 100 - 0.2}%)` }}
-                >
-                  <div className="absolute top-[-4px] left-1/2 -translate-x-1/2 w-2.5 h-2.5 bg-blue-500 rounded-full shadow-sm"></div>
+                <div className="absolute top-[44px] bottom-[40px] left-0 right-0 pointer-events-none z-30 flex px-4 sm:px-8">
+                  <div className="hidden sm:block w-64 shrink-0"></div>
+                  <div className="flex-1 relative">
+                    <div 
+                      className="absolute top-0 bottom-0 w-[2px] bg-blue-500 shadow-[0_0_15px_rgba(37,99,235,0.8)] transition-all duration-75 ease-linear"
+                      style={{ left: `calc(${(currentTime / MOCK_DATA.metadata.duration) * 100}% - 1px)` }}
+                    >
+                      <div className="absolute top-[-6px] left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-[3px] border-blue-500 rounded-full shadow-lg shadow-blue-500/50"></div>
+                    </div>
+                  </div>
                 </div>
               )}
-              
-              <div className="flex flex-col">
-                {MOCK_DATA.active_stems.map((stem) => (
-                  <StemTrack 
-                    key={stem}
-                    id={stem}
-                    name={formatStemName(stem)}
-                    muted={stemStates[stem].muted}
-                    soloed={stemStates[stem].soloed}
-                    volume={stemStates[stem].volume}
-                    onMuteToggle={() => toggleMute(stem)}
-                    onSoloToggle={() => toggleSolo(stem)}
-                    onVolumeChange={(e) => changeStemVolume(stem, e.target.value)}
-                  />
-                ))}
-              </div>
             </div>
           </div>
         )}
       </div>
-
       <BottomAudioPlayer
         isPlaying={isPlaying}
         currentTime={currentTime}
         duration={MOCK_DATA.metadata.duration}
-        volume={globalVolume}
+        volume={isGlobalMuted ? 0 : globalVolume}
         isLyricsView={isLyricsView}
         onPlayPause={() => setIsPlaying(!isPlaying)}
         onSeek={handleSeek}
         onSkipBack={handleSkipBack}
         onSkipForward={handleSkipForward}
-        onVolumeChange={(e) => setGlobalVolume(parseInt(e.target.value, 10))}
+        onVolumeChange={(e) => {
+          setGlobalVolume(parseInt(e.target.value, 10));
+          if (isGlobalMuted) setIsGlobalMuted(false);
+        }}
+        onVolumeToggle={() => setIsGlobalMuted(!isGlobalMuted)}
         onLyricsToggle={() => setIsLyricsView(!isLyricsView)}
       />
     </DashboardLayout>

@@ -1,12 +1,12 @@
 import React from 'react';
-import { Mic2, AlignJustify, Speaker, Music, LayoutGrid, Music4, Volume2, VolumeX } from 'lucide-react';
+import { Mic2, Drum, Speaker, Guitar, Piano, Music4, Volume2, VolumeX } from 'lucide-react';
 
 const iconsMap = {
   vocals: Mic2,
-  drums: AlignJustify,
+  drums: Drum,
   bass: Speaker,
-  guitar: Music,
-  piano: LayoutGrid,
+  guitar: Guitar,
+  piano: Piano,
   other: Music4
 };
 
@@ -20,28 +20,31 @@ const StemTrack = ({
   onSoloToggle, 
   onVolumeChange 
 }) => {
-  const Icon = iconsMap[id] || Music;
+  const Icon = iconsMap[id] || Music4;
 
   return (
-    <div className="flex bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mt-4 shrink-0 transition-opacity">
+    <div className="flex bg-white/70 backdrop-blur-xl rounded-3xl border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/40 hover:border-blue-200/60 transition-all duration-300 overflow-hidden mt-5 shrink-0 group">
+      
       {/* Left Controls */}
-      <div className="w-56 p-4 flex flex-col justify-center border-r border-slate-100 relative bg-white z-10 shrink-0">
-        <div className="flex items-center justify-between mb-4">
+      <div className="hidden sm:flex w-64 p-5 flex-col justify-center border-r border-slate-100/50 relative bg-white/60 z-10 shrink-0 transition-colors group-hover:bg-white/90">
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
-            <Icon className={`w-5 h-5 ${soloed ? 'text-blue-600' : 'text-slate-700'}`} />
-            <span className="font-display font-bold text-[15px] text-slate-900">{name}</span>
+            <div className={`p-2.5 rounded-xl ${soloed ? 'bg-blue-600 text-white shadow-[0_4px_15px_rgba(37,99,235,0.4)]' : muted ? 'bg-slate-100 text-slate-400' : 'bg-slate-50 text-slate-600 group-hover:bg-blue-50 group-hover:text-blue-600'} transition-all duration-300`}>
+              <Icon className="w-5 h-5" />
+            </div>
+            <span className={`font-display font-extrabold text-[15px] tracking-tight transition-colors ${muted ? 'text-slate-400' : 'text-slate-900'}`}>{name}</span>
           </div>
           
-          <div className="flex items-center rounded-md border border-slate-200 overflow-hidden">
+          <div className="flex items-center space-x-1.5">
             <button 
               onClick={onMuteToggle}
-              className={`px-2 py-0.5 text-xs font-bold font-display border-r border-slate-200 transition-colors ${muted ? 'bg-slate-100 text-slate-400' : 'text-slate-600 hover:bg-slate-50'}`}
+              className={`w-8 h-8 flex items-center justify-center rounded-lg text-[11px] font-black font-display transition-all ${muted ? 'bg-red-50 text-red-600 ring-1 ring-red-500/30 shadow-inner' : 'bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-700'}`}
             >
               M
             </button>
             <button 
               onClick={onSoloToggle}
-              className={`px-2 py-0.5 text-xs font-bold font-display transition-colors ${soloed ? 'bg-blue-500 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
+              className={`w-8 h-8 flex items-center justify-center rounded-lg text-[11px] font-black font-display transition-all ${soloed ? 'bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)] ring-1 ring-blue-500/50' : 'bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-700'}`}
             >
               S
             </button>
@@ -49,26 +52,56 @@ const StemTrack = ({
         </div>
 
         {/* Volume Slider */}
-        <div className="flex items-center space-x-2">
-          {volume === 0 || muted ? <VolumeX className="w-3.5 h-3.5 text-slate-400" /> : <Volume2 className="w-3.5 h-3.5 text-slate-400" />}
-          <input 
-            type="range" 
-            min="0" 
-            max="100" 
-            value={muted ? 0 : volume} 
-            onChange={onVolumeChange}
-            className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
-          />
-          <Volume2 className="w-3.5 h-3.5 text-slate-400 opacity-60" />
+        <div className="flex items-center space-x-3 px-1">
+          <button onClick={onMuteToggle} title="Mute Track" className="focus:outline-none hover:scale-110 transition-transform group/mute">
+            {volume === 0 || muted ? <VolumeX className="w-3.5 h-3.5 text-slate-300 group-hover/mute:text-red-400" /> : <Volume2 className={`w-3.5 h-3.5 ${muted ? 'text-slate-300' : 'text-slate-400 group-hover/mute:text-blue-500'}`} />}
+          </button>
+          <div className="relative w-full h-1.5 bg-slate-100 rounded-lg flex items-center group/slider">
+            <div 
+              className={`absolute left-0 top-0 h-full rounded-lg transition-colors ${muted ? 'bg-slate-300' : 'bg-slate-400 group-hover/slider:bg-blue-500'}`}
+              style={{ width: `${muted ? 0 : volume}%` }}
+            ></div>
+            <input 
+              type="range" 
+              min="0" 
+              max="100" 
+              value={muted ? 0 : volume} 
+              onChange={onVolumeChange}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            />
+          </div>
         </div>
       </div>
 
       {/* Right Waveform Area */}
-      <div className="flex-1 relative overflow-hidden bg-white flex items-center px-4 h-[88px] my-auto">
-        {/* Mock Generic Waveform SVG */}
-        <svg preserveAspectRatio="none" viewBox="0 0 1000 60" className="w-full h-12 opacity-80" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M0 30 L50 40 L100 20 L150 45 L200 15 L250 50 L300 25 L350 40 L400 10 L450 35 L500 20 L550 55 L600 25 L650 40 L700 15 L750 45 L800 25 L850 40 L900 10 L950 35 L1000 30" stroke="#3b82f6" strokeWidth="2" fill="none" className={muted ? 'stroke-slate-300' : 'stroke-blue-500'} />
-          <path d="M0 30 L50 40 L100 20 L150 45 L200 15 L250 50 L300 25 L350 40 L400 10 L450 35 L500 20 L550 55 L600 25 L650 40 L700 15 L750 45 L800 25 L850 40 L900 10 L950 35 L1000 30 L1000 60 L0 60 Z" fill={muted ? '#cbd5e1' : '#60a5fa'} opacity="0.4" />
+      <div className={`flex-1 relative overflow-hidden flex items-center h-[104px] my-auto transition-opacity duration-300 ${muted ? 'opacity-30 grayscale' : 'opacity-100'}`}>
+        
+        {/* Animated aesthetic backdrop */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/10 to-transparent group-hover:translate-x-full duration-1000 ease-in-out transition-transform"></div>
+
+        {/* Generic Premium SVG Waveform */}
+        <svg preserveAspectRatio="none" viewBox="0 0 1000 60" className="w-full h-16 drop-shadow-sm" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id={`gradient-${id}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.8" />
+              <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.1" />
+            </linearGradient>
+            <linearGradient id={`stroke-${id}`} x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#60a5fa" />
+              <stop offset="50%" stopColor="#3b82f6" />
+              <stop offset="100%" stopColor="#2563eb" />
+            </linearGradient>
+          </defs>
+          <path d="M0 30 C 20 30, 30 15, 50 20 S 70 45, 100 40 S 130 10, 150 20 S 180 50, 200 45 S 230 15, 250 25 S 280 40, 300 35 S 330 15, 350 20 S 380 50, 400 40 S 430 10, 450 15 S 480 35, 500 30 S 530 45, 550 40 S 580 15, 600 25 S 630 40, 650 35 S 680 10, 700 20 S 730 45, 750 40 S 780 15, 800 20 S 830 50, 850 40 S 880 10, 900 15 S 930 35, 950 30 S 980 30, 1000 30" 
+            stroke={`url(#stroke-${id})`} 
+            strokeWidth="2.5" 
+            fill="none" 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+          />
+          <path d="M0 30 C 20 30, 30 15, 50 20 S 70 45, 100 40 S 130 10, 150 20 S 180 50, 200 45 S 230 15, 250 25 S 280 40, 300 35 S 330 15, 350 20 S 380 50, 400 40 S 430 10, 450 15 S 480 35, 500 30 S 530 45, 550 40 S 580 15, 600 25 S 630 40, 650 35 S 680 10, 700 20 S 730 45, 750 40 S 780 15, 800 20 S 830 50, 850 40 S 880 10, 900 15 S 930 35, 950 30 S 980 30, 1000 30 L 1000 60 L 0 60 Z" 
+            fill={`url(#gradient-${id})`} 
+          />
         </svg>
       </div>
     </div>

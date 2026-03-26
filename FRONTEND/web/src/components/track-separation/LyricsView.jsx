@@ -12,8 +12,7 @@ const LyricsView = ({ lyrics, currentTime }) => {
     }
   }
 
-  // Auto-scroll logic
-  useEffect(() => {
+  React.useEffect(() => {
     if (activeIndex !== -1 && containerRef.current) {
       const activeElement = containerRef.current.children[activeIndex];
       if (activeElement) {
@@ -23,9 +22,9 @@ const LyricsView = ({ lyrics, currentTime }) => {
   }, [activeIndex]);
 
   return (
-    <div className="flex-1 overflow-y-auto py-32 px-4 md:px-20 text-center relative h-full">
+    <div className="flex-1 overflow-y-auto py-16 px-6 md:px-24 relative h-full flex flex-col text-left">
       <div 
-        className="space-y-6 max-w-4xl mx-auto pb-40 relative z-10"
+        className="max-w-4xl mx-auto w-full pb-[40vh] relative z-10 flex flex-col space-y-5"
         ref={containerRef}
       >
         {lyrics.map((line, idx) => {
@@ -35,10 +34,12 @@ const LyricsView = ({ lyrics, currentTime }) => {
           return (
             <p 
               key={idx}
-              className={`font-display font-bold transition-all duration-500 ease-out cursor-pointer leading-tight
-                ${isActive ? 'text-4xl md:text-[56px] text-blue-600 scale-105 my-8' : 
-                  isPast ? 'text-2xl md:text-5xl text-slate-200 font-semibold' : 
-                  'text-2xl md:text-5xl text-slate-300/80 font-semibold'}
+              className={`font-display transition-all duration-500 ease-out cursor-pointer tracking-tight
+                ${isActive 
+                  ? 'text-4xl md:text-5xl font-black text-blue-600 scale-[1.01] origin-left' 
+                  : isPast
+                    ? 'text-2xl md:text-3xl text-slate-400/50 font-medium hover:text-slate-400'
+                    : 'text-2xl md:text-3xl text-slate-300 font-medium hover:text-slate-400'}
               `}
             >
               {line.text}
@@ -46,8 +47,6 @@ const LyricsView = ({ lyrics, currentTime }) => {
           );
         })}
       </div>
-      {/* Overlay to fade edges */}
-      <div className="fixed top-[150px] bottom-[120px] left-0 right-0 pointer-events-none md:ml-64 bg-gradient-to-b from-slate-50 via-transparent to-slate-50 z-20"></div>
     </div>
   );
 };

@@ -77,7 +77,7 @@ const ProcessingPipeline = ({ statuses }) => {
   ];
 
   return (
-    <div className="bg-white rounded-3xl p-5 md:p-8 border border-slate-100 shadow-sm mt-6">
+    <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm flex flex-col shrink-0 h-auto xl:h-[calc(100vh-5rem)] max-h-[700px] xl:max-h-none overflow-y-auto">
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center space-x-3">
           <Network className="w-5 h-5 text-slate-800" />

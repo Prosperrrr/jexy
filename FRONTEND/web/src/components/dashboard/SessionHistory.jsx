@@ -31,40 +31,44 @@ const SessionHistory = () => {
   ];
 
   return (
-    <div className="w-full xl:w-80 bg-white rounded-3xl border border-slate-100 flex flex-col shadow-sm shrink-0 h-auto xl:h-[calc(100vh-5rem)] max-h-[400px] xl:max-h-none">
+    <div className="w-full bg-white rounded-3xl border border-slate-100 flex flex-col shadow-sm mt-6 mb-12">
       {/* Header */}
-      <div className="p-6 border-b border-slate-100">
-        <div className="flex items-center space-x-2">
+      <div className="p-5 md:p-8 border-b border-slate-50">
+        <div className="flex items-center space-x-3">
           <History className="w-5 h-5 text-slate-800" />
-          <h2 className="font-display font-bold text-slate-900">Session History</h2>
+          <h2 className="font-display font-bold text-slate-900 text-lg">Session History</h2>
         </div>
       </div>
 
       {/* List */}
-      <div className="flex-1 overflow-y-auto p-2">
+      <div className="p-4 md:p-6 grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
         {mockJobs.map((job) => (
-          <div key={job.id} className="p-4 hover:bg-slate-50 rounded-2xl transition-colors cursor-pointer border border-transparent hover:border-slate-100 relative group">
-            <div className="flex justify-between items-start mb-2">
-              <span className="font-display font-medium text-sm text-slate-900 truncate pr-4" title={job.filename}>
-                {job.filename}
-              </span>
-              <span className="text-xs text-slate-400 whitespace-nowrap">{job.timeAgo}</span>
-            </div>
-            <div className="flex items-center text-xs space-x-3">
-              <div className="flex items-center space-x-1.5">
-                <div className={`w-1.5 h-1.5 rounded-full ${job.color}`}></div>
-                <span className="text-slate-500 font-medium">{job.status}</span>
+          <div key={job.id} className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100 hover:border-blue-200 hover:shadow-sm transition-all cursor-pointer group flex flex-col">
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex items-start space-x-3 w-full truncate pr-2">
+                <FileAudio className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
+                <span className="font-display font-bold text-sm text-slate-900 truncate" title={job.filename}>
+                  {job.filename}
+                </span>
               </div>
-              <span className="text-slate-300">•</span>
-              <span className="text-slate-500">{job.size}</span>
+            </div>
+            <div className="flex items-center justify-between text-[11px] mt-auto uppercase tracking-wider font-semibold">
+              <div className="flex items-center space-x-2">
+                <div className={`w-2 h-2 rounded-full ${job.color}`}></div>
+                <span className="text-slate-500">{job.status}</span>
+              </div>
+              <div className="flex flex-col items-end text-slate-400 space-y-0.5">
+                <span>{job.size}</span>
+                <span>{job.timeAgo}</span>
+              </div>
             </div>
           </div>
         ))}
       </div>
 
       {/* Footer / CTA */}
-      <div className="p-4 border-t border-slate-50 bg-slate-50/50 rounded-b-3xl mt-auto">
-        <button className="w-full text-center py-3 text-xs font-display font-bold text-slate-400 tracking-wider hover:text-slate-600 transition-colors uppercase">
+      <div className="p-5 bg-slate-50/50 rounded-b-3xl mt-auto border-t border-slate-100 items-center justify-center flex">
+        <button className="text-[11px] font-display font-bold text-slate-400 tracking-wider hover:text-slate-900 transition-colors uppercase">
           VIEW ALL ARCHIVES
         </button>
       </div>

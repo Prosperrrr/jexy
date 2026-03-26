@@ -289,14 +289,14 @@ const DashboardPage = () => {
           
           <div className="flex-1 flex flex-col space-y-6">
             {renderView()}
-            <ProcessingPipeline statuses={getPipelineStatuses()} />
+            <SessionHistory />
           </div>
         </div>
 
         {/* Right Panel */}
         <div className="w-full xl:w-80 shrink-0">
           <div className="sticky top-0 pt-0">
-            <SessionHistory />
+            <ProcessingPipeline statuses={getPipelineStatuses()} />
           </div>
         </div>
       </div>

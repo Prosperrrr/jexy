@@ -2,7 +2,6 @@ import React from 'react';
 
 const TimelineRuler = ({ duration }) => {
   const markers = [];
-  // Add markers every 30 seconds
   for (let i = 0; i <= duration; i += 30) {
     const mins = Math.floor(i / 60);
     const secs = i % 60;
@@ -13,16 +12,15 @@ const TimelineRuler = ({ duration }) => {
   }
 
   return (
-    <div className="relative h-8 flex items-end pb-2 w-full pt-4 px-4 sm:px-8">
+    <div className="relative h-14 flex items-end pb-3 w-full border-b border-slate-200/50 mb-2">
       {markers.map((marker, index) => {
         const position = duration > 0 ? (marker.time / duration) * 100 : 0;
-        // Adjust alignment for the first and last items so they don't overflow
         const transform = position === 0 ? 'none' : position === 100 ? 'translateX(-100%)' : 'translateX(-50%)';
         
         return (
           <div 
             key={index} 
-            className="absolute text-[10px] font-bold text-slate-300 font-display pb-1"
+            className="absolute text-[10px] font-bold text-slate-400/80 tracking-widest font-display pb-2 transition-colors hover:text-slate-600"
             style={{ left: `${position}%`, transform }}
           >
             {marker.label}
