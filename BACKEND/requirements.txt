@@ -27,3 +27,6 @@ scipy==1.11.4
 python-dotenv==1.0.0
 torch>=2.0.0
 torchaudio>=2.0.0
+
+#database
+supabase

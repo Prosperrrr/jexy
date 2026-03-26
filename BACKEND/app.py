@@ -21,11 +21,17 @@ from models.classifier import AudioClassifier
 from models.yamnet_classifier import YAMNetClassifier
 from models.music_processor import MusicProcessor
 from models.speech_processor import SpeechProcessor
-from utils.file_cleanup import FileCleanup
 from utils.rate_limiter import RateLimiter
+
+from supabase import create_client, Client
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for React frontend
+
+# Initialize Supabase client
+SUPABASE_URL = os.environ.get('SUPABASE_URL')
+SUPABASE_SERVICE_KEY = os.environ.get('SUPABASE_SERVICE_KEY')
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 # Initialize models
 # classifier = AudioClassifier()  # Old classifier this is kept for documentation/backup
@@ -33,16 +39,14 @@ yamnet_classifier = YAMNetClassifier()  #Google YAMNet classifier
 music_processor = MusicProcessor()
 speech_processor = SpeechProcessor()  
 
-# Initialize file cleanup (deletes files older than 24 hours)
-file_cleanup = FileCleanup(processed_dir='processed', uploads_dir='uploads', max_age_hours=24)
-file_cleanup.start_cleanup_scheduler()  # Start automatic cleanup
+
 
 # Initialize rate limiter (limits to max 5 uploads per minute)
 rate_limiter = RateLimiter(max_requests=5, time_window=60)
 
 # Configuration
 app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500MB max file size
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max file size
 ALLOWED_EXTENSIONS = {'mp3', 'wav', 'ogg', 'flac', 'm4a'}
 
 # Create folders
@@ -61,8 +65,8 @@ def allowed_file(filename):
 @app.route('/')
 def home():
     return jsonify({
-        "message": "Welcome to Jexi API",
-        "version": "1.0.0",
+        "message": "Welcome to Jexy API",
+        "version": "1.1.0",
         "status": "running"
     })
 
@@ -162,7 +166,24 @@ def confirm_and_process(file_id):
     
     # Generate processing job ID
     job_id = str(uuid.uuid4())[:8]
-    
+
+    # Get user_id from request header (Firebase UID sent by frontend)
+    user_id = request.headers.get('X-User-ID', None)
+
+    # Save job record to Supabase
+    try:
+        from datetime import datetime, timezone
+        supabase.table('jobs').insert({
+            'id': job_id,
+            'filename': file_info['filename'],
+            'job_type': content_type,
+            'status': 'processing',
+            'user_id': user_id,
+            'created_at': datetime.now(timezone.utc).isoformat()
+        }).execute()
+    except Exception as e:
+        app.logger.error(f"Supabase insert failed for job {job_id}: {e}")
+
     # Start processing
     if content_type == "music":
         processing_jobs[job_id] = {"status": "processing", "type": "music"}
@@ -207,18 +228,63 @@ def confirm_and_process(file_id):
 def process_music_background(filepath, job_id):
     """Background function to process music"""
     try:
-        music_processor.process(filepath, job_id)
+        result = music_processor.process(filepath, job_id)
         processing_jobs[job_id] = {"status": "completed", "type": "music"}
+        # Update Supabase: status + metadata + stems_data
+        try:
+            music_metadata = {
+                "key": result.get('key'),
+                "bpm": result.get('bpm'),
+                "duration": result.get('duration'),
+                "sample_rate": result.get('sample_rate'),
+                "lyrics": result.get('lyrics'),
+                "processed_at": result.get('processed_at')
+            }
+            stems_data = {
+                name: {"active": info.get('active')}
+                for name, info in (result.get('stems') or {}).items()
+            }
+            supabase.table('jobs').update({
+                'status': 'completed',
+                'metadata': music_metadata,
+                'stems_data': stems_data
+            }).eq('id', job_id).execute()
+        except Exception as e:
+            app.logger.error(f"Supabase update failed for job {job_id}: {e}")
     except Exception as e:
         processing_jobs[job_id] = {"status": "failed", "type": "music", "error": str(e)}
+        # Update Supabase job status
+        try:
+            supabase.table('jobs').update({'status': 'failed'}).eq('id', job_id).execute()
+        except Exception as db_e:
+            app.logger.error(f"Supabase update failed for job {job_id}: {db_e}")
 
 def process_speech_background(filepath, job_id):
     """Background function to process speech"""
     try:
-        speech_processor.process(filepath, job_id)
+        result = speech_processor.process(filepath, job_id)
         processing_jobs[job_id] = {"status": "completed", "type": "speech"}
+        # Update Supabase: status + metadata + transcript
+        try:
+            speech_metadata = {
+                "duration": result.get('duration'),
+                "sample_rate": result.get('sample_rate'),
+                "processed_at": result.get('processed_at')
+            }
+            supabase.table('jobs').update({
+                'status': 'completed',
+                'metadata': speech_metadata,
+                'transcript': result.get('transcript')
+            }).eq('id', job_id).execute()
+        except Exception as e:
+            app.logger.error(f"Supabase update failed for job {job_id}: {e}")
     except Exception as e:
         processing_jobs[job_id] = {"status": "failed", "type": "speech", "error": str(e)}
+        # Update Supabase job status
+        try:
+            supabase.table('jobs').update({'status': 'failed'}).eq('id', job_id).execute()
+        except Exception as db_e:
+            app.logger.error(f"Supabase update failed for job {job_id}: {db_e}")
 
 # MUSIC PROCESSING route
 
@@ -440,31 +506,19 @@ def process_speech():
 
 #left here for documentation
 
-#Utils Routes 
+#Utils Routes
 
-@app.route('/api/storage/stats', methods=['GET'])
-def get_storage_stats():
-    """Get storage usage statistics"""
-    stats = file_cleanup.get_storage_stats()
-    return jsonify(stats), 200
-
-@app.route('/api/cleanup/now', methods=['POST'])
-def cleanup_now():
-    """Manually trigger cleanup (admin only - will add auth later)"""
+@app.route('/api/jobs', methods=['GET'])
+def get_user_jobs():
+    """Get all jobs for the authenticated user (filtered by X-User-ID header)"""
+    user_id = request.headers.get('X-User-ID')
+    if not user_id:
+        return jsonify({"error": "X-User-ID header is required"}), 401
     try:
-        file_cleanup.cleanup_old_files()
-        return jsonify({"message": "Cleanup completed"}), 200
+        result = supabase.table('jobs').select('*').eq('user_id', user_id).order('created_at', desc=True).execute()
+        return jsonify({"jobs": result.data}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-@app.route('/api/cleanup/job/<job_id>', methods=['DELETE'])
-def cleanup_specific_job(job_id):
-    """Delete a specific job's files"""
-    success = file_cleanup.cleanup_specific_job(job_id)
-    if success:
-        return jsonify({"message": f"Job {job_id} deleted"}), 200
-    else:
-        return jsonify({"error": "Could not delete job"}), 500
 
 @app.route('/api/rate-limit/stats', methods=['GET'])
 def get_rate_limit_stats():

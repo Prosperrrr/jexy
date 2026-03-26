@@ -1,6 +1,7 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import AuthPage from './pages/AuthPage';
+import DashboardPage from './pages/DashboardPage';
 
 function App() {
   return (
@@ -8,14 +9,11 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<AuthPage />} />
-        <Route path="/dashboard" element={
-          <div className="min-h-screen bg-slate-50 dark:bg-[#0a0a0a] flex items-center justify-center">
-            <div className="text-center">
-              <h1 className="text-4xl font-display font-bold mb-4">Dashboard</h1>
-              <p className="text-slate-500">Authentication successful!</p>
-            </div>
-          </div>
-        } />
+        <Route path="/dashboard" element={<DashboardPage />} />
+        
+        {/* Placeholder routes for redirect redirects */}
+        <Route path="/track-separation" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/audio-enhancer" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </Router>
   );
