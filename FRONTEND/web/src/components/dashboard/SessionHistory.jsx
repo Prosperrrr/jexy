@@ -31,7 +31,7 @@ const SessionHistory = () => {
   ];
 
   return (
-    <div className="w-80 bg-white rounded-3xl border border-slate-100 flex flex-col shadow-sm flex-shrink-0 h-[calc(100vh-5rem)]">
+    <div className="w-full xl:w-80 bg-white rounded-3xl border border-slate-100 flex flex-col shadow-sm shrink-0 h-auto xl:h-[calc(100vh-5rem)] max-h-[400px] xl:max-h-none">
       {/* Header */}
       <div className="p-6 border-b border-slate-100">
         <div className="flex items-center space-x-2">

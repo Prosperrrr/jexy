@@ -276,12 +276,12 @@ const DashboardPage = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-7xl mx-auto flex gap-8">
+      <div className="max-w-7xl mx-auto flex flex-col xl:flex-row gap-8">
         
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-w-0">
           <div className="mb-8">
-            <h1 className="text-[32px] font-display font-bold text-slate-900 tracking-tight mb-2">User Dashboard</h1>
+            <h1 className="text-2xl md:text-[32px] font-display font-bold text-slate-900 tracking-tight mb-2">User Dashboard</h1>
             <p className="text-slate-500 max-w-2xl font-medium">
               High-fidelity audio processing pipeline. Upload raw signals for classification, separation, and neural transcription.
             </p>
@@ -294,7 +294,7 @@ const DashboardPage = () => {
         </div>
 
         {/* Right Panel */}
-        <div className="hidden lg:block w-80">
+        <div className="w-full xl:w-80 shrink-0">
           <div className="sticky top-0 pt-0">
             <SessionHistory />
           </div>

@@ -19,14 +19,14 @@ export const IdleView = ({ onFileSelect }) => {
 
   return (
     <div 
-      className="bg-white rounded-3xl p-16 border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center relative overflow-hidden h-[460px]"
+      className="bg-white rounded-3xl p-6 md:p-16 border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center relative overflow-hidden h-auto min-h-[400px] md:h-[460px]"
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleDrop}
     >
       <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-8">
         <Plus className="w-6 h-6 text-slate-900" />
       </div>
-      <h2 className="text-3xl font-display font-bold text-slate-900 mb-3 tracking-tight">Initialize New Session</h2>
+      <h2 className="text-2xl md:text-3xl font-display font-bold text-slate-900 mb-3 tracking-tight">Initialize New Session</h2>
       <p className="text-slate-400 mb-10 max-w-sm mx-auto font-medium">
         Select your audio source (WAV, FLAC, MP3) to begin processing in the cloud.
       </p>
@@ -40,7 +40,7 @@ export const IdleView = ({ onFileSelect }) => {
       />
       <button 
         onClick={() => fileInputRef.current?.click()}
-        className="font-display bg-slate-900 hover:bg-slate-800 text-white font-semibold py-4 px-12 rounded-full transition-colors shadow-lg"
+        className="font-display w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-semibold py-4 px-12 rounded-full transition-colors shadow-lg"
       >
         Select Raw Audio
       </button>
@@ -50,11 +50,11 @@ export const IdleView = ({ onFileSelect }) => {
 
 export const UploadingView = ({ progress, filename, onCancel }) => {
   return (
-    <div className="bg-white rounded-3xl p-16 border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center relative overflow-hidden h-[460px]">
+    <div className="bg-white rounded-3xl p-6 md:p-16 border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center relative overflow-hidden h-auto min-h-[400px] md:h-[460px]">
       <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-8">
         <div className="w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
-      <h2 className="text-3xl font-display font-bold text-slate-900 mb-3 tracking-tight">Uploading audio file...</h2>
+      <h2 className="text-2xl md:text-3xl font-display font-bold text-slate-900 mb-3 tracking-tight">Uploading audio file...</h2>
       <p className="text-slate-400 mb-10 max-w-sm mx-auto font-medium">
         Sending signals to YAMNet for classification.
       </p>
@@ -67,7 +67,7 @@ export const UploadingView = ({ progress, filename, onCancel }) => {
         ></div>
       </div>
       
-      <div className="flex justify-between w-full max-w-md text-sm font-semibold mt-8 text-slate-400">
+      <div className="flex flex-col sm:flex-row justify-between items-center w-full max-w-md text-sm font-semibold mt-8 text-slate-400 space-y-3 sm:space-y-0">
         <span className="font-display truncate max-w-[200px] text-slate-900">{filename}</span>
         <button onClick={onCancel} className="font-display text-red-500 hover:text-red-600 uppercase tracking-wider text-xs font-bold">CANCEL UPLOAD</button>
       </div>
@@ -78,7 +78,7 @@ export const UploadingView = ({ progress, filename, onCancel }) => {
 export const ConfirmingView = ({ type, confidence, onConfirm, onToggle }) => {
   const isMusic = type === 'music';
   return (
-    <div className="bg-white rounded-3xl p-16 border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center relative overflow-hidden h-[460px]">
+    <div className="bg-white rounded-3xl p-6 md:p-16 border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center relative overflow-hidden h-auto min-h-[400px] md:h-[460px]">
       <div className={`w-16 h-16 ${isMusic ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600'} rounded-full flex items-center justify-center mb-8`}>
         {isMusic ? (
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
@@ -86,7 +86,7 @@ export const ConfirmingView = ({ type, confidence, onConfirm, onToggle }) => {
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20 M17 5v14 M22 10v4 M7 5v14 M2 10v4"/></svg>
         )}
       </div>
-      <h2 className="text-3xl font-display font-bold text-slate-900 mb-2 tracking-tight">
+      <h2 className="text-2xl md:text-3xl font-display font-bold text-slate-900 mb-2 tracking-tight">
         {isMusic ? 'Music Detected' : 'Speech Detected'}
       </h2>
       <p className="text-slate-500 mb-10 max-w-md mx-auto">
@@ -106,16 +106,16 @@ export const ConfirmingView = ({ type, confidence, onConfirm, onToggle }) => {
         </div>
       </div>
       
-      <div className="flex items-center space-x-4">
+      <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4 w-full px-4 sm:px-0">
         <button 
           onClick={onConfirm}
-          className={`font-display ${isMusic ? 'bg-purple-50 hover:bg-purple-100 text-purple-700' : 'bg-blue-50 hover:bg-blue-100 text-blue-700'} font-bold py-4 px-8 rounded-full transition-colors`}
+          className={`font-display w-full sm:w-auto ${isMusic ? 'bg-purple-50 hover:bg-purple-100 text-purple-700' : 'bg-blue-50 hover:bg-blue-100 text-blue-700'} font-bold py-4 px-8 rounded-full transition-colors`}
         >
           {isMusic ? 'PROCEED WITH STEM SEPARATION' : 'PROCEED WITH DENOISING'}
         </button>
         <button 
           onClick={onToggle}
-          className="font-display bg-white hover:bg-slate-50 border border-slate-200 text-slate-500 font-bold py-4 px-8 rounded-full transition-colors"
+          className="font-display w-full sm:w-auto bg-white hover:bg-slate-50 border border-slate-200 text-slate-500 font-bold py-4 px-8 rounded-full transition-colors"
         >
           No, it's {isMusic ? 'Speech' : 'Music'}
         </button>
@@ -131,7 +131,7 @@ export const ProcessingView = ({ title, subtitle, progress, isIndeterminate = fa
   const iconClass = isMusic ? 'text-purple-600' : 'text-blue-600';
 
   return (
-    <div className="bg-white rounded-3xl p-16 border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center relative overflow-hidden h-[460px]">
+    <div className="bg-white rounded-3xl p-6 md:p-16 border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center relative overflow-hidden h-auto min-h-[400px] md:h-[460px]">
       <div className={`w-16 h-16 ${lightColorClass} rounded-full flex items-center justify-center mb-8`}>
         {isMusic ? (
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20 M17 5v14 M22 10v4 M7 5v14 M2 10v4"/></svg>
@@ -139,7 +139,7 @@ export const ProcessingView = ({ title, subtitle, progress, isIndeterminate = fa
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20 M17 5v14 M22 10v4 M7 5v14 M2 10v4"/></svg>
         )}
       </div>
-      <h2 className="text-3xl font-display font-bold text-slate-900 mb-3 tracking-tight">{title}</h2>
+      <h2 className="text-2xl md:text-3xl font-display font-bold text-slate-900 mb-3 tracking-tight">{title}</h2>
       
       <div className="w-full max-w-md mt-10 mb-8">
         <div className="flex justify-between text-[11px] font-bold tracking-wider uppercase mb-3">
@@ -159,7 +159,7 @@ export const ProcessingView = ({ title, subtitle, progress, isIndeterminate = fa
         {subtitle}
       </p>
 
-      <button className={`mt-10 font-display ${lightColorClass} font-bold py-4 px-12 rounded-full pointer-events-none flex items-center space-x-2`}>
+      <button className={`mt-10 font-display w-full sm:w-auto justify-center ${lightColorClass} font-bold py-4 px-12 rounded-full pointer-events-none flex items-center space-x-2`}>
         <RefreshCcw className="w-5 h-5 animate-spin" />
         <span>PROCESSING...</span>
       </button>
@@ -169,16 +169,16 @@ export const ProcessingView = ({ title, subtitle, progress, isIndeterminate = fa
 
 export const CompleteView = () => {
   return (
-    <div className="bg-white rounded-3xl p-16 border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center relative overflow-hidden h-[460px]">
+    <div className="bg-white rounded-3xl p-6 md:p-16 border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center relative overflow-hidden h-auto min-h-[400px] md:h-[460px]">
       <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-8 text-blue-600">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20 M17 5v14 M22 10v4 M7 5v14 M2 10v4"/></svg>
       </div>
-      <h2 className="text-3xl font-display font-bold text-slate-900 mb-3 tracking-tight">Processing Completed</h2>
+      <h2 className="text-2xl md:text-3xl font-display font-bold text-slate-900 mb-3 tracking-tight">Processing Completed</h2>
       <p className="text-slate-400 mb-10 max-w-sm mx-auto font-medium">
         All AI models have finished execution. Your results are now ready for review.
       </p>
       
-      <button className="font-display bg-emerald-50 text-emerald-600 font-bold py-4 px-12 rounded-full flex items-center space-x-2 pointer-events-none">
+      <button className="font-display w-full sm:w-auto justify-center bg-emerald-50 text-emerald-600 font-bold py-4 px-12 rounded-full flex items-center space-x-2 pointer-events-none">
         <CheckCircle2 className="w-5 h-5" />
         <span>PROCESSING COMPLETE</span>
       </button>
@@ -188,18 +188,18 @@ export const CompleteView = () => {
 
 export const ErrorView = ({ error, onRetry }) => {
   return (
-    <div className="bg-white rounded-3xl p-16 border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center relative overflow-hidden h-[460px]">
+    <div className="bg-white rounded-3xl p-6 md:p-16 border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center relative overflow-hidden h-auto min-h-[400px] md:h-[460px]">
       <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-8 text-red-600">
         <XCircle className="w-8 h-8" />
       </div>
-      <h2 className="text-3xl font-display font-bold text-slate-900 mb-3 tracking-tight">Processing Failed</h2>
+      <h2 className="text-2xl md:text-3xl font-display font-bold text-slate-900 mb-3 tracking-tight">Processing Failed</h2>
       <p className="text-slate-500 mb-10 max-w-sm mx-auto font-medium">
         {error || 'An unexpected error occurred during processing.'}
       </p>
       
       <button 
         onClick={onRetry}
-        className="font-display bg-slate-900 hover:bg-slate-800 text-white font-semibold py-4 px-12 rounded-full transition-colors shadow-lg flex items-center space-x-2"
+        className="font-display w-full sm:w-auto justify-center bg-slate-900 hover:bg-slate-800 text-white font-semibold py-4 px-12 rounded-full transition-colors shadow-lg flex items-center space-x-2"
       >
         <RefreshCcw className="w-5 h-5" />
         <span>Retry Upload</span>

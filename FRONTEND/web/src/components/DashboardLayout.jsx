@@ -5,8 +5,8 @@ const DashboardLayout = ({ children }) => {
   return (
     <div className="min-h-screen bg-slate-50 flex">
       <Sidebar />
-      <div className="flex-1 ml-64 flex flex-col h-screen overflow-hidden">
-        <main className="flex-1 overflow-y-auto p-10 relative">
+      <div className="flex-1 md:ml-64 flex flex-col h-screen overflow-hidden">
+        <main className="flex-1 overflow-y-auto pt-20 pb-20 px-4 md:p-10 relative">
           {children}
         </main>
       </div>

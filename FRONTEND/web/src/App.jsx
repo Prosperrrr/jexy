@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import LandingPage from './pages/LandingPage';
 import AuthPage from './pages/AuthPage';
 import DashboardPage from './pages/DashboardPage';
+import TrackSeparationPage from './pages/TrackSeparationPage';
 
 function App() {
   return (
@@ -12,7 +13,7 @@ function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
         
         {/* Placeholder routes for redirect redirects */}
-        <Route path="/track-separation" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/track-separation" element={<TrackSeparationPage />} />
         <Route path="/audio-enhancer" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </Router>

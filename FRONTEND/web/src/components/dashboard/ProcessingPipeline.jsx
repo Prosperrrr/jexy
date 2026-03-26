@@ -77,7 +77,7 @@ const ProcessingPipeline = ({ statuses }) => {
   ];
 
   return (
-    <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm mt-6">
+    <div className="bg-white rounded-3xl p-5 md:p-8 border border-slate-100 shadow-sm mt-6">
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center space-x-3">
           <Network className="w-5 h-5 text-slate-800" />
@@ -102,8 +102,8 @@ const ProcessingPipeline = ({ statuses }) => {
                 </div>
               )}
               
-              <div className="flex items-center justify-between py-2 mb-6">
-                <div className="flex items-center space-x-6">
+              <div className="flex items-start sm:items-center justify-between py-2 mb-6 gap-2">
+                <div className="flex items-center space-x-4 sm:space-x-6">
                   <StageIcon type={step.id} status={status} />
                   <div>
                     <h4 className="font-display font-bold text-slate-900 text-[15px]">{step.title}</h4>
