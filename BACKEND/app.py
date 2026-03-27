@@ -1,7 +1,10 @@
+#import os
+#os.environ['CUDA_VISIBLE_DEVICES'] = '0'  # Keep GPU visible for PyTorch
+#os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
+#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'  # Keep GPU visible for PyTorch
-os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # Force everything CPU
 
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -40,13 +43,7 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 # Initialize models
 # classifier = AudioClassifier()  # Old classifier this is kept for documentation/backup
-yamnet_classifier = YAMNetClassifier()  #Google YAMNet classifier
-
-import torch
-if torch.cuda.is_available():
-    torch.cuda.empty_cache()
-
-    
+yamnet_classifier = YAMNetClassifier()  #Google YAMNet classifier    
 music_processor = MusicProcessor()
 speech_processor = SpeechProcessor()  
 
