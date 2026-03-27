@@ -115,7 +115,7 @@ def upload_audio():
         file.save(filepath)
         
         # Generate unique file ID
-        file_id = str(uuid.uuid4())[:8]
+        file_id = str(uuid.uuid4())
         
         try:
             # Classify with YAMNet (takes ~5 seconds)
@@ -173,7 +173,7 @@ def confirm_and_process(file_id):
         return jsonify({"error": "Invalid content type"}), 400
     
     # Generate processing job ID
-    job_id = str(uuid.uuid4())[:8]
+    job_id = str(uuid.uuid4())
 
     # Get user_id from request header (Firebase UID sent by frontend)
     user_id = request.headers.get('X-User-ID', None)
