@@ -3,6 +3,7 @@ import LandingPage from './pages/LandingPage';
 import AuthPage from './pages/AuthPage';
 import DashboardPage from './pages/DashboardPage';
 import TrackSeparationPage from './pages/TrackSeparationPage';
+import AudioEnhancerPage from './pages/AudioEnhancerPage';
 
 function App() {
   return (
@@ -14,7 +15,7 @@ function App() {
 
         {/* Placeholder routes for redirect redirects */}
         <Route path="/track-separation" element={<TrackSeparationPage />} />
-        <Route path="/audio-enhancer" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/audio-enhancer" element={<AudioEnhancerPage />} />
       </Routes>
     </Router>
   );

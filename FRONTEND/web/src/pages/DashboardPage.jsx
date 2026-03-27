@@ -141,7 +141,7 @@ const DashboardPage = () => {
           type: pipelineType,
           timestamp: new Date().toISOString()
         }));
-        navigate('/track-separation', { state: { jobId } });
+        navigate(pipelineType === 'speech' ? '/audio-enhancer' : '/track-separation', { state: { jobId } });
       }
     } else {
       setCountdown(5); // Reset countdown when moving away from Complete
@@ -230,7 +230,7 @@ const DashboardPage = () => {
                   </div>
                 </div>
                 <div className="flex gap-3 w-full sm:w-auto z-10 shrink-0">
-                  <button onClick={() => navigate('/track-separation')} className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-2.5 rounded-full transition-colors whitespace-nowrap text-sm shadow-[0_0_15px_rgba(37,99,235,0.4)] hover:shadow-[0_0_20px_rgba(37,99,235,0.6)] active:scale-95">
+                  <button onClick={() => navigate(persistedJob.type === 'speech' ? '/audio-enhancer' : '/track-separation')} className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-2.5 rounded-full transition-colors whitespace-nowrap text-sm shadow-[0_0_15px_rgba(37,99,235,0.4)] hover:shadow-[0_0_20px_rgba(37,99,235,0.6)] active:scale-95">
                     View Results
                   </button>
                 </div>
@@ -335,7 +335,7 @@ const DashboardPage = () => {
                     type: pipelineType,
                     timestamp: new Date().toISOString()
                   }));
-                  navigate('/track-separation', { state: { jobId } });
+                  navigate(pipelineType === 'speech' ? '/audio-enhancer' : '/track-separation', { state: { jobId } });
                 }}
                 className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 px-8 rounded-full transition-all shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
               >

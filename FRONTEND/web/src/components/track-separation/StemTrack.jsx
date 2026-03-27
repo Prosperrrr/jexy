@@ -26,16 +26,16 @@ const StemTrack = ({
     <div className="flex flex-col sm:flex-row bg-white/70 backdrop-blur-xl rounded-3xl border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/40 hover:border-blue-200/60 transition-all duration-300 overflow-hidden mt-5 shrink-0 group">
       
       {/* Left Controls */}
-      <div className="flex w-full sm:w-64 p-3 sm:p-5 flex-row sm:flex-col items-center justify-between sm:justify-center border-b sm:border-b-0 sm:border-r border-slate-100/50 relative bg-white/60 z-10 shrink-0 transition-colors group-hover:bg-white/90">
-        <div className="flex items-center justify-between sm:mb-6 w-full sm:w-auto">
-          <div className="flex items-center space-x-2 sm:space-x-3 w-[120px] sm:w-auto shrink-0">
-            <div className={`p-1.5 sm:p-2.5 rounded-xl ${soloed ? 'bg-blue-600 text-white shadow-[0_4px_15px_rgba(37,99,235,0.4)]' : muted ? 'bg-slate-100 text-slate-400' : 'bg-slate-50 text-slate-600 group-hover:bg-blue-50 group-hover:text-blue-600'} transition-all duration-300`}>
+      <div className="flex w-full sm:w-64 p-4 sm:p-5 flex-col items-center justify-center border-b sm:border-b-0 sm:border-r border-slate-100/50 relative bg-white/60 z-10 shrink-0 transition-colors group-hover:bg-white/90 gap-4 sm:gap-0">
+        <div className="flex items-center justify-between sm:mb-6 w-full">
+          <div className="flex items-center space-x-2 sm:space-x-3 w-auto shrink-0">
+            <div className={`p-2 sm:p-2.5 rounded-xl ${soloed ? 'bg-blue-600 text-white shadow-[0_4px_15px_rgba(37,99,235,0.4)]' : muted ? 'bg-slate-100 text-slate-400' : 'bg-slate-50 text-slate-600 group-hover:bg-blue-50 group-hover:text-blue-600'} transition-all duration-300`}>
               <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <span className={`font-display font-extrabold text-[13px] sm:text-[15px] tracking-tight transition-colors truncate ${muted ? 'text-slate-400' : 'text-slate-900'}`}>{name}</span>
+            <span className={`font-display font-extrabold text-[14px] sm:text-[15px] tracking-tight transition-colors truncate ${muted ? 'text-slate-400' : 'text-slate-900'}`}>{name}</span>
           </div>
           
-          <div className="flex items-center space-x-1.5">
+          <div className="flex items-center space-x-1.5 ml-2">
             <button 
               onClick={onMuteToggle}
               className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg text-[10px] sm:text-[11px] font-black font-display transition-all ${muted ? 'bg-red-50 text-red-600 ring-1 ring-red-500/30 shadow-inner' : 'bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-700'}`}
@@ -52,9 +52,9 @@ const StemTrack = ({
         </div>
 
         {/* Volume Slider */}
-        <div className="flex items-center space-x-3 px-1 ml-4 sm:ml-0 w-24 sm:w-auto shrink-0">
+        <div className="flex items-center space-x-3 px-1 w-full shrink-0">
           <button onClick={onMuteToggle} title="Mute Track" className="focus:outline-none hover:scale-110 transition-transform group/mute">
-            {volume === 0 || muted ? <VolumeX className="w-3.5 h-3.5 text-slate-300 group-hover/mute:text-red-400" /> : <Volume2 className={`w-3.5 h-3.5 ${muted ? 'text-slate-300' : 'text-slate-400 group-hover/mute:text-blue-500'}`} />}
+            {volume === 0 || muted ? <VolumeX className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-slate-300 group-hover/mute:text-red-400" /> : <Volume2 className={`w-4 h-4 sm:w-3.5 sm:h-3.5 ${muted ? 'text-slate-300' : 'text-slate-400 group-hover/mute:text-blue-500'}`} />}
           </button>
           <div className="relative w-full h-1.5 bg-slate-100 rounded-lg flex items-center group/slider">
             <div 
