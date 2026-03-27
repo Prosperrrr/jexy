@@ -19,7 +19,8 @@ class MusicProcessor:
     def __init__(self):
         print("Loading Demucs model (this may take a minute)...")
         self.demucs_model = get_model('htdemucs_6s')  # 6 stems model
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        #self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.device = 'cpu'
         self.demucs_model.to(self.device)
         
         print("Loading Whisper model...")
