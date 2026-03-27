@@ -120,7 +120,7 @@ const AudioPlayerCard = ({
               {/* Download Button */}
               <a 
                 href={downloadUrl}
-                download
+                download={`jexy_enhanced_${metadata.filename}`}
                 title="Download Clean Audio"
                 className="w-full sm:w-auto justify-center px-6 py-2.5 md:py-3 bg-[#2563EB] hover:bg-blue-600 active:scale-95 text-white text-[14px] md:text-[15px] font-semibold rounded-[10px] flex items-center gap-2 transition-all shadow-md shadow-blue-500/20 tracking-wide focus:outline-none"
               >
