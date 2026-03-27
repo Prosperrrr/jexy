@@ -106,12 +106,27 @@ const TrackSeparationPage = () => {
   const handleSkipBack = () => setCurrentTime(prev => Math.max(0, prev - 10));
   const handleSkipForward = () => setCurrentTime(prev => Math.min(MOCK_DATA.metadata.duration, prev + 10));
 
+  const handleExport = () => {
+    const activeStemNames = Object.keys(stemStates).filter(stem => !stemStates[stem].muted);
+    const content = `Mock Export\n\nJob ID: ${MOCK_DATA.job_id}\nFilename: ${MOCK_DATA.metadata.filename}\nActive Stems: ${activeStemNames.join(', ')}`;
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `jexy_export_${MOCK_DATA.metadata.filename.replace(/\s+/g, '_')}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <DashboardLayout>
       <div className="flex flex-col h-full relative" style={{ paddingBottom: '160px' }}>
         <Header 
           filename={MOCK_DATA.metadata.filename} 
           bpm={MOCK_DATA.metadata.bpm} 
+          onExport={handleExport}
         />
         
         {isLyricsView ? (

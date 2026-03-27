@@ -2,7 +2,7 @@ import React from 'react';
 import { ArrowLeft, Share2, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const Header = ({ filename, bpm }) => {
+const Header = ({ filename, bpm, onExport }) => {
   const navigate = useNavigate();
 
   return (
@@ -33,7 +33,11 @@ const Header = ({ filename, bpm }) => {
         <button className="w-11 h-11 flex items-center justify-center bg-white border border-slate-200/60 text-slate-500 hover:text-slate-900 hover:shadow-md rounded-full transition-all hover:scale-105 active:scale-95">
           <Share2 className="w-4 h-4" />
         </button>
-        <button className="flex items-center space-x-2 bg-slate-900 hover:bg-slate-800 text-white font-bold px-6 py-2.5 rounded-full transition-all shadow-lg shadow-slate-900/20 hover:shadow-xl hover:scale-105 active:scale-95">
+        <button 
+          onClick={onExport}
+          title="Export Stems"
+          className="flex items-center space-x-2 bg-slate-900 hover:bg-slate-800 text-white font-bold px-6 py-2.5 rounded-full transition-all shadow-lg shadow-slate-900/20 hover:shadow-xl hover:-translate-y-0.5 active:scale-95 outline-none"
+        >
           <Download className="w-4 h-4" />
           <span className="text-sm hidden sm:inline">Export</span>
         </button>
