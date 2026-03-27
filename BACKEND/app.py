@@ -41,6 +41,12 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 # Initialize models
 # classifier = AudioClassifier()  # Old classifier this is kept for documentation/backup
 yamnet_classifier = YAMNetClassifier()  #Google YAMNet classifier
+
+import torch
+if torch.cuda.is_available():
+    torch.cuda.empty_cache()
+
+    
 music_processor = MusicProcessor()
 speech_processor = SpeechProcessor()  
 
