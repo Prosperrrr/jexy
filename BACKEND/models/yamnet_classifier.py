@@ -1,4 +1,7 @@
 import tensorflow as tf
+tf.config.set_visible_devices([], 'GPU')  # Hide GPU from TF only
+
+import tensorflow as tf
 import tensorflow_hub as hub
 import numpy as np
 import librosa
