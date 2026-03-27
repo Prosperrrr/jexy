@@ -4,6 +4,7 @@ import { CheckCircle2 } from 'lucide-react';
 import DashboardLayout from '../components/DashboardLayout';
 import SessionHistory from '../components/dashboard/SessionHistory';
 import ProcessingPipeline from '../components/dashboard/ProcessingPipeline';
+import { uploadAudio, confirmAndProcess, getMusicStatus, getSpeechStatus } from '../services/api';
 import {
   IdleView,
   UploadingView,
@@ -35,6 +36,7 @@ const DashboardPage = () => {
   const [file, setFile] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [jobId, setJobId] = useState(null);
+  const [fileId, setFileId] = useState(null);
   const [confidence, setConfidence] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -46,37 +48,48 @@ const DashboardPage = () => {
   useEffect(() => {
     try {
       const stored = localStorage.getItem('jexy_completed_job');
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (stored) setPersistedJob(JSON.parse(stored));
-    } catch (e) { }
+    } catch { 
+      // safe to ignore
+    }
   }, []);
 
   // Handle file select from IDLE
-  const handleFileSelect = (selectedFile) => {
+  const handleFileSelect = async (selectedFile) => {
     setFile(selectedFile);
     setCurrentState(STATES.UPLOADING);
     setUploadProgress(0);
+    setErrorMessage('');
 
-    // Simulate Upload -> POST /api/upload
     let progress = 0;
     const interval = setInterval(() => {
-      progress += 10;
-      setUploadProgress(progress);
-      if (progress >= 100) {
-        clearInterval(interval);
-        // Simulate response from YAMNet
-        setTimeout(() => {
-          setConfidence(98.4);
-          // Simple heuristic: if filename contains 'speech', classify as speech
-          const isSpeech = selectedFile.name.toLowerCase().includes('speech') || selectedFile.name.toLowerCase().includes('interview');
-          setCurrentState(isSpeech ? STATES.CONFIRMING_SPEECH : STATES.CONFIRMING_MUSIC);
-        }, 500);
-      }
+      progress += 5;
+      if (progress <= 90) setUploadProgress(progress);
     }, 200);
+
+    try {
+      const result = await uploadAudio(selectedFile);
+      clearInterval(interval);
+      setUploadProgress(100);
+      setFileId(result.file_id);
+      setConfidence(result.confidence);
+      
+      setTimeout(() => {
+        const isSpeech = result.detected_type === 'speech';
+        setCurrentState(isSpeech ? STATES.CONFIRMING_SPEECH : STATES.CONFIRMING_MUSIC);
+      }, 500);
+    } catch (error) {
+      clearInterval(interval);
+      setErrorMessage(error.response?.data?.error || error.message || 'Upload failed');
+      setCurrentState(STATES.ERROR);
+    }
   };
 
   const cancelUpload = () => {
     setCurrentState(STATES.IDLE);
     setFile(null);
+    setFileId(null);
     setUploadProgress(0);
   };
 
@@ -89,48 +102,81 @@ const DashboardPage = () => {
   };
 
   // Start Processing pipeline -> POST /api/process/{file_id}
-  const startProcessing = () => {
-    const mockJobId = 'job_' + Math.random().toString(36).substr(2, 9);
-    setJobId(mockJobId);
-    setPipelineType(currentState === STATES.CONFIRMING_MUSIC ? 'music' : 'speech');
+  const startProcessing = async () => {
+    const type = currentState === STATES.CONFIRMING_MUSIC ? 'music' : 'speech';
+    setPipelineType(type);
+    
+    // Set initial processing state visually immediately
+    setCurrentState(type === 'music' ? STATES.PROCESSING_MUSIC_STEMS : STATES.PROCESSING_SPEECH_DENOISE);
+    setErrorMessage('');
 
-    if (currentState === STATES.CONFIRMING_MUSIC) {
-      setCurrentState(STATES.PROCESSING_MUSIC_STEMS);
-    } else {
-      setCurrentState(STATES.PROCESSING_SPEECH_DENOISE);
+    try {
+      const result = await confirmAndProcess(fileId, type);
+      setJobId(result.job_id);
+    } catch (error) {
+      setErrorMessage(error.response?.data?.error || error.message || 'Failed to start processing');
+      setCurrentState(STATES.ERROR);
     }
   };
 
-  // Mock polling effect for Processing states
+  // Polling effect for Processing states
   useEffect(() => {
-    if (currentState === STATES.PROCESSING_MUSIC_STEMS) {
-      const timer = setTimeout(() => {
-        setCurrentState(STATES.PROCESSING_MUSIC_TRANSCRIPT);
-      }, 4000);
-      return () => clearTimeout(timer);
+    let intervalId;
+
+    const checkStatus = async () => {
+      if (!jobId) return;
+
+      try {
+        const statusData = pipelineType === 'music' 
+          ? await getMusicStatus(jobId)
+          : await getSpeechStatus(jobId);
+
+        if (statusData.status === 'completed') {
+          setCurrentState(STATES.COMPLETE);
+          clearInterval(intervalId);
+        } else if (statusData.status === 'failed') {
+          setErrorMessage(statusData.error || 'Processing failed');
+          setCurrentState(STATES.ERROR);
+          clearInterval(intervalId);
+        } else if (statusData.status === 'processing') {
+          if (pipelineType === 'music') {
+             if (statusData.current_step?.toLowerCase().includes('transcrib')) {
+               setCurrentState(STATES.PROCESSING_MUSIC_TRANSCRIPT);
+             } else {
+               setCurrentState(STATES.PROCESSING_MUSIC_STEMS);
+             }
+          } else {
+             if (statusData.current_step?.toLowerCase().includes('transcrib')) {
+               setCurrentState(STATES.PROCESSING_SPEECH_TRANSCRIPT);
+             } else {
+               setCurrentState(STATES.PROCESSING_SPEECH_DENOISE);
+             }
+          }
+        }
+      } catch (error) {
+        console.error("Polling error:", error);
+      }
+    };
+
+    const isProcessing = [
+      STATES.PROCESSING_MUSIC_STEMS,
+      STATES.PROCESSING_MUSIC_TRANSCRIPT,
+      STATES.PROCESSING_SPEECH_DENOISE,
+      STATES.PROCESSING_SPEECH_TRANSCRIPT
+    ].includes(currentState);
+
+    if (isProcessing && jobId) {
+      intervalId = setInterval(checkStatus, 3000);
+      checkStatus(); // Initial check
     }
 
-    if (currentState === STATES.PROCESSING_MUSIC_TRANSCRIPT) {
-      const timer = setTimeout(() => {
-        setCurrentState(STATES.COMPLETE);
-      }, 4000);
-      return () => clearTimeout(timer);
-    }
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [currentState, jobId, pipelineType]);
 
-    if (currentState === STATES.PROCESSING_SPEECH_DENOISE) {
-      const timer = setTimeout(() => {
-        setCurrentState(STATES.PROCESSING_SPEECH_TRANSCRIPT);
-      }, 4000);
-      return () => clearTimeout(timer);
-    }
-
-    if (currentState === STATES.PROCESSING_SPEECH_TRANSCRIPT) {
-      const timer = setTimeout(() => {
-        setCurrentState(STATES.COMPLETE);
-      }, 4000);
-      return () => clearTimeout(timer);
-    }
-
+  // Handle countdown in COMPLETE state
+  useEffect(() => {
     if (currentState === STATES.COMPLETE) {
       if (countdown > 0) {
         const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
@@ -144,6 +190,7 @@ const DashboardPage = () => {
         navigate(pipelineType === 'speech' ? '/audio-enhancer' : '/track-separation', { state: { jobId } });
       }
     } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCountdown(5); // Reset countdown when moving away from Complete
     }
   }, [currentState, countdown, navigate, jobId, file, pipelineType]);

@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { motion } from 'framer-motion';
 
 export default function FadeIn({ children, delay = 0, direction = 'up', className = "" }) {

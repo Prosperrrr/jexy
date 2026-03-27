@@ -163,7 +163,7 @@ export default function FeatureSections() {
                     <div className="h-16 w-full bg-slate-200 dark:bg-slate-900 rounded-md overflow-hidden flex items-end px-1 gap-0.5">
                       {/* Using standard HTML generation logic instead of writing out 50 divs manually to save space, but keeping the visual intact */}
                       {Array.from({ length: 28 }).map((_, i) => (
-                        <div key={i} className={`w-1 bg-slate-400`} style={{ height: `${Math.max(2, Math.random() * 16 * 4)}px` }}></div>
+                        <div key={i} className={`w-1 bg-slate-400`} style={{ height: `${Math.max(2, ((i * 13) % 16) * 4)}px` }}></div>
                       ))}
                     </div>
                   </div>
@@ -174,7 +174,7 @@ export default function FeatureSections() {
                     </div>
                     <div className="h-16 w-full bg-slate-200 dark:bg-slate-900 rounded-md overflow-hidden flex items-end px-1 gap-0.5">
                       {Array.from({ length: 28 }).map((_, i) => (
-                        <div key={i} className={`w-1 bg-slate-800 dark:bg-slate-200`} style={{ height: `${i % 4 !== 0 ? Math.max(1, Math.random() * 15 * 4) : 2}px` }}></div>
+                        <div key={i} className={`w-1 bg-slate-800 dark:bg-slate-200`} style={{ height: `${i % 4 !== 0 ? Math.max(1, ((i * 7) % 15) * 4) : 2}px` }}></div>
                       ))}
                     </div>
                   </div>

@@ -1,35 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
 import AudioPlayerCard from '../components/audio-enhancer/AudioPlayerCard';
 import TranscriptionSection from '../components/audio-enhancer/TranscriptionSection';
-
-const MOCK_DATA = {
-  job_id: "mock-123",
-  status: "completed",
-  metadata: {
-    filename: "Speech File_final.wav",
-    duration: 143, // 02:23
-    sample_rate: "48000",
-    transcript: [
-      { start: 0, end: 42, text: "Welcome to the latest session of our creative deep dive. Today, we're exploring how artificial intelligence is reshaping the landscape of audio production. When we talk about noise reduction, it's not just about removing hum; it's about preserving the soul of the speaker's voice." },
-      { start: 42, end: 75, text: "Traditionally, high-end studios spent hours manually gating and EQing tracks. With the new models we're seeing, that process is reduced to seconds, allowing creators to focus more on the narrative and less on the technical hurdles of a poor recording environment." },
-      { start: 75, end: 118, text: "Take this recording for example. It was captured in a busy cafe with significant background chatter and reverb. Notice how the clarity of the consonants remains intact even as the ambient noise is completely neutralized. This is the power of neural network-based processing." },
-      { start: 118, end: 143, text: "Looking ahead, we expect these tools to become standard in every creator's toolkit, from podcasters to documentary filmmakers. The barrier to entry for high-quality audio has never been lower." }
-    ],
-    processed_at: "2026-03-27T10:00:00Z"
-  },
-  downloads: {
-    clean_audio: "#",
-    transcript_txt: "#",
-    transcript_json: "#",
-    transcript_srt: "#"
-  }
-};
+import { getSpeechResults, getUserJobs } from '../services/api';
+import { Loader2 } from 'lucide-react';
 
 const AudioEnhancerPage = () => {
   const location = useLocation();
-  const job_id = location.state?.job_id || MOCK_DATA.job_id;
+  const navigate = useNavigate();
+  const jobId = location.state?.jobId;
+
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -37,27 +21,92 @@ const AudioEnhancerPage = () => {
   const [isMuted, setIsMuted] = useState(false);
 
   useEffect(() => {
-    let interval;
-    if (isPlaying) {
-      interval = setInterval(() => {
-        setCurrentTime((prev) => {
-          if (prev >= MOCK_DATA.metadata.duration) {
-            setIsPlaying(false);
-            return MOCK_DATA.metadata.duration;
+    const fetchData = async () => {
+      try {
+        let activeJobId = jobId;
+
+        if (!activeJobId) {
+          const history = await getUserJobs();
+          const speechJobs = history.jobs?.filter(j => j.job_type === 'speech' && j.status === 'completed');
+          
+          if (speechJobs && speechJobs.length > 0) {
+            activeJobId = speechJobs[0].id;
+          } else {
+            setError('No session ID provided. Please start a new session from the Dashboard.');
+            setLoading(false);
+            return;
           }
-          return prev + 0.1;
-        });
-      }, 100);
-    }
-    return () => clearInterval(interval);
-  }, [isPlaying]);
+        }
+
+        const result = await getSpeechResults(activeJobId);
+        setData(result);
+      } catch (err) {
+        setError(err.response?.data?.error || err.message || 'Failed to load results');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [jobId]);
+
+  // Artificial interval removed since AudioPlayerCard's internal audio <timeUpdate> handles progress tracking natively!
 
   const handleSeek = (timeVal) => {
-    setCurrentTime(Math.max(0, Math.min(timeVal, MOCK_DATA.metadata.duration)));
+    if (data) {
+      setCurrentTime(Math.max(0, Math.min(timeVal, data.metadata.duration)));
+    }
   };
 
   const handleSkipBack = () => setCurrentTime(prev => Math.max(0, prev - 10));
-  const handleSkipForward = () => setCurrentTime(prev => Math.min(MOCK_DATA.metadata.duration, prev + 10));
+  const handleSkipForward = () => setCurrentTime(prev => {
+    if (!data) return prev;
+    return Math.min(data.metadata.duration, prev + 10);
+  });
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex flex-col items-center justify-center h-[60vh]">
+          <Loader2 className="w-10 h-10 text-blue-500 animate-spin mb-4" />
+          <h2 className="text-xl font-display font-medium text-slate-700">Loading Session...</h2>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="flex flex-col items-center justify-center h-[60vh] max-w-md mx-auto text-center px-4">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-6">
+            <span className="text-red-500 font-bold text-2xl">!</span>
+          </div>
+          <h2 className="text-2xl font-display font-bold text-slate-900 mb-2">Error Loading Session</h2>
+          <p className="text-slate-500 mb-8">{error}</p>
+          <button 
+            onClick={() => navigate('/dashboard')}
+            className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-full transition-all"
+          >
+            Return to Dashboard
+          </button>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Base URL from env for download link binding
+  const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+  
+  // Update downloads to contain full URLs
+  const fullUrlDownloads = {
+    clean_audio: data?.downloads?.clean_audio ? `${baseURL}${data.downloads.clean_audio}` : '#',
+    transcript_txt: data?.downloads?.transcript_txt ? `${baseURL}${data.downloads.transcript_txt}` : '#',
+    transcript_json: data?.downloads?.transcript_json ? `${baseURL}${data.downloads.transcript_json}` : '#',
+    transcript_srt: data?.downloads?.transcript_srt ? `${baseURL}${data.downloads.transcript_srt}` : '#'
+  };
+
+  const safeMetadata = data?.metadata || { filename: 'Audio Session', duration: 0, transcript: [] };
 
   return (
     <DashboardLayout>
@@ -69,7 +118,7 @@ const AudioEnhancerPage = () => {
 
         <div className="space-y-8 pb-12 mt-6 sm:mt-0">
           <AudioPlayerCard 
-            metadata={MOCK_DATA.metadata}
+            metadata={safeMetadata}
             isPlaying={isPlaying}
             setIsPlaying={setIsPlaying}
             currentTime={currentTime}
@@ -82,13 +131,13 @@ const AudioEnhancerPage = () => {
             onSeek={handleSeek}
             onSkipBack={handleSkipBack}
             onSkipForward={handleSkipForward}
-            downloadUrl={MOCK_DATA.downloads.clean_audio}
+            downloadUrl={fullUrlDownloads.clean_audio}
           />
 
           <TranscriptionSection 
-            transcript={MOCK_DATA.metadata.transcript}
+            transcript={safeMetadata.transcript || []}
             currentTime={currentTime}
-            downloads={MOCK_DATA.downloads}
+            downloads={fullUrlDownloads}
           />
         </div>
       </div>

@@ -16,6 +16,7 @@ const BottomAudioPlayer = ({
   onLyricsToggle
 }) => {
   const formatTime = (time) => {
+    if (isNaN(time) || time === null || time === undefined) return "0:00";
     const m = Math.floor(time / 60);
     const s = Math.floor(time % 60);
     return `${m}:${s.toString().padStart(2, '0')}`;
@@ -111,7 +112,7 @@ const BottomAudioPlayer = ({
             min="0"
             max={duration || 100}
             step="0.01"
-            value={currentTime}
+            value={currentTime || 0}
             onChange={(e) => onSeek(parseFloat(e.target.value))}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
           />

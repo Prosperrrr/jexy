@@ -11,8 +11,10 @@ const TranscriptionSection = ({ transcript, currentTime, downloads }) => {
   const [activeIndex, setActiveIndex] = useState(-1);
   const [isCopied, setIsCopied] = useState(false);
 
+  const segments = transcript?.segments || [];
+  
   const handleCopyText = async () => {
-    const fullText = transcript.map(t => t.text).join('\n\n');
+    const fullText = transcript?.plain || segments.map(t => t.text).join('\n\n');
     try {
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(fullText);
@@ -34,7 +36,7 @@ const TranscriptionSection = ({ transcript, currentTime, downloads }) => {
 
   // Auto-scroll only when active segment changes to prevent scroll locking
   useEffect(() => {
-    const newActiveIndex = transcript.findIndex(t => currentTime >= t.start && currentTime < t.end);
+    const newActiveIndex = segments.findIndex(t => currentTime >= t.start && currentTime < t.end);
     if (newActiveIndex !== activeIndex && newActiveIndex !== -1) {
       setActiveIndex(newActiveIndex);
       if (scrollRef.current) {
@@ -47,7 +49,7 @@ const TranscriptionSection = ({ transcript, currentTime, downloads }) => {
     } else if (newActiveIndex === -1 && activeIndex !== -1) {
       setActiveIndex(-1);
     }
-  }, [currentTime, transcript, activeIndex]);
+  }, [currentTime, segments, activeIndex]);
 
   return (
     <div>
@@ -78,7 +80,7 @@ const TranscriptionSection = ({ transcript, currentTime, downloads }) => {
         className="bg-white border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-[20px] p-6 h-[400px] overflow-y-auto"
       >
         <div className="space-y-6">
-          {transcript.map((item, idx) => {
+          {segments.map((item, idx) => {
             const isActive = currentTime >= item.start && currentTime < item.end;
             return (
               <div key={idx} className={`flex gap-4 group transcript-item-${idx} ${isActive ? 'active-transcript' : ''}`}>

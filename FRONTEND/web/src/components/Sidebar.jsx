@@ -1,12 +1,38 @@
-import React from 'react';
-import { NavLink, Link } from 'react-router-dom';
-import { LayoutDashboard, ScissorsLineDashed, SlidersHorizontal } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, ScissorsLineDashed, SlidersHorizontal, LogOut } from 'lucide-react';
+import { auth } from '../lib/firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 
 const Sidebar = () => {
-  // Use mock user for now per instructions
-  const user = {
-    displayName: 'Sobamiwa Prosper',
-    photoURL: 'https://ui-avatars.com/api/?name=Sobamiwa+Prosper&background=random',
+  const navigate = useNavigate();
+  const [user, setUser] = useState({
+    displayName: 'User',
+    photoURL: null,
+  });
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        setUser({
+          displayName: currentUser.displayName || currentUser.email?.split('@')[0] || 'User',
+          photoURL: currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.displayName || currentUser.email || 'User')}&background=random`,
+        });
+      } else {
+        // Only redirect if they aren't on auth pages if you prefer, but usually layout protections handle this.
+        // Leaving it here as an extra safety measure.
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   const navItems = [
@@ -54,19 +80,28 @@ const Sidebar = () => {
 
         {/* User Profile */}
         <div className="p-4 border-t border-slate-200">
-          <div className="flex items-center space-x-3 px-2 py-2">
-            {user.photoURL ? (
-              <img src={user.photoURL} alt="Profile" className="w-9 h-9 rounded-full object-cover" />
-            ) : (
-              <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center">
-                <span className="text-slate-500 font-semibold text-sm">
-                  {user.displayName?.charAt(0) || 'U'}
-                </span>
-              </div>
-            )}
-            <span className="font-display font-semibold text-sm text-slate-900 truncate">
-              {user.displayName || 'User'}
-            </span>
+          <div className="flex items-center justify-between px-2 py-2">
+            <div className="flex items-center space-x-3 truncate">
+              {user.photoURL ? (
+                <img src={user.photoURL} alt="Profile" className="w-9 h-9 rounded-full object-cover shrink-0" />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
+                  <span className="text-slate-500 font-semibold text-sm">
+                    {user.displayName?.charAt(0) || 'U'}
+                  </span>
+                </div>
+              )}
+              <span className="font-display font-semibold text-sm text-slate-900 truncate max-w-[100px]">
+                {user.displayName || 'User'}
+              </span>
+            </div>
+            <button 
+              onClick={handleLogout} 
+              className="text-slate-400 hover:text-red-500 transition-colors p-1"
+              title="Log out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </div>
@@ -81,16 +116,25 @@ const Sidebar = () => {
           </div>
           <span className="font-display font-bold text-xl text-slate-900 tracking-tight">jexy</span>
         </Link>
-        <div className="flex items-center">
-          {user.photoURL ? (
-            <img src={user.photoURL} alt="Profile" className="w-8 h-8 rounded-full object-cover ring-2 ring-slate-100" />
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center ring-2 ring-slate-100">
-              <span className="text-slate-500 font-semibold text-sm">
-                {user.displayName?.charAt(0) || 'U'}
-              </span>
-            </div>
-          )}
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center">
+            {user.photoURL ? (
+              <img src={user.photoURL} alt="Profile" className="w-8 h-8 rounded-full object-cover ring-2 ring-slate-100" />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center ring-2 ring-slate-100">
+                <span className="text-slate-500 font-semibold text-sm">
+                  {user.displayName?.charAt(0) || 'U'}
+                </span>
+              </div>
+            )}
+          </div>
+          <button 
+            onClick={handleLogout} 
+            className="text-slate-400 hover:text-red-500 transition-colors bg-slate-50 p-1.5 rounded-md"
+            title="Log out"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </div>
 

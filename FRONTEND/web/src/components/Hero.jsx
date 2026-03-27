@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import FadeIn from './FadeIn';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';

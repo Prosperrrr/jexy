@@ -466,8 +466,15 @@ def download_speech_audio(job_id, filename):
     
     if not os.path.exists(file_path):
         return jsonify({"error": "File not found"}), 404
+        
+    metadata = speech_processor.get_metadata(job_id)
+    download_name = filename
+    if metadata and 'filename' in metadata:
+        download_name = f"Enhanced_{metadata['filename']}"
+        if not download_name.endswith('.wav'):
+            download_name += '.wav'
     
-    return send_file(file_path, as_attachment=True)
+    return send_file(file_path, as_attachment=True, download_name=download_name)
 
 @app.route('/api/download/transcript/<job_id>/<format>', methods=['GET'])
 def download_transcript(job_id, format):
@@ -525,6 +532,32 @@ def get_user_jobs():
     try:
         result = supabase.table('jobs').select('*').eq('user_id', user_id).order('created_at', desc=True).execute()
         return jsonify({"jobs": result.data}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+import shutil
+
+@app.route('/api/jobs/<job_id>', methods=['DELETE'])
+def delete_job(job_id):
+    """Delete a job from Supabase and delete its files from the processed directory"""
+    user_id = request.headers.get('X-User-ID')
+    if not user_id:
+        return jsonify({"error": "X-User-ID header is required"}), 401
+    try:
+        # Verify job belongs to user
+        result = supabase.table('jobs').select('user_id').eq('id', job_id).execute()
+        if not result.data or result.data[0]['user_id'] != user_id:
+            return jsonify({"error": "Job not found or unauthorized"}), 404
+            
+        # Delete from Supabase
+        supabase.table('jobs').delete().eq('id', job_id).execute()
+        
+        # Delete from filesystem
+        job_dir = os.path.join('processed', job_id)
+        if os.path.exists(job_dir):
+            shutil.rmtree(job_dir)
+            
+        return jsonify({"success": True}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

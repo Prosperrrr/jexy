@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Play, Pause, RotateCcw, RotateCw, Volume2, VolumeX } from 'lucide-react';
 
 const formatTime = (seconds) => {
+  if (isNaN(seconds) || seconds === null || seconds === undefined) return "00:00";
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
   return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
@@ -20,8 +21,66 @@ const AudioPlayerCard = ({
   onSkipForward,
   downloadUrl
 }) => {
+  const audioRef = useRef(null);
+
+  // Sync isPlaying state to actual audio element
+  useEffect(() => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.play().catch(err => {
+          console.error("Audio playback failed:", err);
+          setIsPlaying(false);
+        });
+      } else {
+        audioRef.current.pause();
+      }
+    }
+  }, [isPlaying, setIsPlaying]);
+
+  // Sync volume state
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume / 100;
+    }
+  }, [volume]);
+
+  // Sync seek requests (only when onSeek is triggered by user)
+  const handleSeekInternal = (timeVals) => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = timeVals;
+    }
+    onSeek(timeVals);
+  };
+
+  const handleSkipBackInternal = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = Math.max(0, audioRef.current.currentTime - 10);
+      onSkipBack(); // Keep parent in sync
+    }
+  };
+
+  const handleSkipForwardInternal = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = Math.min(metadata?.duration || 100, audioRef.current.currentTime + 10);
+      onSkipForward(); // Keep parent in sync
+    }
+  };
+
   return (
     <div className="bg-white rounded-[24px] border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 sm:p-6 md:p-8 flex flex-col md:flex-row gap-6 md:gap-8 items-center md:items-stretch">
+      
+      {/* Hidden Audio Element */}
+      <audio 
+        ref={audioRef}
+        src={downloadUrl}
+        onEnded={() => setIsPlaying(false)}
+        onTimeUpdate={() => {
+          if (audioRef.current && isPlaying) {
+            onSeek(audioRef.current.currentTime);
+          }
+        }}
+        crossOrigin="anonymous"
+      />
       {/* Waveform graphic */}
       <div className="w-full sm:w-40 md:w-48 h-[140px] sm:h-40 md:h-48 bg-[#F8FAFC] rounded-[20px] flex items-center justify-center shrink-0">
         <div className="flex items-center gap-1.5 h-16">
@@ -29,7 +88,7 @@ const AudioPlayerCard = ({
             <div 
               key={i} 
               className={`w-1.5 bg-[#3B82F6] rounded-full transition-all duration-300 ${isPlaying ? 'animate-pulse' : ''}`}
-              style={{ height: isPlaying ? `${Math.random() * 60 + 20}%` : `${height}%` }}
+              style={{ height: isPlaying ? `${((i * 17) % 60) + 20}%` : `${height}%` }}
             />
           ))}
         </div>
@@ -37,7 +96,7 @@ const AudioPlayerCard = ({
 
       <div className="flex-1 flex flex-col justify-center w-full min-w-0 py-1 md:py-2">
         <div className="mb-6 md:mb-8 text-center md:text-left pl-0 md:pl-1">
-          <h2 className="text-[20px] md:text-[22px] font-display font-bold text-slate-800 truncate tracking-tight">Enhanced {metadata.filename}</h2>
+          <h2 className="text-[20px] md:text-[22px] font-display font-bold text-slate-800 truncate tracking-tight">Enhanced {metadata?.filename || 'Audio Session'}</h2>
           <p className="text-[14px] md:text-[15px] font-medium text-slate-400 mt-1 md:mt-1.5">Processed with DeepFilterNet</p>
         </div>
 
@@ -49,18 +108,18 @@ const AudioPlayerCard = ({
               <input 
                 type="range" 
                 min="0" 
-                max={metadata.duration} 
+                max={metadata?.duration || 100} 
                 step="0.1"
-                value={currentTime}
-                onChange={(e) => onSeek(parseFloat(e.target.value))}
+                value={currentTime || 0}
+                onChange={(e) => handleSeekInternal(parseFloat(e.target.value))}
                 className="w-full h-[6px] bg-[#E2E8F0] rounded-lg appearance-none cursor-pointer accent-[#2563EB] focus:outline-none focus:ring-2 focus:ring-blue-500/30 z-10"
               />
               <div 
                 className="absolute left-0 top-1/2 -translate-y-1/2 h-[6px] bg-[#3B82F6] rounded-l-lg pointer-events-none" 
-                style={{ width: `${(currentTime / metadata.duration) * 100}%` }}
+                style={{ width: `${((currentTime || 0) / (metadata?.duration || 1)) * 100}%` }}
               ></div>
             </div>
-            <span className="text-[12px] md:text-[13px] font-medium text-[#94A3B8] w-8 md:w-10 text-right shrink-0 font-display tracking-wide">{formatTime(metadata.duration)}</span>
+            <span className="text-[12px] md:text-[13px] font-medium text-[#94A3B8] w-8 md:w-10 text-right shrink-0 font-display tracking-wide">{formatTime(metadata?.duration)}</span>
           </div>
 
           {/* Action Row */}
@@ -68,7 +127,7 @@ const AudioPlayerCard = ({
             
             {/* Play Controls */}
             <div className="flex items-center justify-center sm:justify-start gap-5 md:gap-6 w-full sm:w-auto md:pl-5">
-              <button onClick={onSkipBack} title="Skip Back 10s" className="relative group outline-none text-slate-400 hover:text-slate-600 transition-colors flex items-center justify-center w-8 h-8 shrink-0">
+              <button onClick={handleSkipBackInternal} title="Skip Back 10s" className="relative group outline-none text-slate-400 hover:text-slate-600 transition-colors flex items-center justify-center w-8 h-8 shrink-0">
                 <RotateCcw strokeWidth={2.5} className="w-5 h-5 md:w-6 md:h-6" />
                 <span className="absolute text-[7px] md:text-[8px] font-bold mt-0.5 ml-[1px]">10</span>
               </button>
@@ -85,7 +144,7 @@ const AudioPlayerCard = ({
                 )}
               </button>
               
-              <button onClick={onSkipForward} title="Skip Forward 10s" className="relative group outline-none text-slate-400 hover:text-slate-600 transition-colors flex items-center justify-center w-8 h-8 shrink-0">
+              <button onClick={handleSkipForwardInternal} title="Skip Forward 10s" className="relative group outline-none text-slate-400 hover:text-slate-600 transition-colors flex items-center justify-center w-8 h-8 shrink-0">
                 <RotateCw strokeWidth={2.5} className="w-5 h-5 md:w-6 md:h-6" />
                 <span className="absolute text-[7px] md:text-[8px] font-bold mt-0.5 ml-0.5">10</span>
               </button>
@@ -120,7 +179,7 @@ const AudioPlayerCard = ({
               {/* Download Button */}
               <a 
                 href={downloadUrl}
-                download={`jexy_enhanced_${metadata.filename}`}
+                download={`jexy_enhanced_${metadata?.filename || 'audio'}`}
                 title="Download Clean Audio"
                 className="w-full sm:w-auto justify-center px-6 py-2.5 md:py-3 bg-[#2563EB] hover:bg-blue-600 active:scale-95 text-white text-[14px] md:text-[15px] font-semibold rounded-[10px] flex items-center gap-2 transition-all shadow-md shadow-blue-500/20 tracking-wide focus:outline-none"
               >

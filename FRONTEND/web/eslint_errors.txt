@@ -1,0 +1,110 @@
+
+C:\Users\prosp\Documents\CODE\JEXY\FRONTEND\web\src\components\FadeIn.jsx
+  1:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\prosp\Documents\CODE\JEXY\FRONTEND\web\src\components\FeatureSections.jsx
+  166:101  error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  164 |                       {/* Using standard HTML generation logic instead of writing out 50 divs manually to save space, but keeping the visual intact */}
+  165 |                       {Array.from({ length: 28 }).map((_, i) => (
+> 166 |                         <div key={i} className={`w-1 bg-slate-400`} style={{ height: `${Math.max(2, Math.random() * 16 * 4)}px` }}></div>
+      |                                                                                                     ^^^^^^^^^^^^^ Cannot call impure function
+  167 |                       ))}
+  168 |                     </div>
+  169 |                   </div>                                                      react-hooks/purity
+  177:133  error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  175 |                     <div className="h-16 w-full bg-slate-200 dark:bg-slate-900 rounded-md overflow-hidden flex items-end px-1 gap-0.5">
+  176 |                       {Array.from({ length: 28 }).map((_, i) => (
+> 177 |                         <div key={i} className={`w-1 bg-slate-800 dark:bg-slate-200`} style={{ height: `${i % 4 !== 0 ? Math.max(1, Math.random() * 15 * 4) : 2}px` }}></div>
+      |                                                                                                                                     ^^^^^^^^^^^^^ Cannot call impure function
+  178 |                       ))}
+  179 |                     </div>
+  180 |                   </div>  react-hooks/purity
+
+C:\Users\prosp\Documents\CODE\JEXY\FRONTEND\web\src\components\Hero.jsx
+  4:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\prosp\Documents\CODE\JEXY\FRONTEND\web\src\components\audio-enhancer\AudioPlayerCard.jsx
+  91:47  error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  89 |               key={i} 
+  90 |               className={`w-1.5 bg-[#3B82F6] rounded-full transition-all duration-300 ${isPlaying ? 'animate-pulse' : ''}`}
+> 91 |               style={{ height: isPlaying ? `${Math.random() * 60 + 20}%` : `${height}%` }}
+     |                                               ^^^^^^^^^^^^^ Cannot call impure function
+  92 |             />
+  93 |           ))}
+  94 |         </div>  react-hooks/purity
+
+C:\Users\prosp\Documents\CODE\JEXY\FRONTEND\web\src\components\audio-enhancer\TranscriptionSection.jsx
+  14:9  warning  The 'segments' logical expression could make the dependencies of useEffect Hook (at line 52) change on every render. To fix this, wrap the initialization of 'segments' in its own useMemo() Hook                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               react-hooks/exhaustive-deps
+  41:7  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  39 |     const newActiveIndex = segments.findIndex(t => currentTime >= t.start && currentTime < t.end);
+  40 |     if (newActiveIndex !== activeIndex && newActiveIndex !== -1) {
+> 41 |       setActiveIndex(newActiveIndex);
+     |       ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  42 |       if (scrollRef.current) {
+  43 |         const activeEl = scrollRef.current.querySelector(`.transcript-item-${newActiveIndex}`);
+  44 |         if (activeEl) {  react-hooks/set-state-in-effect
+
+C:\Users\prosp\Documents\CODE\JEXY\FRONTEND\web\src\components\dashboard\SessionHistory.jsx
+  44:16  error  'err' is defined but never used  no-unused-vars
+
+C:\Users\prosp\Documents\CODE\JEXY\FRONTEND\web\src\components\track-separation\LyricsView.jsx
+  1:17  error  'useEffect' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\prosp\Documents\CODE\JEXY\FRONTEND\web\src\pages\AuthPage.jsx
+  3:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\prosp\Documents\CODE\JEXY\FRONTEND\web\src\pages\DashboardPage.jsx
+   51:19  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  49 |     try {
+  50 |       const stored = localStorage.getItem('jexy_completed_job');
+> 51 |       if (stored) setPersistedJob(JSON.parse(stored));
+     |                   ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  52 |     } catch (e) { }
+  53 |   }, []);
+  54 |    react-hooks/set-state-in-effect
+   52:14  error  'e' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               no-unused-vars
+   52:17  error  Empty block statement                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       no-empty
+  190:7   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  188 |       }
+  189 |     } else {
+> 190 |       setCountdown(5); // Reset countdown when moving away from Complete
+      |       ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  191 |     }
+  192 |   }, [currentState, countdown, navigate, jobId, file, pipelineType]);
+  193 |  react-hooks/set-state-in-effect
+
+C:\Users\prosp\Documents\CODE\JEXY\FRONTEND\web\vite.config.js
+  9:25  error  '__dirname' is not defined  no-undef
+
+✖ 15 problems (14 errors, 1 warning)
+
