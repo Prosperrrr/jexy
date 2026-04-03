@@ -27,7 +27,7 @@ const TrackSeparationPage = () => {
   const [isLyricsView, setIsLyricsView] = useState(false);
   const [globalVolume, setGlobalVolume] = useState(80);
   const [isGlobalMuted, setIsGlobalMuted] = useState(false);
-  
+
   const [stemStates, setStemStates] = useState({});
   const [stemUrls, setStemUrls] = useState({});
   const audioRefs = React.useRef({});
@@ -40,7 +40,7 @@ const TrackSeparationPage = () => {
         if (!activeJobId) {
           const history = await getUserJobs();
           const musicJobs = history.jobs?.filter(j => j.job_type === 'music' && j.status === 'completed');
-          
+
           if (musicJobs && musicJobs.length > 0) {
             activeJobId = musicJobs[0].id;
           } else {
@@ -51,8 +51,17 @@ const TrackSeparationPage = () => {
         }
 
         const result = await getMusicResults(activeJobId);
+
+        // Fix duration string (e.g. "3:45" to 225)
+        if (result?.metadata?.duration && typeof result.metadata.duration === 'string') {
+          const parts = result.metadata.duration.split(':');
+          if (parts.length === 2) {
+            result.metadata.duration = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+          }
+        }
+
         setData(result);
-        
+
         const initialStems = (result.active_stems || []).reduce((acc, stem) => {
           acc[stem] = { muted: false, soloed: false, volume: 80 };
           return acc;
@@ -69,42 +78,38 @@ const TrackSeparationPage = () => {
     fetchData();
   }, [jobId]);
 
-  // Clean up blob URLs upon component destruction
-  useEffect(() => {
-    return () => {
-      Object.values(stemUrls).forEach(url => {
-        if (url) URL.revokeObjectURL(url);
-      });
-    };
-  }, [stemUrls]);
-
   // Fetch Blobs sequentially to avoid ngrok connection limits freezing the UI
   useEffect(() => {
     if (!data?.active_stems) return;
 
     let isMounted = true;
+    const localUrls = [];
+
     const loadBlobs = async () => {
       const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-      const urlsObj = {};
 
       for (const stem of data.active_stems) {
         try {
           const path = data.stems?.[stem]?.url || data.downloads?.[stem];
           if (!path) continue;
-          
+
           const fullUrl = path.startsWith('http') ? path : `${baseURL}${path}`;
           const res = await fetch(fullUrl, { headers: { 'ngrok-skip-browser-warning': 'true' } });
-          
+
           if (!res.ok) throw new Error("Fetch failed");
           const blob = await res.blob();
-          urlsObj[stem] = URL.createObjectURL(blob);
-          
+          const objUrl = URL.createObjectURL(blob);
+          localUrls.push(objUrl);
+
           // Update progressively so stems appear as they finish downloading
           if (isMounted) {
-            setStemUrls(prev => ({ ...prev, [stem]: urlsObj[stem] }));
+            setStemUrls(prev => ({ ...prev, [stem]: objUrl }));
           }
-        } catch(e) {
+        } catch (e) {
           console.error("Stem load error", stem, e);
+          if (isMounted) {
+            setError("Audio files are no longer on the server (they expire temporarily). Please upload this track again.");
+          }
         }
       }
     };
@@ -113,41 +118,54 @@ const TrackSeparationPage = () => {
 
     return () => {
       isMounted = false;
+      localUrls.forEach(url => URL.revokeObjectURL(url));
     };
   }, [data]);
 
-  // Handle Play/Pause
-  useEffect(() => {
+  const togglePlay = () => {
+    const nextState = !isPlaying;
+    setIsPlaying(nextState);
+
+    // Play immediately to capture the user gesture
     Object.keys(stemUrls).forEach(stem => {
       const audio = audioRefs.current[stem];
       if (audio) {
-        if (isPlaying) audio.play().catch(e => console.error("Playback error:", e));
-        else audio.pause();
+        if (nextState) {
+          if (Math.abs(audio.currentTime - currentTime) > 0.5) {
+            audio.currentTime = currentTime;
+          }
+          audio.play().catch(e => console.error("Play error:", e));
+        } else {
+          audio.pause();
+        }
       }
     });
+  };
 
+  // Keep interval checking separate and robust
+  useEffect(() => {
     let interval;
     if (isPlaying && data) {
       interval = setInterval(() => {
         const firstStem = data.active_stems[0];
         const primaryAudio = audioRefs.current[firstStem];
-        
-        if (primaryAudio) {
-           setCurrentTime(primaryAudio.currentTime);
-           if (primaryAudio.ended) setIsPlaying(false);
+
+        if (primaryAudio && !primaryAudio.paused) {
+          setCurrentTime(primaryAudio.currentTime);
+          if (primaryAudio.ended) setIsPlaying(false);
         } else {
-           setCurrentTime((prev) => {
-             if (prev >= (data.metadata.duration || 100)) {
-               setIsPlaying(false);
-               return 0;
-             }
-             return prev + 0.1;
-           });
+          setCurrentTime((prev) => {
+            if (prev >= (data.metadata.duration || 100)) {
+              setIsPlaying(false);
+              return 0;
+            }
+            return prev + 0.1;
+          });
         }
       }, 100);
     }
     return () => clearInterval(interval);
-  }, [isPlaying, data, stemUrls]);
+  }, [isPlaying, data]);
 
   // Handle live Dynamic Volumes, Mutings, Soloing Overrides
   useEffect(() => {
@@ -157,13 +175,13 @@ const TrackSeparationPage = () => {
     data.active_stems.forEach(stem => {
       const audio = audioRefs.current[stem];
       if (audio) {
-         const isEffectivelyMuted = stemStates[stem].muted || (hasSolo && !stemStates[stem].soloed) || isGlobalMuted;
-         const stemVol = stemStates[stem].volume / 100;
-         const masterVol = globalVolume / 100;
-         audio.volume = isEffectivelyMuted ? 0 : (stemVol * masterVol);
+        const isEffectivelyMuted = stemStates[stem].muted || (hasSolo && !stemStates[stem].soloed) || isGlobalMuted;
+        const stemVol = stemStates[stem].volume / 100;
+        const masterVol = globalVolume / 100;
+        audio.volume = isEffectivelyMuted ? 0 : (stemVol * masterVol);
       }
     });
-  }, [stemStates, globalVolume, isGlobalMuted, data]);
+  }, [stemStates, globalVolume, isGlobalMuted, data, stemUrls]);
 
   const toggleMute = (stem) => {
     setStemStates(prev => ({
@@ -198,7 +216,7 @@ const TrackSeparationPage = () => {
       const clamped = Math.max(0, timeVal);
       setCurrentTime(clamped);
       Object.values(audioRefs.current).forEach(audio => {
-         if (audio) audio.currentTime = clamped;
+        if (audio) audio.currentTime = clamped;
       });
     }
   };
@@ -241,7 +259,7 @@ const TrackSeparationPage = () => {
           </div>
           <h2 className="text-2xl font-display font-bold text-slate-900 mb-2">Error Loading Session</h2>
           <p className="text-slate-500 mb-8">{error}</p>
-          <button 
+          <button
             onClick={() => navigate('/dashboard')}
             className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-full transition-all"
           >
@@ -258,14 +276,14 @@ const TrackSeparationPage = () => {
   return (
     <DashboardLayout>
       <div className="flex flex-col h-full relative" style={{ paddingBottom: '160px' }}>
-        <Header 
-          filename={data.metadata.filename} 
-          bpm={data.metadata.bpm} 
+        <Header
+          filename={data.metadata.filename}
+          bpm={data.metadata.bpm}
           onExport={handleExport}
         />
-        
+
         {isLyricsView ? (
-          <LyricsView lyrics={data.metadata.lyrics || []} currentTime={currentTime} />
+          <LyricsView lyrics={data.metadata.lyrics?.timestamped || []} currentTime={currentTime} />
         ) : (
           <div className="flex-1 overflow-x-hidden overflow-y-auto w-full relative pb-48">
             <div className="relative w-full px-4 sm:px-8 shrink-0">
@@ -276,26 +294,26 @@ const TrackSeparationPage = () => {
                   <TimelineRuler duration={data.metadata.duration} />
                 </div>
               </div>
-              
+
               {/* Tracks Stack */}
               <div className="flex flex-col relative z-10 -mt-2 pb-10">
                 {data.active_stems.map((stem) => {
                   const hasSolo = Object.values(stemStates).some(s => s?.soloed);
                   const isEffectivelyMuted = stemStates[stem]?.muted || (hasSolo && !stemStates[stem]?.soloed);
-                  
+
                   // Setup track rendering & injection of physical audio tags attached to ref loop
                   const audioUrl = stemUrls[stem];
 
                   return (
                     <React.Fragment key={stem}>
                       {audioUrl && (
-                        <audio 
-                           ref={el => audioRefs.current[stem] = el}
-                           src={audioUrl}
-                           preload="auto"
+                        <audio
+                          ref={el => audioRefs.current[stem] = el}
+                          src={audioUrl}
+                          preload="auto"
                         />
                       )}
-                      <StemTrack 
+                      <StemTrack
                         id={stem}
                         name={formatStemName(stem)}
                         muted={isEffectivelyMuted}
@@ -315,7 +333,7 @@ const TrackSeparationPage = () => {
                 <div className="absolute top-[44px] bottom-[40px] left-0 right-0 pointer-events-none z-30 flex px-4 sm:px-8">
                   <div className="hidden sm:block w-64 shrink-0"></div>
                   <div className="flex-1 relative">
-                    <div 
+                    <div
                       className="absolute top-0 bottom-0 w-[2px] bg-blue-500 shadow-[0_0_15px_rgba(37,99,235,0.8)] transition-all duration-75 ease-linear"
                       style={{ left: `calc(${(currentTime / data.metadata.duration) * 100}% - 1px)` }}
                     >
@@ -334,7 +352,7 @@ const TrackSeparationPage = () => {
         duration={data.metadata.duration}
         volume={isGlobalMuted ? 0 : globalVolume}
         isLyricsView={isLyricsView}
-        onPlayPause={() => setIsPlaying(!isPlaying)}
+        onPlayPause={togglePlay}
         onSeek={handleSeek}
         onSkipBack={handleSkipBack}
         onSkipForward={handleSkipForward}

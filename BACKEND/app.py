@@ -41,6 +41,9 @@ SUPABASE_URL = os.environ.get('SUPABASE_URL')
 SUPABASE_SERVICE_KEY = os.environ.get('SUPABASE_SERVICE_KEY')
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROCESSED_DIR = os.path.join(BASE_DIR, 'processed')
+
 # Initialize models
 # classifier = AudioClassifier()  # Old classifier this is kept for documentation/backup
 yamnet_classifier = YAMNetClassifier()  #Google YAMNet classifier    
@@ -382,7 +385,7 @@ def get_music_results(job_id):
 @app.route('/api/download/<job_id>/<stem_file>', methods=['GET'])
 def download_stem(job_id, stem_file):
     """Download individual stem file"""
-    stem_path = os.path.join('processed', job_id, 'stems', stem_file)
+    stem_path = os.path.join(PROCESSED_DIR, job_id, 'stems', stem_file)
     
     if not os.path.exists(stem_path):
         return jsonify({"error": "File not found"}), 404
@@ -462,7 +465,7 @@ def get_speech_results(job_id):
 @app.route('/api/download/speech/<job_id>/<filename>', methods=['GET'])
 def download_speech_audio(job_id, filename):
     """Download processed speech audio"""
-    file_path = os.path.join('processed', job_id, filename)
+    file_path = os.path.join(PROCESSED_DIR, job_id, filename)
     
     if not os.path.exists(file_path):
         return jsonify({"error": "File not found"}), 404
@@ -553,7 +556,7 @@ def delete_job(job_id):
         supabase.table('jobs').delete().eq('id', job_id).execute()
         
         # Delete from filesystem
-        job_dir = os.path.join('processed', job_id)
+        job_dir = os.path.join(PROCESSED_DIR, job_id)
         if os.path.exists(job_dir):
             shutil.rmtree(job_dir)
             

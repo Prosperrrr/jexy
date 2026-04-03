@@ -14,7 +14,7 @@ const LyricsView = ({ lyrics, currentTime }) => {
   // Find index of currently active line
   let activeIndex = -1;
   for (let i = 0; i < lyrics.length; i++) {
-    if (currentTime >= lyrics[i].time && (!lyrics[i+1] || currentTime < lyrics[i+1].time)) {
+    if (currentTime >= lyrics[i].start && (!lyrics[i+1] || currentTime < lyrics[i+1].start)) {
       activeIndex = i;
       break;
     }

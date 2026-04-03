@@ -27,7 +27,8 @@ class MusicProcessor:
         self.whisper_model = whisper.load_model("base")  # Use base for speed
         
         self.sample_rate = 44100
-        self.processed_dir = "processed"
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.processed_dir = os.path.join(base_dir, "processed")
         os.makedirs(self.processed_dir, exist_ok=True)
         
         # Progress tracking
