@@ -54,14 +54,13 @@ const AudioEnhancerPage = () => {
 
   const handleSeek = (timeVal) => {
     if (data) {
-      setCurrentTime(Math.max(0, Math.min(timeVal, data.metadata.duration)));
+      setCurrentTime(Math.max(0, timeVal));
     }
   };
 
   const handleSkipBack = () => setCurrentTime(prev => Math.max(0, prev - 10));
   const handleSkipForward = () => setCurrentTime(prev => {
-    if (!data) return prev;
-    return Math.min(data.metadata.duration, prev + 10);
+    return prev + 10;
   });
 
   if (loading) {

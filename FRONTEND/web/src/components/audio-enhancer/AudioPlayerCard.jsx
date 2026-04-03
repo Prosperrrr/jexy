@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Play, Pause, RotateCcw, RotateCw, Volume2, VolumeX } from 'lucide-react';
 
 const formatTime = (seconds) => {
@@ -22,6 +22,49 @@ const AudioPlayerCard = ({
   downloadUrl
 }) => {
   const audioRef = useRef(null);
+  const [audioSrc, setAudioSrc] = useState(null);
+  const [audioDuration, setAudioDuration] = useState(metadata?.duration || 0);
+
+  useEffect(() => {
+    if (metadata?.duration) {
+      setAudioDuration(metadata.duration);
+    }
+  }, [metadata?.duration]);
+
+  // Fetch audio as a blob to bypass ngrok browser warnings with custom headers
+  useEffect(() => {
+    if (!downloadUrl || downloadUrl === '#') return;
+    
+    let objectUrl = null;
+    let isMounted = true;
+
+    const loadAudioBlob = async () => {
+      try {
+        const response = await fetch(downloadUrl, {
+          headers: {
+            'ngrok-skip-browser-warning': 'true'
+          }
+        });
+        if (!response.ok) throw new Error("Failed to load audio");
+        const blob = await response.blob();
+        if (isMounted) {
+          objectUrl = URL.createObjectURL(blob);
+          setAudioSrc(objectUrl);
+        }
+      } catch (err) {
+        console.error("Audio fetch failed:", err);
+      }
+    };
+
+    loadAudioBlob();
+
+    return () => {
+      isMounted = false;
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [downloadUrl]);
 
   // Sync isPlaying state to actual audio element
   useEffect(() => {
@@ -35,7 +78,7 @@ const AudioPlayerCard = ({
         audioRef.current.pause();
       }
     }
-  }, [isPlaying, setIsPlaying]);
+  }, [isPlaying, audioSrc]);
 
   // Sync volume state
   useEffect(() => {
@@ -61,7 +104,7 @@ const AudioPlayerCard = ({
 
   const handleSkipForwardInternal = () => {
     if (audioRef.current) {
-      audioRef.current.currentTime = Math.min(metadata?.duration || 100, audioRef.current.currentTime + 10);
+      audioRef.current.currentTime = Math.min(audioDuration || 100, audioRef.current.currentTime + 10);
       onSkipForward(); // Keep parent in sync
     }
   };
@@ -69,17 +112,20 @@ const AudioPlayerCard = ({
   return (
     <div className="bg-white rounded-[24px] border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 sm:p-6 md:p-8 flex flex-col md:flex-row gap-6 md:gap-8 items-center md:items-stretch">
       
-      {/* Hidden Audio Element */}
       <audio 
         ref={audioRef}
-        src={downloadUrl}
+        src={audioSrc || undefined}
         onEnded={() => setIsPlaying(false)}
         onTimeUpdate={() => {
-          if (audioRef.current && isPlaying) {
+          if (audioRef.current) {
             onSeek(audioRef.current.currentTime);
           }
         }}
-        crossOrigin="anonymous"
+        onLoadedMetadata={(e) => {
+          if (e.target.duration && !isNaN(e.target.duration) && e.target.duration !== Infinity) {
+            setAudioDuration(e.target.duration);
+          }
+        }}
       />
       {/* Waveform graphic */}
       <div className="w-full sm:w-40 md:w-48 h-[140px] sm:h-40 md:h-48 bg-[#F8FAFC] rounded-[20px] flex items-center justify-center shrink-0">
@@ -108,7 +154,7 @@ const AudioPlayerCard = ({
               <input 
                 type="range" 
                 min="0" 
-                max={metadata?.duration || 100} 
+                max={audioDuration || 100} 
                 step="0.1"
                 value={currentTime || 0}
                 onChange={(e) => handleSeekInternal(parseFloat(e.target.value))}
@@ -116,10 +162,10 @@ const AudioPlayerCard = ({
               />
               <div 
                 className="absolute left-0 top-1/2 -translate-y-1/2 h-[6px] bg-[#3B82F6] rounded-l-lg pointer-events-none" 
-                style={{ width: `${((currentTime || 0) / (metadata?.duration || 1)) * 100}%` }}
+                style={{ width: `${((currentTime || 0) / (audioDuration || 1)) * 100}%` }}
               ></div>
             </div>
-            <span className="text-[12px] md:text-[13px] font-medium text-[#94A3B8] w-8 md:w-10 text-right shrink-0 font-display tracking-wide">{formatTime(metadata?.duration)}</span>
+            <span className="text-[12px] md:text-[13px] font-medium text-[#94A3B8] w-8 md:w-10 text-right shrink-0 font-display tracking-wide">{formatTime(audioDuration)}</span>
           </div>
 
           {/* Action Row */}
