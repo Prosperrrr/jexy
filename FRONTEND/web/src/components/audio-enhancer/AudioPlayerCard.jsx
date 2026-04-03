@@ -128,13 +128,23 @@ const AudioPlayerCard = ({
         }}
       />
       {/* Waveform graphic */}
+      <style>{`
+        @keyframes equalize {
+          0%, 100% { transform: scaleY(0.3); }
+          50% { transform: scaleY(1); }
+        }
+      `}</style>
       <div className="w-full sm:w-40 md:w-48 h-[140px] sm:h-40 md:h-48 bg-[#F8FAFC] rounded-[20px] flex items-center justify-center shrink-0">
         <div className="flex items-center gap-1.5 h-16">
           {[40, 70, 40, 100, 60, 80, 50].map((height, i) => (
             <div 
               key={i} 
-              className={`w-1.5 bg-[#3B82F6] rounded-full transition-all duration-300 ${isPlaying ? 'animate-pulse' : ''}`}
-              style={{ height: isPlaying ? `${((i * 17) % 60) + 20}%` : `${height}%` }}
+              className="w-1.5 bg-[#3B82F6] rounded-full transition-all duration-300 origin-center"
+              style={{ 
+                height: `${height}%`,
+                animation: isPlaying ? `equalize 0.8s ease-in-out infinite` : 'none',
+                animationDelay: `${i * 0.15}s`
+              }}
             />
           ))}
         </div>

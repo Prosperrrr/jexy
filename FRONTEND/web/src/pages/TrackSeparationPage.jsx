@@ -29,6 +29,8 @@ const TrackSeparationPage = () => {
   const [isGlobalMuted, setIsGlobalMuted] = useState(false);
   
   const [stemStates, setStemStates] = useState({});
+  const [stemUrls, setStemUrls] = useState({});
+  const audioRefs = React.useRef({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -51,11 +53,12 @@ const TrackSeparationPage = () => {
         const result = await getMusicResults(activeJobId);
         setData(result);
         
-        const initialStems = result.active_stems.reduce((acc, stem) => {
+        const initialStems = (result.active_stems || []).reduce((acc, stem) => {
           acc[stem] = { muted: false, soloed: false, volume: 80 };
           return acc;
         }, {});
         setStemStates(initialStems);
+
       } catch (err) {
         setError(err.response?.data?.error || err.message || 'Failed to load results');
       } finally {
@@ -66,21 +69,101 @@ const TrackSeparationPage = () => {
     fetchData();
   }, [jobId]);
 
+  // Clean up blob URLs upon component destruction
   useEffect(() => {
+    return () => {
+      Object.values(stemUrls).forEach(url => {
+        if (url) URL.revokeObjectURL(url);
+      });
+    };
+  }, [stemUrls]);
+
+  // Fetch Blobs sequentially to avoid ngrok connection limits freezing the UI
+  useEffect(() => {
+    if (!data?.active_stems) return;
+
+    let isMounted = true;
+    const loadBlobs = async () => {
+      const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+      const urlsObj = {};
+
+      for (const stem of data.active_stems) {
+        try {
+          const path = data.stems?.[stem]?.url || data.downloads?.[stem];
+          if (!path) continue;
+          
+          const fullUrl = path.startsWith('http') ? path : `${baseURL}${path}`;
+          const res = await fetch(fullUrl, { headers: { 'ngrok-skip-browser-warning': 'true' } });
+          
+          if (!res.ok) throw new Error("Fetch failed");
+          const blob = await res.blob();
+          urlsObj[stem] = URL.createObjectURL(blob);
+          
+          // Update progressively so stems appear as they finish downloading
+          if (isMounted) {
+            setStemUrls(prev => ({ ...prev, [stem]: urlsObj[stem] }));
+          }
+        } catch(e) {
+          console.error("Stem load error", stem, e);
+        }
+      }
+    };
+
+    loadBlobs();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [data]);
+
+  // Handle Play/Pause
+  useEffect(() => {
+    Object.keys(stemUrls).forEach(stem => {
+      const audio = audioRefs.current[stem];
+      if (audio) {
+        if (isPlaying) audio.play().catch(e => console.error("Playback error:", e));
+        else audio.pause();
+      }
+    });
+
     let interval;
     if (isPlaying && data) {
       interval = setInterval(() => {
-        setCurrentTime((prev) => {
-          if (prev >= data.metadata.duration) {
-            setIsPlaying(false);
-            return 0;
-          }
-          return prev + 0.1;
-        });
+        const firstStem = data.active_stems[0];
+        const primaryAudio = audioRefs.current[firstStem];
+        
+        if (primaryAudio) {
+           setCurrentTime(primaryAudio.currentTime);
+           if (primaryAudio.ended) setIsPlaying(false);
+        } else {
+           setCurrentTime((prev) => {
+             if (prev >= (data.metadata.duration || 100)) {
+               setIsPlaying(false);
+               return 0;
+             }
+             return prev + 0.1;
+           });
+        }
       }, 100);
     }
     return () => clearInterval(interval);
-  }, [isPlaying, data]);
+  }, [isPlaying, data, stemUrls]);
+
+  // Handle live Dynamic Volumes, Mutings, Soloing Overrides
+  useEffect(() => {
+    if (!data) return;
+    const hasSolo = Object.values(stemStates).some(s => s.soloed);
+
+    data.active_stems.forEach(stem => {
+      const audio = audioRefs.current[stem];
+      if (audio) {
+         const isEffectivelyMuted = stemStates[stem].muted || (hasSolo && !stemStates[stem].soloed) || isGlobalMuted;
+         const stemVol = stemStates[stem].volume / 100;
+         const masterVol = globalVolume / 100;
+         audio.volume = isEffectivelyMuted ? 0 : (stemVol * masterVol);
+      }
+    });
+  }, [stemStates, globalVolume, isGlobalMuted, data]);
 
   const toggleMute = (stem) => {
     setStemStates(prev => ({
@@ -112,15 +195,16 @@ const TrackSeparationPage = () => {
 
   const handleSeek = (timeVal) => {
     if (data) {
-      setCurrentTime(Math.max(0, Math.min(timeVal, data.metadata.duration)));
+      const clamped = Math.max(0, timeVal);
+      setCurrentTime(clamped);
+      Object.values(audioRefs.current).forEach(audio => {
+         if (audio) audio.currentTime = clamped;
+      });
     }
   };
 
-  const handleSkipBack = () => setCurrentTime(prev => Math.max(0, prev - 10));
-  const handleSkipForward = () => setCurrentTime(prev => {
-    if (!data) return prev;
-    return Math.min(data.metadata.duration, prev + 10);
-  });
+  const handleSkipBack = () => handleSeek(currentTime - 10);
+  const handleSkipForward = () => handleSeek(currentTime + 10);
 
   const handleExport = () => {
     if (!data) return;
@@ -196,24 +280,32 @@ const TrackSeparationPage = () => {
               {/* Tracks Stack */}
               <div className="flex flex-col relative z-10 -mt-2 pb-10">
                 {data.active_stems.map((stem) => {
-                  const hasSolo = Object.values(stemStates).some(s => s.soloed);
-                  const isEffectivelyMuted = stemStates[stem].muted || (hasSolo && !stemStates[stem].soloed);
+                  const hasSolo = Object.values(stemStates).some(s => s?.soloed);
+                  const isEffectivelyMuted = stemStates[stem]?.muted || (hasSolo && !stemStates[stem]?.soloed);
                   
-                  // In a real implementation with real audio, we'd pass the actual URL to an audio element.
-                  // const audioUrl = `${baseURL}${data.stems[stem].url}`;
+                  // Setup track rendering & injection of physical audio tags attached to ref loop
+                  const audioUrl = stemUrls[stem];
 
                   return (
-                    <StemTrack 
-                      key={stem}
-                      id={stem}
-                      name={formatStemName(stem)}
-                      muted={isEffectivelyMuted}
-                      soloed={stemStates[stem].soloed}
-                      volume={stemStates[stem].volume}
-                      onMuteToggle={() => toggleMute(stem)}
-                      onSoloToggle={() => toggleSolo(stem)}
-                      onVolumeChange={(e) => changeStemVolume(stem, e.target.value)}
-                    />
+                    <React.Fragment key={stem}>
+                      {audioUrl && (
+                        <audio 
+                           ref={el => audioRefs.current[stem] = el}
+                           src={audioUrl}
+                           preload="auto"
+                        />
+                      )}
+                      <StemTrack 
+                        id={stem}
+                        name={formatStemName(stem)}
+                        muted={isEffectivelyMuted}
+                        soloed={stemStates[stem]?.soloed || false}
+                        volume={stemStates[stem]?.volume ?? 80}
+                        onMuteToggle={() => toggleMute(stem)}
+                        onSoloToggle={() => toggleSolo(stem)}
+                        onVolumeChange={(e) => changeStemVolume(stem, e.target.value)}
+                      />
+                    </React.Fragment>
                   );
                 })}
               </div>

@@ -2,6 +2,14 @@ import React, { useEffect, useRef } from 'react';
 
 const LyricsView = ({ lyrics, currentTime }) => {
   const containerRef = useRef(null);
+
+  if (!Array.isArray(lyrics) || lyrics.length === 0) {
+    return (
+      <div className="flex-1 overflow-y-auto py-16 px-6 md:px-24 relative h-full flex flex-col items-center justify-center text-center">
+        <p className="text-xl md:text-2xl text-slate-300 font-display font-medium">Lyrics not available for this track.</p>
+      </div>
+    );
+  }
   
   // Find index of currently active line
   let activeIndex = -1;
