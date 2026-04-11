@@ -5,7 +5,7 @@ import torch
 import whisper
 from demucs.pretrained import get_model
 from demucs.apply import apply_model
-from demucs.audio import AudioFile, save_audio
+from demucs.audio import AudioFile
 import torchaudio
 from pathlib import Path
 import uuid
@@ -188,10 +188,10 @@ class MusicProcessor:
         stem_paths = {}
         
         for i, name in enumerate(stem_names):
-            stem_path = os.path.join(output_dir, f"{name}.wav")
+            stem_path = os.path.join(output_dir, f"{name}.mp3")
             
-            # Save audio
-            save_audio(sources[i], stem_path, self.demucs_model.samplerate)
+            # Save audio as MP3 via torchaudio (ffmpeg backend)
+            torchaudio.save(stem_path, sources[i].cpu(), self.demucs_model.samplerate, format="mp3")
             
             # Check if stem is active (has actual content vs silence)
             is_active = self._check_stem_activity(sources[i])
@@ -202,7 +202,7 @@ class MusicProcessor:
             }
             
             status = "✓ Active" if is_active else "○ Silent/Minimal"
-            print(f"  {status}: {name}.wav")
+            print(f"  {status}: {name}.mp3")
         
         return stem_paths
     

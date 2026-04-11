@@ -358,7 +358,7 @@ def get_music_results(job_id):
         is_active = stem_info.get('active', True)  # Default to True for backwards compatibility
         
         stem_data = {
-            "url": f"/api/download/{job_id}/{stem_name}.wav",
+            "url": f"/api/download/{job_id}/{stem_name}.mp3",
             "active": is_active
         }
         stems_urls[stem_name] = stem_data

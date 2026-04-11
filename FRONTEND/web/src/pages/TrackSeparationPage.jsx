@@ -52,6 +52,13 @@ const TrackSeparationPage = () => {
 
         const result = await getMusicResults(activeJobId);
 
+        // Render only stem tracks where active: true
+        if (result?.stems) {
+          result.active_stems = Object.keys(result.stems).filter(
+            stem => result.stems[stem]?.active === true
+          );
+        }
+
         // Fix duration string (e.g. "3:45" to 225)
         if (result?.metadata?.duration && typeof result.metadata.duration === 'string') {
           const parts = result.metadata.duration.split(':');
@@ -90,10 +97,9 @@ const TrackSeparationPage = () => {
 
       for (const stem of data.active_stems) {
         try {
-          const path = data.stems?.[stem]?.url || data.downloads?.[stem];
-          if (!path) continue;
+          const stemPath = `/api/download/${data.job_id}/${stem}.wav`;
+          const fullUrl = `${baseURL}${stemPath}`;
 
-          const fullUrl = path.startsWith('http') ? path : `${baseURL}${path}`;
           const res = await fetch(fullUrl, { headers: { 'ngrok-skip-browser-warning': 'true' } });
 
           if (!res.ok) throw new Error("Fetch failed");
