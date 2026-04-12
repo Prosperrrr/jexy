@@ -2,7 +2,7 @@ import React from 'react';
 import { ArrowLeft, Share2, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const Header = ({ filename, bpm, onExport }) => {
+const Header = ({ filename, bpm, onExport, isExporting }) => {
   const navigate = useNavigate();
 
   return (
@@ -35,11 +35,16 @@ const Header = ({ filename, bpm, onExport }) => {
         </button>
         <button 
           onClick={onExport}
-          title="Export Stems"
-          className="flex items-center space-x-2 bg-slate-900 hover:bg-slate-800 text-white font-bold px-6 py-2.5 rounded-full transition-all shadow-lg shadow-slate-900/20 hover:shadow-xl hover:-translate-y-0.5 active:scale-95 outline-none"
+          disabled={isExporting}
+          title="Download Mix"
+          className={`flex items-center space-x-2 font-bold px-6 py-2.5 rounded-full transition-all outline-none ${isExporting ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none' : 'bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/20 hover:shadow-xl hover:-translate-y-0.5 active:scale-95'}`}
         >
-          <Download className="w-4 h-4" />
-          <span className="text-sm hidden sm:inline">Export</span>
+          {isExporting ? (
+            <div className="w-4 h-4 border-2 border-slate-500 border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <Download className="w-4 h-4" />
+          )}
+          <span className="text-sm hidden sm:inline">{isExporting ? 'Mixing...' : 'Download Mix'}</span>
         </button>
       </div>
     </div>

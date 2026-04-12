@@ -6,7 +6,7 @@ import TimelineRuler from '../components/track-separation/TimelineRuler';
 import StemTrack from '../components/track-separation/StemTrack';
 import LyricsView from '../components/track-separation/LyricsView';
 import BottomAudioPlayer from '../components/track-separation/BottomAudioPlayer';
-import { getMusicResults, getUserJobs } from '../services/api';
+import api, { getMusicResults, getUserJobs } from '../services/api';
 import { Loader2 } from 'lucide-react';
 
 
@@ -32,6 +32,7 @@ const TrackSeparationPage = () => {
   const [stemStates, setStemStates] = useState({});
   const [stemUrls, setStemUrls] = useState({});
   const [stemsReady, setStemsReady] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const audioRefs = React.useRef({});
 
   useEffect(() => {
@@ -239,19 +240,34 @@ const TrackSeparationPage = () => {
   const handleSkipBack = () => handleSeek(currentTime - 10);
   const handleSkipForward = () => handleSeek(currentTime + 10);
 
-  const handleExport = () => {
-    if (!data) return;
+  const handleExport = async () => {
+    if (!data || isExporting) return;
     const activeStemNames = Object.keys(stemStates).filter(stem => !stemStates[stem].muted);
-    const content = `Jexy Export\n\nJob ID: ${data.job_id}\nFilename: ${data.metadata.filename}\nActive Stems: ${activeStemNames.join(', ')}`;
-    const blob = new Blob([content], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `jexy_export_${data.metadata.filename.replace(/\s+/g, '_')}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    
+    if (activeStemNames.length === 0) return;
+    
+    setIsExporting(true);
+    try {
+      const response = await api.post(`/api/mix/${data.job_id}`, {
+        stems: activeStemNames
+      }, {
+        responseType: 'blob'
+      });
+      
+      const blob = new Blob([response.data], { type: 'audio/mpeg' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `jexy_mix_${data.metadata.filename.replace(/\s+/g, '_')}.mp3`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Export mix failed:", err);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   if (loading) {
@@ -295,6 +311,7 @@ const TrackSeparationPage = () => {
           filename={data.metadata.filename}
           bpm={data.metadata.bpm}
           onExport={handleExport}
+          isExporting={isExporting}
         />
 
         {/* Global hidden audio elements to persist playback across views (Fixes Bug 2 & 3) */}
