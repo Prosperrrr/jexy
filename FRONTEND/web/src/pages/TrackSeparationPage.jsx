@@ -97,7 +97,7 @@ const TrackSeparationPage = () => {
 
       for (const stem of data.active_stems) {
         try {
-          const stemPath = `/api/download/${data.job_id}/${stem}.wav`;
+          const stemPath = data.stems[stem]?.url;
           const fullUrl = `${baseURL}${stemPath}`;
 
           const res = await fetch(fullUrl, { headers: { 'ngrok-skip-browser-warning': 'true' } });
