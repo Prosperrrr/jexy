@@ -9,6 +9,7 @@ import BottomAudioPlayer from '../components/track-separation/BottomAudioPlayer'
 import { getMusicResults, getUserJobs } from '../services/api';
 import { Loader2 } from 'lucide-react';
 
+
 const formatStemName = (name) => {
   return name.charAt(0).toUpperCase() + name.slice(1);
 };
@@ -30,6 +31,7 @@ const TrackSeparationPage = () => {
 
   const [stemStates, setStemStates] = useState({});
   const [stemUrls, setStemUrls] = useState({});
+  const [stemsReady, setStemsReady] = useState(false);
   const audioRefs = React.useRef({});
 
   useEffect(() => {
@@ -118,6 +120,7 @@ const TrackSeparationPage = () => {
           }
         }
       }
+      if (isMounted) setStemsReady(true);
     };
 
     loadBlobs();
@@ -140,7 +143,13 @@ const TrackSeparationPage = () => {
           if (Math.abs(audio.currentTime - currentTime) > 0.5) {
             audio.currentTime = currentTime;
           }
-          audio.play().catch(e => console.error("Play error:", e));
+          if (audio.readyState >= 2) {
+            audio.play().catch(e => console.error("Play error:", e));
+          } else {
+            audio.addEventListener('canplay', () => {
+              audio.play().catch(e => console.error("Play error:", e));
+            }, { once: true });
+          }
         } else {
           audio.pause();
         }
@@ -288,12 +297,29 @@ const TrackSeparationPage = () => {
           onExport={handleExport}
         />
 
+        {/* Global hidden audio elements to persist playback across views (Fixes Bug 2 & 3) */}
+        <div className="hidden">
+          {data?.active_stems?.map((stem) => {
+            const audioUrl = stemUrls[stem];
+            if (!audioUrl) return null;
+            return (
+              <audio
+                key={`audio-${stem}`}
+                ref={el => audioRefs.current[stem] = el}
+                src={audioUrl}
+                preload="auto"
+              />
+            );
+          })}
+        </div>
+
         {isLyricsView ? (
           <LyricsView lyrics={data.metadata.lyrics?.timestamped || []} currentTime={currentTime} />
         ) : (
           <div className="flex-1 overflow-x-hidden overflow-y-auto w-full relative pb-48">
-            <div className="relative w-full px-4 sm:px-8 shrink-0">
-              {/* Timeline Wrapper */}
+            {stemsReady ? (
+              <div className="relative w-full px-4 sm:px-8 shrink-0">
+                {/* Timeline Wrapper */}
               <div className="flex w-full relative pt-6 z-20">
                 <div className="hidden sm:block w-64 shrink-0"></div>
                 <div className="flex-1 relative border-b border-transparent">
@@ -307,29 +333,18 @@ const TrackSeparationPage = () => {
                   const hasSolo = Object.values(stemStates).some(s => s?.soloed);
                   const isEffectivelyMuted = stemStates[stem]?.muted || (hasSolo && !stemStates[stem]?.soloed);
 
-                  // Setup track rendering & injection of physical audio tags attached to ref loop
-                  const audioUrl = stemUrls[stem];
-
                   return (
-                    <React.Fragment key={stem}>
-                      {audioUrl && (
-                        <audio
-                          ref={el => audioRefs.current[stem] = el}
-                          src={audioUrl}
-                          preload="auto"
-                        />
-                      )}
-                      <StemTrack
-                        id={stem}
-                        name={formatStemName(stem)}
-                        muted={isEffectivelyMuted}
-                        soloed={stemStates[stem]?.soloed || false}
-                        volume={stemStates[stem]?.volume ?? 80}
-                        onMuteToggle={() => toggleMute(stem)}
-                        onSoloToggle={() => toggleSolo(stem)}
-                        onVolumeChange={(e) => changeStemVolume(stem, e.target.value)}
-                      />
-                    </React.Fragment>
+                    <StemTrack
+                      key={stem}
+                      id={stem}
+                      name={formatStemName(stem)}
+                      muted={isEffectivelyMuted}
+                      soloed={stemStates[stem]?.soloed || false}
+                      volume={stemStates[stem]?.volume ?? 80}
+                      onMuteToggle={() => toggleMute(stem)}
+                      onSoloToggle={() => toggleSolo(stem)}
+                      onVolumeChange={(e) => changeStemVolume(stem, e.target.value)}
+                    />
                   );
                 })}
               </div>
@@ -349,6 +364,14 @@ const TrackSeparationPage = () => {
                 </div>
               )}
             </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-[40vh]">
+                <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-3" />
+                <p className="text-slate-500 text-sm">
+                  Loading stems...
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -368,6 +391,7 @@ const TrackSeparationPage = () => {
         }}
         onVolumeToggle={() => setIsGlobalMuted(!isGlobalMuted)}
         onLyricsToggle={() => setIsLyricsView(!isLyricsView)}
+        stemsReady={stemsReady}
       />
     </DashboardLayout>
   );

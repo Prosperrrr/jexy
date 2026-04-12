@@ -13,7 +13,8 @@ const BottomAudioPlayer = ({
   onSkipForward,
   onVolumeChange,
   onVolumeToggle,
-  onLyricsToggle
+  onLyricsToggle,
+  stemsReady
 }) => {
   const formatTime = (time) => {
     if (isNaN(time) || time === null || time === undefined) return "0:00";
@@ -57,8 +58,9 @@ const BottomAudioPlayer = ({
 
             <button
               onClick={onPlayPause}
+              disabled={stemsReady === false}
               title={isPlaying ? "Pause" : "Play"}
-              className="w-16 h-16 shrink-0 bg-blue-600 hover:bg-blue-500 text-white rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(37,99,235,0.4)] hover:shadow-[0_0_30px_rgba(37,99,235,0.6)] transition-all active:scale-95"
+              className={`w-16 h-16 shrink-0 rounded-full flex items-center justify-center transition-all ${stemsReady === false ? 'bg-slate-300 text-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_20px_rgba(37,99,235,0.4)] hover:shadow-[0_0_30px_rgba(37,99,235,0.6)] active:scale-95'}`}
             >
               {isPlaying ? (
                 <Pause className="w-6 h-6 fill-current" />
