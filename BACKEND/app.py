@@ -392,6 +392,66 @@ def download_stem(job_id, stem_file):
     
     return send_file(stem_path, mimetype='audio/mpeg', conditional=True)
 
+@app.route('/api/mix/<job_id>', methods=['POST'])
+def mix_stems(job_id):
+    """Mix selected stems into a single downloadable MP3"""
+    data = request.get_json() or {}
+    selected_stems = data.get('stems', [])
+
+    if not selected_stems:
+        return jsonify({"error": "No stems provided"}), 400
+
+    job_stems_dir = os.path.join(PROCESSED_DIR, job_id, 'stems')
+
+    if not os.path.exists(job_stems_dir):
+        return jsonify({"error": "Job not found"}), 404
+
+    # Build ffmpeg input args for each selected stem
+    stem_files = []
+    for stem in selected_stems:
+        stem_path = os.path.join(job_stems_dir, f"{stem}.mp3")
+        if not os.path.exists(stem_path):
+            return jsonify({"error": f"Stem not found: {stem}"}), 404
+        stem_files.append(stem_path)
+
+    # Output path for mixed file
+    mix_output = os.path.join(PROCESSED_DIR, job_id, 'mix.mp3')
+
+    try:
+        import subprocess
+
+        if len(stem_files) == 1:
+            # Only one stem selected, just copy it
+            import shutil
+            shutil.copy(stem_files[0], mix_output)
+        else:
+            # Build ffmpeg command to mix multiple stems
+            cmd = ['ffmpeg', '-y']
+            for f in stem_files:
+                cmd += ['-i', f]
+            cmd += [
+                '-filter_complex',
+                f'amix=inputs={len(stem_files)}:duration=longest:normalize=0',
+                '-codec:a', 'libmp3lame',
+                '-qscale:a', '2',
+                mix_output
+            ]
+            subprocess.run(cmd, check=True, capture_output=True)
+
+        return send_file(
+            mix_output,
+            mimetype='audio/mpeg',
+            as_attachment=True,
+            download_name=f'jexy_mix_{job_id[:8]}.mp3'
+        )
+
+    except subprocess.CalledProcessError as e:
+        app.logger.error(f"ffmpeg mix failed: {e.stderr.decode()}")
+        return jsonify({"error": "Mix failed"}), 500
+    except Exception as e:
+        app.logger.error(f"Mix error: {e}")
+        return jsonify({"error": str(e)}), 500
+
 # SPEECH PROCESSING routes
 
 @app.route('/api/process/speech/<job_id>/status', methods=['GET'])
