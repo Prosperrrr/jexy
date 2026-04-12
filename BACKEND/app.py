@@ -390,7 +390,7 @@ def download_stem(job_id, stem_file):
     if not os.path.exists(stem_path):
         return jsonify({"error": "File not found"}), 404
     
-    return send_file(stem_path, as_attachment=True)
+    return send_file(stem_path, mimetype='audio/mpeg', conditional=True)
 
 # SPEECH PROCESSING routes
 
