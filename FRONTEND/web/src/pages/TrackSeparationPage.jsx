@@ -242,8 +242,15 @@ const TrackSeparationPage = () => {
 
   const handleExport = async () => {
     if (!data || isExporting) return;
-    const activeStemNames = Object.keys(stemStates).filter(stem => !stemStates[stem].muted);
-    
+
+    const hasSolo = Object.values(stemStates).some(s => s.soloed);
+    const activeStemNames = Object.keys(stemStates).filter(stem => {
+      const isMuted = stemStates[stem].muted;
+      const isSoloed = stemStates[stem].soloed;
+      const isEffectivelyMuted = isMuted || (hasSolo && !isSoloed);
+      return !isEffectivelyMuted;
+    });
+
     if (activeStemNames.length === 0) return;
     
     setIsExporting(true);
