@@ -19,12 +19,16 @@ class MusicProcessor:
     def __init__(self):
         print("Loading Demucs model (this may take a minute)...")
         self.demucs_model = get_model('htdemucs_6s')  # 6 stems model
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        #self.device = 'cpu'
+        
+        # REMOVEd the fallback logic and FORCE cuda
+        self.device = 'cuda'
+        print(f" FORCE PYTORCH TO USE: {self.device.upper()} ")
+        
         self.demucs_model.to(self.device)
         
         print("Loading Whisper model...")
-        self.whisper_model = whisper.load_model("base")  # Use base for speed
+        # explicitly pass the device to Whisper so it doesn't guess
+        self.whisper_model = whisper.load_model("base", device=self.device) 
         
         self.sample_rate = 44100
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

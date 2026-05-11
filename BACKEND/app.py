@@ -26,9 +26,9 @@ from werkzeug.utils import secure_filename
 import threading
 import uuid
 from models.classifier import AudioClassifier
-from models.yamnet_classifier import YAMNetClassifier
 from models.music_processor import MusicProcessor
 from models.speech_processor import SpeechProcessor
+from models.yamnet_classifier import YAMNetClassifier
 from utils.rate_limiter import RateLimiter
 
 from supabase import create_client, Client
@@ -45,10 +45,10 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROCESSED_DIR = os.path.join(BASE_DIR, 'processed')
 
 # Initialize models
-# classifier = AudioClassifier()  # Old classifier this is kept for documentation/backup
-yamnet_classifier = YAMNetClassifier()  #Google YAMNet classifier    
+# classifier = AudioClassifier()  # Old classifier this is kept for documentation/backup    
 music_processor = MusicProcessor()
-speech_processor = SpeechProcessor()  
+speech_processor = SpeechProcessor() 
+yamnet_classifier = YAMNetClassifier()  #Google YAMNet classifier 
 
 
 
