@@ -1,13 +1,13 @@
-#import os
-#os.environ['CUDA_VISIBLE_DEVICES'] = '0'  # Keep GPU visible for PyTorch
-#os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
-#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # Force everything CPU
-
-import os
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'  # Keep GPU visible for PyTorch
+os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+#import os
+#os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # Force everything CPU
+
+#import os
+#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
 import warnings
@@ -71,7 +71,7 @@ uploaded_files = {}  # Store file info before starting processing
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# ============= ROUTES =============
+#  ROUTES 
 
 @app.route('/')
 def home():
@@ -85,7 +85,7 @@ def home():
 def health_check():
     return jsonify({"status": "healthy"}), 200
 
-# ============= UPLOAD & AUTO-CLASSIFY =============
+# UPLOAD & AUTO-CLASSIFY 
 
 @app.route('/api/upload', methods=['POST'])
 def upload_audio():
