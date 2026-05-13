@@ -88,7 +88,7 @@ const TrackSeparationPage = () => {
     fetchData();
   }, [jobId]);
 
-  // Fetch Blobs sequentially to avoid ngrok connection limits freezing the UI
+  // Fetch Blobs in parallel to avoid freezing the UI
   useEffect(() => {
     if (!data?.active_stems) return;
 
@@ -98,30 +98,38 @@ const TrackSeparationPage = () => {
     const loadBlobs = async () => {
       const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
-      for (const stem of data.active_stems) {
-        try {
+      try {
+        const fetchPromises = data.active_stems.map(async (stem) => {
           const stemPath = data.stems[stem]?.url;
-          const fullUrl = `${baseURL}${stemPath}`;
+          // Check if it's already a full URL (e.g. Supabase), otherwise prepend baseURL
+          const fullUrl = stemPath.startsWith('http') ? stemPath : `${baseURL}${stemPath}`;
 
           const res = await fetch(fullUrl, { headers: { 'ngrok-skip-browser-warning': 'true' } });
 
-          if (!res.ok) throw new Error("Fetch failed");
+          if (!res.ok) throw new Error(`Fetch failed for ${stem}`);
           const blob = await res.blob();
           const objUrl = URL.createObjectURL(blob);
-          localUrls.push(objUrl);
+          
+          return { stem, objUrl };
+        });
 
-          // Update progressively so stems appear as they finish downloading
-          if (isMounted) {
-            setStemUrls(prev => ({ ...prev, [stem]: objUrl }));
-          }
-        } catch (e) {
-          console.error("Stem load error", stem, e);
-          if (isMounted) {
-            setError("Audio files are no longer on the server (they expire temporarily). Please upload this track again.");
-          }
+        const results = await Promise.all(fetchPromises);
+
+        if (isMounted) {
+          const newUrls = {};
+          results.forEach(({ stem, objUrl }) => {
+            newUrls[stem] = objUrl;
+            localUrls.push(objUrl);
+          });
+          setStemUrls(prev => ({ ...prev, ...newUrls }));
+          setStemsReady(true);
+        }
+      } catch (e) {
+        console.error("Stem load error", e);
+        if (isMounted) {
+          setError("Audio files are no longer on the server (they expire temporarily). Please upload this track again.");
         }
       }
-      if (isMounted) setStemsReady(true);
     };
 
     loadBlobs();
