@@ -19,7 +19,7 @@ class SpeechProcessor:
         self.df_model, self.df_state, _ = init_df()
         
         print("Loading Whisper model for speech...")
-        self.whisper_model = whisper.load_model("large-v3", device=self.device) 
+        self.whisper_model = whisper.load_model("base")  # Use base for speed
         
         self.sample_rate = 16000  # Standard for speech
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
