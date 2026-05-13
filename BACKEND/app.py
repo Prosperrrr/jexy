@@ -337,52 +337,55 @@ def get_music_status(job_id):
 
 @app.route('/api/process/music/<job_id>', methods=['GET'])
 def get_music_results(job_id):
-    """Get results of completed music processing"""
-    metadata = music_processor.get_metadata(job_id)
-    
-    if not metadata:
+    """Get results of completed music processing (reads from Supabase)"""
+    try:
+        result = supabase.table('jobs').select('*').eq('id', job_id).execute()
+    except Exception as e:
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+
+    if not result.data:
         return jsonify({"error": "Job not found"}), 404
-    
-    if metadata['status'] != 'completed':
+
+    row = result.data[0]
+
+    if row['status'] != 'completed':
         return jsonify({
             "error": "Job not completed yet",
-            "status": metadata['status']
+            "status": row['status']
         }), 400
-    
-    # Build URLs for stems (only active ones)
-    stems_urls = {}
+
+    db_metadata = row.get('metadata') or {}
+    stems_data  = row.get('stems_data') or {}
+
+    # Build stem URLs from stems_data stored in Supabase
+    stems_urls  = {}
     active_stems = []
-    
+
     for stem_name in ['vocals', 'drums', 'bass', 'guitar', 'piano', 'other']:
-        stem_info = metadata['stems'].get(stem_name, {})
-        is_active = stem_info.get('active', True)  # Default to True for backwards compatibility
-        
-        # Prefer Supabase URL; fall back to local download endpoint
+        stem_info = stems_data.get(stem_name, {})
+        is_active = stem_info.get('active', True)  # default True for backward compat
+
+        # Prefer stored Supabase URL; fall back to local download endpoint
         stem_url = stem_info.get('url') or f"/api/download/{job_id}/{stem_name}.mp3"
-        
-        stem_data = {
-            "url": stem_url,
-            "active": is_active
-        }
-        stems_urls[stem_name] = stem_data
-        
+
+        stems_urls[stem_name] = {"url": stem_url, "active": is_active}
         if is_active:
             active_stems.append(stem_name)
-    
+
     return jsonify({
         "job_id": job_id,
         "status": "completed",
         "metadata": {
-            "filename": metadata['filename'],
-            "key": metadata['key'],
-            "bpm": metadata['bpm'],
-            "duration": metadata['duration'],
-            "sample_rate": metadata['sample_rate'],
-            "lyrics": metadata['lyrics'],
-            "processed_at": metadata['processed_at']
+            "filename": row.get('filename'),
+            "key": db_metadata.get('key'),
+            "bpm": db_metadata.get('bpm'),
+            "duration": db_metadata.get('duration'),
+            "sample_rate": db_metadata.get('sample_rate'),
+            "lyrics": db_metadata.get('lyrics'),
+            "processed_at": db_metadata.get('processed_at')
         },
         "stems": stems_urls,
-        "active_stems": active_stems  # List of stems that have content
+        "active_stems": active_stems
     }), 200
 
 @app.route('/api/download/<job_id>/<stem_file>', methods=['GET'])
@@ -495,33 +498,41 @@ def get_speech_status(job_id):
 
 @app.route('/api/process/speech/<job_id>', methods=['GET'])
 def get_speech_results(job_id):
-    """Get results of completed speech processing"""
-    metadata = speech_processor.get_metadata(job_id)
-    
-    if not metadata:
+    """Get results of completed speech processing (reads from Supabase)"""
+    try:
+        result = supabase.table('jobs').select('*').eq('id', job_id).execute()
+    except Exception as e:
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+
+    if not result.data:
         return jsonify({"error": "Job not found"}), 404
-    
-    if metadata['status'] != 'completed':
+
+    row = result.data[0]
+
+    if row['status'] != 'completed':
         return jsonify({
             "error": "Job not completed yet",
-            "status": metadata['status']
+            "status": row['status']
         }), 400
-    
-    # Prefer Supabase URL for clean audio; fall back to local download endpoint
+
+    db_metadata = row.get('metadata') or {}
+    transcript  = row.get('transcript') or {}
+
+    # Prefer stored Supabase URL; fall back to local download endpoint
     clean_audio_url = (
-        metadata.get('clean_audio_url')
+        db_metadata.get('clean_audio_url')
         or f"/api/download/speech/{job_id}/clean_audio.wav"
     )
-    
+
     return jsonify({
         "job_id": job_id,
         "status": "completed",
         "metadata": {
-            "filename": metadata['filename'],
-            "duration": metadata['duration'],
-            "sample_rate": metadata['sample_rate'],
-            "transcript": metadata['transcript'],
-            "processed_at": metadata['processed_at']
+            "filename": row.get('filename'),
+            "duration": db_metadata.get('duration'),
+            "sample_rate": db_metadata.get('sample_rate'),
+            "transcript": transcript,
+            "processed_at": db_metadata.get('processed_at')
         },
         "downloads": {
             "clean_audio": clean_audio_url,
