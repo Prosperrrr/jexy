@@ -88,56 +88,23 @@ const TrackSeparationPage = () => {
     fetchData();
   }, [jobId]);
 
-  // Fetch Blobs in parallel to avoid freezing the UI
+  // Map stem URLs directly from data without fetching blobs
   useEffect(() => {
     if (!data?.active_stems) return;
 
-    let isMounted = true;
-    const localUrls = [];
+    const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+    const newUrls = {};
 
-    const loadBlobs = async () => {
-      const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-
-      try {
-        const fetchPromises = data.active_stems.map(async (stem) => {
-          const stemPath = data.stems[stem]?.url;
-          // Check if it's already a full URL (e.g. Supabase), otherwise prepend baseURL
-          const fullUrl = stemPath.startsWith('http') ? stemPath : `${baseURL}${stemPath}`;
-
-          const res = await fetch(fullUrl, { headers: { 'ngrok-skip-browser-warning': 'true' } });
-
-          if (!res.ok) throw new Error(`Fetch failed for ${stem}`);
-          const blob = await res.blob();
-          const objUrl = URL.createObjectURL(blob);
-          
-          return { stem, objUrl };
-        });
-
-        const results = await Promise.all(fetchPromises);
-
-        if (isMounted) {
-          const newUrls = {};
-          results.forEach(({ stem, objUrl }) => {
-            newUrls[stem] = objUrl;
-            localUrls.push(objUrl);
-          });
-          setStemUrls(prev => ({ ...prev, ...newUrls }));
-          setStemsReady(true);
-        }
-      } catch (e) {
-        console.error("Stem load error", e);
-        if (isMounted) {
-          setError("Audio files are no longer on the server (they expire temporarily). Please upload this track again.");
-        }
+    data.active_stems.forEach(stem => {
+      const stemPath = data.stems[stem]?.url;
+      if (stemPath) {
+        // Check if it's already a full URL (e.g. Supabase), otherwise prepend baseURL
+        newUrls[stem] = stemPath.startsWith('http') ? stemPath : `${baseURL}${stemPath}`;
       }
-    };
+    });
 
-    loadBlobs();
-
-    return () => {
-      isMounted = false;
-      localUrls.forEach(url => URL.revokeObjectURL(url));
-    };
+    setStemUrls(prev => ({ ...prev, ...newUrls }));
+    setStemsReady(true);
   }, [data]);
 
   const togglePlay = () => {
