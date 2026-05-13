@@ -280,6 +280,7 @@ def process_speech_background(filepath, job_id):
             speech_metadata = {
                 "duration": result.get('duration'),
                 "sample_rate": result.get('sample_rate'),
+                "clean_audio_url": result.get('clean_audio_url', ''),
                 "processed_at": result.get('processed_at')
             }
             supabase.table('jobs').update({

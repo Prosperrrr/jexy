@@ -65,27 +65,33 @@ class MusicProcessor:
             stems_dir = os.path.join(job_dir, "stems")
             os.makedirs(stems_dir, exist_ok=True)
             
-            # Step 1: Separate stems
-            print("Step 1/3: Separating stems with Demucs...")
+            # Step 1: Separate stems (saved locally only — no upload yet)
+            print("Step 1/4: Separating stems with Demucs...")
             self._update_progress(job_id, 10, "Separating audio stems...")
             stem_paths = self.separate_stems(audio_path, stems_dir, job_id)
-            self._update_progress(job_id, 70, "Stems separated successfully!")
+            self._update_progress(job_id, 60, "Stems separated successfully!")
             print(" Stems separated successfully!")
             
-            # Step 2: Transcribe lyrics from vocals
-            print("\nStep 2/3: Transcribing lyrics with Whisper...")
-            self._update_progress(job_id, 75, "Transcribing lyrics...")
-            vocals_path = stem_paths['vocals']['path'] if isinstance(stem_paths['vocals'], dict) else stem_paths['vocals']
+            # Step 2: Transcribe lyrics from vocals (local file still exists)
+            print("\nStep 2/4: Transcribing lyrics with Whisper...")
+            self._update_progress(job_id, 65, "Transcribing lyrics...")
+            vocals_path = stem_paths['vocals']['path']
             lyrics = self.transcribe_lyrics(vocals_path)
-            self._update_progress(job_id, 90, "Lyrics transcribed!")
+            self._update_progress(job_id, 80, "Lyrics transcribed!")
             print(" Lyrics transcribed!")
             
-            # Step 3: Analyze audio 
-            print("\nStep 3/3: Analyzing audio...")
-            self._update_progress(job_id, 95, "Analyzing audio properties...")
+            # Step 3: Analyze audio
+            print("\nStep 3/4: Analyzing audio...")
+            self._update_progress(job_id, 85, "Analyzing audio properties...")
             analysis = self.analyze_audio(audio_path)
-            self._update_progress(job_id, 100, "Processing complete!")
             print("Analysis complete!")
+            
+            # Step 4: Upload stems to Supabase now that all processing is done
+            print("\nStep 4/4: Uploading stems to Supabase...")
+            self._update_progress(job_id, 90, "Uploading stems to cloud storage...")
+            stem_paths = self._upload_stems_to_supabase(stem_paths, job_id)
+            self._update_progress(job_id, 100, "Processing complete!")
+            print(" Upload complete!")
             
             # Compile metadata
             metadata = {
@@ -190,7 +196,8 @@ class MusicProcessor:
         if job_id:
             self._update_progress(job_id, 60, "Saving separated stems...")
         
-        # Save each stem and check if it's active
+        # Save each stem locally and check if it's active
+        # NOTE: No Supabase upload here — uploads happen after transcription in process()
         stem_names = ['drums', 'bass', 'other', 'vocals', 'guitar', 'piano']
         stem_paths = {}
         
@@ -203,35 +210,54 @@ class MusicProcessor:
             # Check if stem is active (has actual content vs silence)
             is_active = self._check_stem_activity(sources[i])
             
-            # Upload to Supabase Storage if client is available
-            supabase_url = ""
-            if self.supabase:
-                try:
-                    storage_path = f"{job_id}/stems/{name}.mp3"
-                    with open(stem_path, 'rb') as f:
-                        self.supabase.storage.from_('audio-files').upload(
-                            storage_path,
-                            f,
-                            file_options={"content-type": "audio/mpeg", "upsert": "true"}
-                        )
-                    supabase_url = self.supabase.storage.from_('audio-files').get_public_url(storage_path)
-                    # Delete local file to save disk space
-                    os.remove(stem_path)
-                    stem_path = ""  # No longer a valid local path
-                    print(f"  Uploaded to Supabase: {storage_path}")
-                except Exception as e:
-                    print(f"  Warning: Supabase upload failed for {name}: {e}")
-            
             stem_paths[name] = {
                 "path": stem_path,
                 "active": is_active,
-                "url": supabase_url
+                "url": ""  # Populated later by _upload_stems_to_supabase()
             }
             
             status = "✓ Active" if is_active else "○ Silent/Minimal"
             print(f"  {status}: {name}.mp3")
         
         return stem_paths
+    
+    def _upload_stems_to_supabase(self, stem_paths, job_id):
+        """
+        Upload all locally saved stems to Supabase Storage, delete local files,
+        and return an updated stem_paths dict with public URLs filled in.
+        Called after transcription so local files are still available for Whisper.
+        """
+        if not self.supabase:
+            return stem_paths
+        
+        updated = {}
+        for name, info in stem_paths.items():
+            local_path = info.get("path", "")
+            supabase_url = ""
+            
+            if local_path and os.path.exists(local_path):
+                try:
+                    storage_path = f"{job_id}/stems/{name}.mp3"
+                    with open(local_path, 'rb') as f:
+                        self.supabase.storage.from_('audio-files').upload(
+                            storage_path,
+                            f,
+                            file_options={"content-type": "audio/mpeg", "upsert": "true"}
+                        )
+                    supabase_url = self.supabase.storage.from_('audio-files').get_public_url(storage_path)
+                    os.remove(local_path)
+                    local_path = ""  # No longer a valid local path
+                    print(f"  Uploaded to Supabase: {storage_path}")
+                except Exception as e:
+                    print(f"  Warning: Supabase upload failed for {name}: {e}")
+            
+            updated[name] = {
+                "path": local_path,
+                "active": info["active"],
+                "url": supabase_url
+            }
+        
+        return updated
     
     def _check_stem_activity(self, stem_tensor):
         """
