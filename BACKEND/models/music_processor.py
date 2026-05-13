@@ -27,7 +27,7 @@ class MusicProcessor:
         
         print("Loading Whisper model...")
         # explicitly pass the device to Whisper so it doesn't guess
-        self.whisper_model = whisper.load_model("base", device=self.device) 
+        self.whisper_model = whisper.load_model("large-v3", device=self.device) 
         
         self.sample_rate = 44100
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
