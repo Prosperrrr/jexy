@@ -16,7 +16,7 @@ class MusicProcessor:
     Processes music files: separates stems, transcribes lyrics, analyzes audio
     """
     
-    def __init__(self):
+    def __init__(self, supabase=None):
         print("Loading Demucs model (this may take a minute)...")
         self.demucs_model = get_model('htdemucs_6s')  # 6 stems model
         
@@ -33,6 +33,9 @@ class MusicProcessor:
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.processed_dir = os.path.join(base_dir, "processed")
         os.makedirs(self.processed_dir, exist_ok=True)
+        
+        # Supabase client (optional — enables cloud storage upload)
+        self.supabase = supabase
         
         # Progress tracking
         self.current_progress = {}  # Store progress for each job_id
@@ -97,8 +100,9 @@ class MusicProcessor:
                 "lyrics": lyrics,
                 "stems": {
                     name: {
-                        "path": info["path"],
-                        "active": info["active"]
+                        "path": info.get("path", ""),
+                        "active": info["active"],
+                        "url": info.get("url", "")
                     } for name, info in stem_paths.items()
                 },
                 "processed_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -199,9 +203,29 @@ class MusicProcessor:
             # Check if stem is active (has actual content vs silence)
             is_active = self._check_stem_activity(sources[i])
             
+            # Upload to Supabase Storage if client is available
+            supabase_url = ""
+            if self.supabase:
+                try:
+                    storage_path = f"{job_id}/stems/{name}.mp3"
+                    with open(stem_path, 'rb') as f:
+                        self.supabase.storage.from_('audio-files').upload(
+                            storage_path,
+                            f,
+                            file_options={"content-type": "audio/mpeg", "upsert": "true"}
+                        )
+                    supabase_url = self.supabase.storage.from_('audio-files').get_public_url(storage_path)
+                    # Delete local file to save disk space
+                    os.remove(stem_path)
+                    stem_path = ""  # No longer a valid local path
+                    print(f"  Uploaded to Supabase: {storage_path}")
+                except Exception as e:
+                    print(f"  Warning: Supabase upload failed for {name}: {e}")
+            
             stem_paths[name] = {
                 "path": stem_path,
-                "active": is_active
+                "active": is_active,
+                "url": supabase_url
             }
             
             status = "✓ Active" if is_active else "○ Silent/Minimal"

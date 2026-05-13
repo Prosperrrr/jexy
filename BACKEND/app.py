@@ -46,8 +46,8 @@ PROCESSED_DIR = os.path.join(BASE_DIR, 'processed')
 
 # Initialize models
 # classifier = AudioClassifier()  # Old classifier this is kept for documentation/backup    
-music_processor = MusicProcessor()
-speech_processor = SpeechProcessor() 
+music_processor = MusicProcessor(supabase=supabase)
+speech_processor = SpeechProcessor(supabase=supabase)
 yamnet_classifier = YAMNetClassifier()  #Google YAMNet classifier 
 
 
@@ -252,7 +252,7 @@ def process_music_background(filepath, job_id):
                 "processed_at": result.get('processed_at')
             }
             stems_data = {
-                name: {"active": info.get('active')}
+                name: {"active": info.get('active'), "url": info.get('url', '')}
                 for name, info in (result.get('stems') or {}).items()
             }
             supabase.table('jobs').update({
@@ -349,7 +349,7 @@ def get_music_results(job_id):
             "status": metadata['status']
         }), 400
     
-    # Build download URLs for stems (only active ones)
+    # Build URLs for stems (only active ones)
     stems_urls = {}
     active_stems = []
     
@@ -357,8 +357,11 @@ def get_music_results(job_id):
         stem_info = metadata['stems'].get(stem_name, {})
         is_active = stem_info.get('active', True)  # Default to True for backwards compatibility
         
+        # Prefer Supabase URL; fall back to local download endpoint
+        stem_url = stem_info.get('url') or f"/api/download/{job_id}/{stem_name}.mp3"
+        
         stem_data = {
-            "url": f"/api/download/{job_id}/{stem_name}.mp3",
+            "url": stem_url,
             "active": is_active
         }
         stems_urls[stem_name] = stem_data
@@ -504,6 +507,12 @@ def get_speech_results(job_id):
             "status": metadata['status']
         }), 400
     
+    # Prefer Supabase URL for clean audio; fall back to local download endpoint
+    clean_audio_url = (
+        metadata.get('clean_audio_url')
+        or f"/api/download/speech/{job_id}/clean_audio.wav"
+    )
+    
     return jsonify({
         "job_id": job_id,
         "status": "completed",
@@ -515,7 +524,7 @@ def get_speech_results(job_id):
             "processed_at": metadata['processed_at']
         },
         "downloads": {
-            "clean_audio": f"/api/download/speech/{job_id}/clean_audio.wav",
+            "clean_audio": clean_audio_url,
             "transcript_txt": f"/api/download/transcript/{job_id}/txt",
             "transcript_json": f"/api/download/transcript/{job_id}/json",
             "transcript_srt": f"/api/download/transcript/{job_id}/srt"

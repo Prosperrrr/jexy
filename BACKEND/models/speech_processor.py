@@ -14,7 +14,7 @@ class SpeechProcessor:
     Processes speech audio: noise reduction, transcription, enhancement
     """
     
-    def __init__(self):
+    def __init__(self, supabase=None):
         print("Loading DeepFilterNet model for noise reduction...")
         self.df_model, self.df_state, _ = init_df()
         
@@ -25,6 +25,9 @@ class SpeechProcessor:
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.processed_dir = os.path.join(base_dir, "processed")
         os.makedirs(self.processed_dir, exist_ok=True)
+        
+        # Supabase client (optional — enables cloud storage upload)
+        self.supabase = supabase
         
         # Progress tracking
         self.current_progress = {}
@@ -82,6 +85,25 @@ class SpeechProcessor:
             self.save_audio(clean_audio, sr, clean_audio_path)
             print("Audio saved!")
             
+            # Upload clean audio to Supabase Storage if client is available
+            clean_audio_url = ""
+            if self.supabase:
+                try:
+                    storage_path = f"{job_id}/clean_audio.wav"
+                    with open(clean_audio_path, 'rb') as f:
+                        self.supabase.storage.from_('audio-files').upload(
+                            storage_path,
+                            f,
+                            file_options={"content-type": "audio/wav", "upsert": "true"}
+                        )
+                    clean_audio_url = self.supabase.storage.from_('audio-files').get_public_url(storage_path)
+                    # Delete local file to save disk space
+                    os.remove(clean_audio_path)
+                    clean_audio_path = ""  # No longer a valid local path
+                    print(f"  Uploaded to Supabase: {storage_path}")
+                except Exception as e:
+                    print(f"  Warning: Supabase upload failed for clean_audio: {e}")
+            
             # Compile metadata
             metadata = {
                 "job_id": job_id,
@@ -92,6 +114,7 @@ class SpeechProcessor:
                 "sample_rate": sr,
                 "transcript": transcript,
                 "clean_audio_path": clean_audio_path,
+                "clean_audio_url": clean_audio_url,
                 "processed_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
             
