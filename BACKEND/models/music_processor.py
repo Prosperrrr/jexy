@@ -20,9 +20,8 @@ class MusicProcessor:
         print("Loading Demucs model (this may take a minute)...")
         self.demucs_model = get_model('htdemucs_6s')  # 6 stems model
         
-        # REMOVEd the fallback logic and FORCE cuda
-        self.device = 'cuda'
-        print(f" FORCE PYTORCH TO USE: {self.device.upper()} ")
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        print(f" Using PyTorch device: {self.device.upper()} ")
         
         self.demucs_model.to(self.device)
         
