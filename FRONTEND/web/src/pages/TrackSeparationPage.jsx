@@ -227,24 +227,34 @@ const TrackSeparationPage = () => {
     });
 
     if (activeStemNames.length === 0) return;
-    
+
     setIsExporting(true);
     try {
-      const response = await api.post(`/api/mix/${data.job_id}`, {
-        stems: activeStemNames
-      }, {
-        responseType: 'blob'
-      });
-      
-      const blob = new Blob([response.data], { type: 'audio/mpeg' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `jexy_mix_${data.metadata.filename.replace(/\s+/g, '_')}.mp3`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+      if (activeStemNames.length === 1) {
+        const a = document.createElement("a");
+        a.href = data.stems[activeStemNames[0]].url;
+        a.download = `jexy_${activeStemNames[0]}_${data.metadata.filename.replace(/\s+/g, '_')}.mp3`;
+        a.target = "_blank"; // Added target=_blank as fallback for cross-origin downloads
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } else {
+        const response = await api.post(`/api/mix/${data.job_id}`, {
+          stems: activeStemNames
+        }, {
+          responseType: 'blob'
+        });
+
+        const blob = new Blob([response.data], { type: 'audio/mpeg' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `jexy_mix_${data.metadata.filename.replace(/\s+/g, '_')}.mp3`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }
     } catch (err) {
       console.error("Export mix failed:", err);
     } finally {
@@ -319,50 +329,50 @@ const TrackSeparationPage = () => {
             {stemsReady ? (
               <div className="relative w-full px-4 sm:px-8 shrink-0">
                 {/* Timeline Wrapper */}
-              <div className="flex w-full relative pt-6 z-20">
-                <div className="hidden sm:block w-64 shrink-0"></div>
-                <div className="flex-1 relative border-b border-transparent">
-                  <TimelineRuler duration={data.metadata.duration} />
-                </div>
-              </div>
-
-              {/* Tracks Stack */}
-              <div className="flex flex-col relative z-10 -mt-2 pb-10">
-                {data.active_stems.map((stem) => {
-                  const hasSolo = Object.values(stemStates).some(s => s?.soloed);
-                  const isEffectivelyMuted = stemStates[stem]?.muted || (hasSolo && !stemStates[stem]?.soloed);
-
-                  return (
-                    <StemTrack
-                      key={stem}
-                      id={stem}
-                      name={formatStemName(stem)}
-                      muted={isEffectivelyMuted}
-                      soloed={stemStates[stem]?.soloed || false}
-                      volume={stemStates[stem]?.volume ?? 80}
-                      onMuteToggle={() => toggleMute(stem)}
-                      onSoloToggle={() => toggleSolo(stem)}
-                      onVolumeChange={(e) => changeStemVolume(stem, e.target.value)}
-                    />
-                  );
-                })}
-              </div>
-
-              {/* Glowing Playhead Vertical Line overlaying exactly over Timeline and Tracks */}
-              {data.metadata.duration > 0 && (
-                <div className="absolute top-[44px] bottom-[40px] left-0 right-0 pointer-events-none z-30 flex px-4 sm:px-8">
+                <div className="flex w-full relative pt-6 z-20">
                   <div className="hidden sm:block w-64 shrink-0"></div>
-                  <div className="flex-1 relative">
-                    <div
-                      className="absolute top-0 bottom-0 w-[2px] bg-blue-500 shadow-[0_0_15px_rgba(37,99,235,0.8)] transition-all duration-75 ease-linear"
-                      style={{ left: `calc(${(currentTime / data.metadata.duration) * 100}% - 1px)` }}
-                    >
-                      <div className="absolute top-[-6px] left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-[3px] border-blue-500 rounded-full shadow-lg shadow-blue-500/50"></div>
-                    </div>
+                  <div className="flex-1 relative border-b border-transparent">
+                    <TimelineRuler duration={data.metadata.duration} />
                   </div>
                 </div>
-              )}
-            </div>
+
+                {/* Tracks Stack */}
+                <div className="flex flex-col relative z-10 -mt-2 pb-10">
+                  {data.active_stems.map((stem) => {
+                    const hasSolo = Object.values(stemStates).some(s => s?.soloed);
+                    const isEffectivelyMuted = stemStates[stem]?.muted || (hasSolo && !stemStates[stem]?.soloed);
+
+                    return (
+                      <StemTrack
+                        key={stem}
+                        id={stem}
+                        name={formatStemName(stem)}
+                        muted={isEffectivelyMuted}
+                        soloed={stemStates[stem]?.soloed || false}
+                        volume={stemStates[stem]?.volume ?? 80}
+                        onMuteToggle={() => toggleMute(stem)}
+                        onSoloToggle={() => toggleSolo(stem)}
+                        onVolumeChange={(e) => changeStemVolume(stem, e.target.value)}
+                      />
+                    );
+                  })}
+                </div>
+
+                {/* Glowing Playhead Vertical Line overlaying exactly over Timeline and Tracks */}
+                {data.metadata.duration > 0 && (
+                  <div className="absolute top-[44px] bottom-[40px] left-0 right-0 pointer-events-none z-30 flex px-4 sm:px-8">
+                    <div className="hidden sm:block w-64 shrink-0"></div>
+                    <div className="flex-1 relative">
+                      <div
+                        className="absolute top-0 bottom-0 w-[2px] bg-blue-500 shadow-[0_0_15px_rgba(37,99,235,0.8)] transition-all duration-75 ease-linear"
+                        style={{ left: `calc(${(currentTime / data.metadata.duration) * 100}% - 1px)` }}
+                      >
+                        <div className="absolute top-[-6px] left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-[3px] border-blue-500 rounded-full shadow-lg shadow-blue-500/50"></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-[40vh]">
                 <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-3" />
