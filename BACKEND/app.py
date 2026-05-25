@@ -402,34 +402,57 @@ def download_stem(job_id, stem_file):
 @app.route('/api/mix/<job_id>', methods=['POST'])
 def mix_stems(job_id):
     """Mix selected stems into a single downloadable MP3"""
+    import requests as http_requests
+    import shutil
+
     data = request.get_json() or {}
     selected_stems = data.get('stems', [])
 
     if not selected_stems:
         return jsonify({"error": "No stems provided"}), 400
 
-    job_stems_dir = os.path.join(PROCESSED_DIR, job_id, 'stems')
-
-    if not os.path.exists(job_stems_dir):
+    # Fetch job from Supabase to get stems_data (Supabase URLs)
+    try:
+        job_result = supabase.table('jobs').select('stems_data').eq('id', job_id).single().execute()
+    except Exception as e:
+        app.logger.error(f"Supabase fetch failed for job {job_id}: {e}")
         return jsonify({"error": "Job not found"}), 404
 
-    # Build ffmpeg input args for each selected stem
+    if not job_result.data:
+        return jsonify({"error": "Job not found"}), 404
+
+    stems_data = job_result.data.get('stems_data') or {}
+
+    # Download each selected stem to a temp directory
+    tmp_dir = os.path.join('/tmp', job_id)
+    os.makedirs(tmp_dir, exist_ok=True)
+
     stem_files = []
-    for stem in selected_stems:
-        stem_path = os.path.join(job_stems_dir, f"{stem}.mp3")
-        if not os.path.exists(stem_path):
-            return jsonify({"error": f"Stem not found: {stem}"}), 404
-        stem_files.append(stem_path)
-
-    # Output path for mixed file
-    mix_output = os.path.join(PROCESSED_DIR, job_id, 'mix.mp3')
-
     try:
+        for stem in selected_stems:
+            stem_info = stems_data.get(stem)
+            if not stem_info or not stem_info.get('url'):
+                return jsonify({"error": f"Stem URL not found for: {stem}"}), 404
+
+            stem_url = stem_info['url']
+            tmp_path = os.path.join(tmp_dir, f"{stem}.mp3")
+
+            response = http_requests.get(stem_url, timeout=60)
+            if not response.ok:
+                return jsonify({"error": f"Failed to download stem: {stem}"}), 502
+
+            with open(tmp_path, 'wb') as f:
+                f.write(response.content)
+
+            stem_files.append(tmp_path)
+
+        # Output path for mixed file (also in tmp)
+        mix_output = os.path.join(tmp_dir, 'mix.mp3')
+
         import subprocess
 
         if len(stem_files) == 1:
             # Only one stem selected, just copy it
-            import shutil
             shutil.copy(stem_files[0], mix_output)
         else:
             # Build ffmpeg command to mix multiple stems
@@ -458,6 +481,10 @@ def mix_stems(job_id):
     except Exception as e:
         app.logger.error(f"Mix error: {e}")
         return jsonify({"error": str(e)}), 500
+    finally:
+        # Clean up temp files regardless of success or failure
+        if os.path.exists(tmp_dir):
+            shutil.rmtree(tmp_dir, ignore_errors=True)
 
 # SPEECH PROCESSING routes
 
