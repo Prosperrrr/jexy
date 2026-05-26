@@ -9,7 +9,6 @@ import BottomAudioPlayer from '../components/track-separation/BottomAudioPlayer'
 import api, { getMusicResults, getUserJobs } from '../services/api';
 import { Loader2 } from 'lucide-react';
 
-
 const formatStemName = (name) => {
   return name.charAt(0).toUpperCase() + name.slice(1);
 };
@@ -31,9 +30,20 @@ const TrackSeparationPage = () => {
 
   const [stemStates, setStemStates] = useState({});
   const [stemUrls, setStemUrls] = useState({});
+  const [downloadedBuffers, setDownloadedBuffers] = useState({});
+  const [isDecoding, setIsDecoding] = useState(false);
   const [stemsReady, setStemsReady] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const audioRefs = React.useRef({});
+  
+  // Web Audio API refs
+  const audioCtx = React.useRef(null);
+  const audioBuffers = React.useRef({});
+  const sourceNodes = React.useRef({});
+  const gainNodes = React.useRef({});
+  const masterGain = React.useRef(null);
+  const startTimeRef = React.useRef(0);
+  const pausedAtRef = React.useRef(0);
+  const reqAnimFrameId = React.useRef(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -88,7 +98,7 @@ const TrackSeparationPage = () => {
     fetchData();
   }, [jobId]);
 
-  // Map stem URLs directly from data without fetching blobs
+  // Map stem URLs and fetch array buffers immediately
   useEffect(() => {
     if (!data?.active_stems) return;
 
@@ -98,81 +108,141 @@ const TrackSeparationPage = () => {
     data.active_stems.forEach(stem => {
       const stemPath = data.stems[stem]?.url;
       if (stemPath) {
-        // Check if it's already a full URL (e.g. Supabase), otherwise prepend baseURL
         newUrls[stem] = stemPath.startsWith('http') ? stemPath : `${baseURL}${stemPath}`;
       }
     });
 
     setStemUrls(prev => ({ ...prev, ...newUrls }));
-    setStemsReady(true);
+    
+    let isMounted = true;
+    const fetchBuffers = async () => {
+      const buffers = {};
+      try {
+        await Promise.all(
+          data.active_stems.map(async (stem) => {
+             if (!newUrls[stem]) return;
+             const response = await fetch(newUrls[stem]);
+             const arrayBuffer = await response.arrayBuffer();
+             buffers[stem] = arrayBuffer;
+          })
+        );
+        if (isMounted) {
+          setDownloadedBuffers(buffers);
+          setStemsReady(true);
+        }
+      } catch (err) {
+        console.error("Failed to fetch audio buffers:", err);
+      }
+    };
+
+    fetchBuffers();
+    return () => { isMounted = false; };
   }, [data]);
 
-  const togglePlay = () => {
-    const nextState = !isPlaying;
-    setIsPlaying(nextState);
+  const updateCurrentTime = () => {
+    if (!audioCtx.current || !data) return;
+    const elapsed = audioCtx.current.currentTime - startTimeRef.current;
+    if (elapsed >= (data.metadata.duration || 100)) {
+       setIsPlaying(false);
+       stopPlayback();
+       setCurrentTime(0);
+       pausedAtRef.current = 0;
+       return;
+    }
+    setCurrentTime(elapsed);
+    reqAnimFrameId.current = requestAnimationFrame(updateCurrentTime);
+  };
 
-    // Play immediately to capture the user gesture
-    Object.keys(stemUrls).forEach(stem => {
-      const audio = audioRefs.current[stem];
-      if (audio) {
-        if (nextState) {
-          if (Math.abs(audio.currentTime - currentTime) > 0.5) {
-            audio.currentTime = currentTime;
-          }
-          if (audio.readyState >= 2) {
-            audio.play().catch(e => console.error("Play error:", e));
-          } else {
-            audio.addEventListener('canplay', () => {
-              audio.play().catch(e => console.error("Play error:", e));
-            }, { once: true });
-          }
-        } else {
-          audio.pause();
-        }
+  const startPlayback = (offset) => {
+    Object.keys(audioBuffers.current).forEach(stem => {
+      const source = audioCtx.current.createBufferSource();
+      source.buffer = audioBuffers.current[stem];
+      source.connect(gainNodes.current[stem]);
+      source.start(0, offset);
+      sourceNodes.current[stem] = source;
+    });
+    startTimeRef.current = audioCtx.current.currentTime - offset;
+  };
+
+  const stopPlayback = () => {
+    Object.keys(sourceNodes.current).forEach(stem => {
+      if (sourceNodes.current[stem]) {
+        try { sourceNodes.current[stem].stop(); } catch (e) {}
+        sourceNodes.current[stem].disconnect();
+      }
+    });
+    sourceNodes.current = {};
+    if (audioCtx.current) {
+      pausedAtRef.current = audioCtx.current.currentTime - startTimeRef.current;
+    }
+  };
+
+  const applyVolumes = () => {
+    if (!audioCtx.current || !data) return;
+    const hasSolo = Object.values(stemStates).some(s => s.soloed);
+    const masterVol = isGlobalMuted ? 0 : (globalVolume / 100);
+    if (masterGain.current) {
+      masterGain.current.gain.value = masterVol;
+    }
+    
+    data.active_stems.forEach(stem => {
+      const gainNode = gainNodes.current[stem];
+      if (gainNode) {
+        const isEffectivelyMuted = stemStates[stem].muted || (hasSolo && !stemStates[stem].soloed);
+        const stemVol = stemStates[stem].volume / 100;
+        gainNode.gain.value = isEffectivelyMuted ? 0 : stemVol;
       }
     });
   };
 
-  // Keep interval checking separate and robust
   useEffect(() => {
-    let interval;
-    if (isPlaying && data) {
-      interval = setInterval(() => {
-        const firstStem = data.active_stems[0];
-        const primaryAudio = audioRefs.current[firstStem];
+    applyVolumes();
+  }, [stemStates, globalVolume, isGlobalMuted, data]);
 
-        if (primaryAudio && !primaryAudio.paused) {
-          setCurrentTime(primaryAudio.currentTime);
-          if (primaryAudio.ended) setIsPlaying(false);
-        } else {
-          setCurrentTime((prev) => {
-            if (prev >= (data.metadata.duration || 100)) {
-              setIsPlaying(false);
-              return 0;
-            }
-            return prev + 0.1;
-          });
-        }
-      }, 100);
-    }
-    return () => clearInterval(interval);
-  }, [isPlaying, data]);
-
-  // Handle live Dynamic Volumes, Mutings, Soloing Overrides
-  useEffect(() => {
-    if (!data) return;
-    const hasSolo = Object.values(stemStates).some(s => s.soloed);
-
-    data.active_stems.forEach(stem => {
-      const audio = audioRefs.current[stem];
-      if (audio) {
-        const isEffectivelyMuted = stemStates[stem].muted || (hasSolo && !stemStates[stem].soloed) || isGlobalMuted;
-        const stemVol = stemStates[stem].volume / 100;
-        const masterVol = globalVolume / 100;
-        audio.volume = isEffectivelyMuted ? 0 : (stemVol * masterVol);
+  const togglePlay = async () => {
+    if (!stemsReady) return;
+    
+    if (!audioCtx.current) {
+      setIsDecoding(true);
+      try {
+        audioCtx.current = new (window.AudioContext || window.webkitAudioContext)();
+        masterGain.current = audioCtx.current.createGain();
+        masterGain.current.connect(audioCtx.current.destination);
+        
+        await Promise.all(
+          Object.keys(downloadedBuffers).map(async (stem) => {
+            const bufferCopy = downloadedBuffers[stem].slice(0);
+            const audioBuffer = await audioCtx.current.decodeAudioData(bufferCopy);
+            audioBuffers.current[stem] = audioBuffer;
+            
+            const gain = audioCtx.current.createGain();
+            gain.connect(masterGain.current);
+            gainNodes.current[stem] = gain;
+          })
+        );
+        applyVolumes();
+      } catch (e) {
+        console.error("Audio init error:", e);
+      } finally {
+        setIsDecoding(false);
       }
-    });
-  }, [stemStates, globalVolume, isGlobalMuted, data, stemUrls]);
+    }
+
+    if (audioCtx.current.state === 'suspended') {
+       await audioCtx.current.resume();
+    }
+
+    const nextState = !isPlaying;
+    setIsPlaying(nextState);
+
+    if (nextState) {
+       startPlayback(pausedAtRef.current);
+       reqAnimFrameId.current = requestAnimationFrame(updateCurrentTime);
+    } else {
+       stopPlayback();
+       if (reqAnimFrameId.current) cancelAnimationFrame(reqAnimFrameId.current);
+    }
+  };
 
   const toggleMute = (stem) => {
     setStemStates(prev => ({
@@ -206,9 +276,11 @@ const TrackSeparationPage = () => {
     if (data) {
       const clamped = Math.max(0, timeVal);
       setCurrentTime(clamped);
-      Object.values(audioRefs.current).forEach(audio => {
-        if (audio) audio.currentTime = clamped;
-      });
+      pausedAtRef.current = clamped;
+      if (isPlaying) {
+        stopPlayback();
+        startPlayback(clamped);
+      }
     }
   };
 
@@ -239,21 +311,25 @@ const TrackSeparationPage = () => {
         a.click();
         document.body.removeChild(a);
       } else {
-        const response = await api.post(`/api/mix/${data.job_id}`, {
-          stems: activeStemNames
-        }, {
-          responseType: 'blob'
+        // Build volumes payload from current slider state
+        const volumes = {};
+        activeStemNames.forEach(stem => {
+          volumes[stem] = stemStates[stem].volume ?? 100;
         });
 
-        const blob = new Blob([response.data], { type: 'audio/mpeg' });
-        const url = window.URL.createObjectURL(blob);
+        const response = await api.post(`/api/mix/${data.job_id}`, {
+          stems: activeStemNames,
+          volumes
+        });
+
+        const mixUrl = response.data.url;
         const a = document.createElement("a");
-        a.href = url;
+        a.href = mixUrl;
         a.download = `jexy_mix_${data.metadata.filename.replace(/\s+/g, '_')}.mp3`;
+        a.target = "_blank";
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
       }
     } catch (err) {
       console.error("Export mix failed:", err);
@@ -306,21 +382,7 @@ const TrackSeparationPage = () => {
           isExporting={isExporting}
         />
 
-        {/* Global hidden audio elements to persist playback across views (Fixes Bug 2 & 3) */}
-        <div className="hidden">
-          {data?.active_stems?.map((stem) => {
-            const audioUrl = stemUrls[stem];
-            if (!audioUrl) return null;
-            return (
-              <audio
-                key={`audio-${stem}`}
-                ref={el => audioRefs.current[stem] = el}
-                src={audioUrl}
-                preload="auto"
-              />
-            );
-          })}
-        </div>
+        {/* Removed global hidden audio elements; Web Audio API handles playback */}
 
         {isLyricsView ? (
           <LyricsView lyrics={data.metadata.lyrics?.timestamped || []} currentTime={currentTime} />
@@ -377,7 +439,7 @@ const TrackSeparationPage = () => {
               <div className="flex flex-col items-center justify-center h-[40vh]">
                 <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-3" />
                 <p className="text-slate-500 text-sm">
-                  Loading stems...
+                  {isDecoding ? "Decoding audio..." : "Fetching stems..."}
                 </p>
               </div>
             )}

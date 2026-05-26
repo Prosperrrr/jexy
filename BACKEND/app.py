@@ -401,12 +401,14 @@ def download_stem(job_id, stem_file):
 
 @app.route('/api/mix/<job_id>', methods=['POST'])
 def mix_stems(job_id):
-    """Mix selected stems into a single downloadable MP3"""
+    """Mix selected stems into a single MP3, upload to Supabase, return URL"""
     import requests as http_requests
     import shutil
+    import subprocess
 
     data = request.get_json() or {}
     selected_stems = data.get('stems', [])
+    volumes = data.get('volumes', {})  # Optional: { stem_name: 0-100 }
 
     if not selected_stems:
         return jsonify({"error": "No stems provided"}), 400
@@ -444,36 +446,66 @@ def mix_stems(job_id):
             with open(tmp_path, 'wb') as f:
                 f.write(response.content)
 
-            stem_files.append(tmp_path)
+            stem_files.append((stem, tmp_path))
 
         # Output path for mixed file (also in tmp)
         mix_output = os.path.join(tmp_dir, 'mix.mp3')
 
-        import subprocess
-
         if len(stem_files) == 1:
-            # Only one stem selected, just copy it
-            shutil.copy(stem_files[0], mix_output)
+            stem_name, stem_path = stem_files[0]
+            vol = volumes.get(stem_name, 100)
+            vol_float = round(vol / 100.0, 4)
+            cmd = [
+                'ffmpeg', '-y',
+                '-i', stem_path,
+                '-filter_complex', f'[0]volume={vol_float}[a]',
+                '-map', '[a]',
+                '-codec:a', 'libmp3lame',
+                '-qscale:a', '2',
+                mix_output
+            ]
+            subprocess.run(cmd, check=True, capture_output=True)
         else:
-            # Build ffmpeg command to mix multiple stems
+            # Build per-stem volume filters
             cmd = ['ffmpeg', '-y']
-            for f in stem_files:
-                cmd += ['-i', f]
+            for _, path in stem_files:
+                cmd += ['-i', path]
+
+            filter_parts = []
+            mix_labels = []
+            for i, (stem_name, _) in enumerate(stem_files):
+                vol = volumes.get(stem_name, 100)
+                vol_float = round(vol / 100.0, 4)
+                label = chr(ord('a') + i)
+                filter_parts.append(f'[{i}]volume={vol_float}[{label}]')
+                mix_labels.append(f'[{label}]')
+
+            n = len(stem_files)
+            filter_complex = ';'.join(filter_parts) + f';{"".join(mix_labels)}amix=inputs={n}:duration=longest:normalize=0'
+
             cmd += [
-                '-filter_complex',
-                f'amix=inputs={len(stem_files)}:duration=longest:normalize=0',
+                '-filter_complex', filter_complex,
                 '-codec:a', 'libmp3lame',
                 '-qscale:a', '2',
                 mix_output
             ]
             subprocess.run(cmd, check=True, capture_output=True)
 
-        return send_file(
-            mix_output,
-            mimetype='audio/mpeg',
-            as_attachment=True,
-            download_name=f'jexy_mix_{job_id[:8]}.mp3'
+        # Upload mixed MP3 to Supabase Storage
+        storage_path = f"{job_id}/mix.mp3"
+        with open(mix_output, 'rb') as f:
+            mix_bytes = f.read()
+
+        supabase.storage.from_('jexy-stems').upload(
+            path=storage_path,
+            file=mix_bytes,
+            file_options={"content-type": "audio/mpeg", "upsert": "true"}
         )
+
+        # Get public URL
+        public_url = supabase.storage.from_('jexy-stems').get_public_url(storage_path)
+
+        return jsonify({"url": public_url}), 200
 
     except subprocess.CalledProcessError as e:
         app.logger.error(f"ffmpeg mix failed: {e.stderr.decode()}")
@@ -482,9 +514,10 @@ def mix_stems(job_id):
         app.logger.error(f"Mix error: {e}")
         return jsonify({"error": str(e)}), 500
     finally:
-        # Clean up temp files regardless of success or failure
+        # Clean up all temp files
         if os.path.exists(tmp_dir):
             shutil.rmtree(tmp_dir, ignore_errors=True)
+
 
 # SPEECH PROCESSING routes
 
