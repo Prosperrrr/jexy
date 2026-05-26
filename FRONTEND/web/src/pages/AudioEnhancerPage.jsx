@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
 import AudioPlayerCard from '../components/audio-enhancer/AudioPlayerCard';
 import TranscriptionSection from '../components/audio-enhancer/TranscriptionSection';
+import Header from '../components/track-separation/Header';
+import BottomAudioPlayer from '../components/track-separation/BottomAudioPlayer';
 import { getSpeechResults, getUserJobs } from '../services/api';
 import { Loader2 } from 'lucide-react';
 
@@ -19,6 +21,8 @@ const AudioEnhancerPage = () => {
   const [currentTime, setCurrentTime] = useState(0);
   const [volume, setVolume] = useState(80);
   const [isMuted, setIsMuted] = useState(false);
+  const [isLyricsView, setIsLyricsView] = useState(false);
+  const [isRepeating, setIsRepeating] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -28,7 +32,7 @@ const AudioEnhancerPage = () => {
         if (!activeJobId) {
           const history = await getUserJobs();
           const speechJobs = history.jobs?.filter(j => j.job_type === 'speech' && j.status === 'completed');
-          
+
           if (speechJobs && speechJobs.length > 0) {
             activeJobId = speechJobs[0].id;
           } else {
@@ -83,7 +87,7 @@ const AudioEnhancerPage = () => {
           </div>
           <h2 className="text-2xl font-display font-bold text-slate-900 mb-2">Error Loading Session</h2>
           <p className="text-slate-500 mb-8">{error}</p>
-          <button 
+          <button
             onClick={() => navigate('/dashboard')}
             className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-full transition-all"
           >
@@ -96,7 +100,7 @@ const AudioEnhancerPage = () => {
 
   // Base URL from env for download link binding
   const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-  
+
   const resolveUrl = (url) => {
     if (!url || url === '#') return '#';
     return url.startsWith('http') ? url : `${baseURL}${url}`;
@@ -113,37 +117,71 @@ const AudioEnhancerPage = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-[70rem] mx-auto py-10 px-6 sm:px-10 lg:px-12 w-full">
-        <div className="mb-0 sm:mb-8 pl-1">
-          <h1 className="text-2xl sm:text-[32px] font-display font-bold text-slate-900 mb-2 leading-tight tracking-tight">Audio Enhancement Result</h1>
-          <p className="text-[15px] font-medium text-slate-500">Your studio-quality audio is ready.</p>
-        </div>
+      <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-slate-50/50">
+        <Header
+          filename={safeMetadata.filename}
+          subtitle="Enhanced Audio"
+          downloadText="Download"
+          onExport={() => {
+            const link = document.createElement('a');
+            link.href = fullUrlDownloads.clean_audio;
+            link.download = `jexy_enhanced_${safeMetadata.filename || 'audio'}`;
+            link.click();
+          }}
+          isExporting={false}
+        />
 
-        <div className="space-y-8 pb-12 mt-6 sm:mt-0">
-          <AudioPlayerCard 
-            metadata={safeMetadata}
-            isPlaying={isPlaying}
-            setIsPlaying={setIsPlaying}
-            currentTime={currentTime}
-            volume={isMuted ? 0 : volume}
-            setVolume={(val) => {
-              setVolume(parseInt(val, 10));
-              if (isMuted) setIsMuted(false);
-            }}
-            onVolumeToggle={() => setIsMuted(!isMuted)}
-            onSeek={handleSeek}
-            onSkipBack={handleSkipBack}
-            onSkipForward={handleSkipForward}
-            downloadUrl={fullUrlDownloads.clean_audio}
-          />
-
-          <TranscriptionSection 
-            transcript={safeMetadata.transcript || []}
-            currentTime={currentTime}
-            downloads={fullUrlDownloads}
-          />
+        <div className="flex-1 overflow-y-auto overflow-x-hidden relative scroll-smooth pb-32">
+          <div className="max-w-5xl mx-auto px-4 sm:px-8 pt-6">
+            <div className="flex flex-col space-y-6">
+              <AudioPlayerCard
+                metadata={safeMetadata}
+                isPlaying={isPlaying}
+                setIsPlaying={setIsPlaying}
+                currentTime={currentTime}
+                volume={isMuted ? 0 : volume}
+                setVolume={(val) => {
+                  setVolume(parseInt(val, 10));
+                  if (isMuted) setIsMuted(false);
+                }}
+                onVolumeToggle={() => setIsMuted(!isMuted)}
+                onSeek={handleSeek}
+                onSkipBack={handleSkipBack}
+                onSkipForward={handleSkipForward}
+                downloadUrl={fullUrlDownloads.clean_audio}
+                isRepeating={isRepeating}
+              />
+              <TranscriptionSection
+                transcript={safeMetadata.transcript || []}
+                currentTime={currentTime}
+                downloads={fullUrlDownloads}
+              />
+            </div>
+          </div>
         </div>
       </div>
+
+      <BottomAudioPlayer
+        isPlaying={isPlaying}
+        currentTime={currentTime}
+        duration={safeMetadata.duration}
+        volume={isMuted ? 0 : volume}
+        isLyricsView={isLyricsView}
+        onPlayPause={() => setIsPlaying(!isPlaying)}
+        onSeek={handleSeek}
+        onSkipBack={handleSkipBack}
+        onSkipForward={handleSkipForward}
+        onVolumeChange={(e) => {
+          setVolume(parseInt(e.target.value, 10));
+          if (isMuted) setIsMuted(false);
+        }}
+        onVolumeToggle={() => setIsMuted(!isMuted)}
+        onLyricsToggle={() => setIsLyricsView(!isLyricsView)}
+        stemsReady={true}
+        isRepeating={isRepeating}
+        onRepeatToggle={() => setIsRepeating(!isRepeating)}
+        hideLeftToggle={true}
+      />
     </DashboardLayout>
   );
 };

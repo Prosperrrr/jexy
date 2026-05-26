@@ -16,7 +16,9 @@ const BottomAudioPlayer = ({
   onLyricsToggle,
   stemsReady,
   isRepeating,
-  onRepeatToggle
+  onRepeatToggle,
+  leftModeLabels = ['STEMS', 'LYRICS'],
+  hideLeftToggle = false
 }) => {
   const formatTime = (time) => {
     if (isNaN(time) || time === null || time === undefined) return "0:00";
@@ -39,17 +41,19 @@ const BottomAudioPlayer = ({
             <span className="text-xs font-bold text-slate-500 font-display tracking-widest w-12 shrink-0">
               {formatTime(currentTime)}
             </span>
-            <button
-              onClick={onLyricsToggle}
-              title={isLyricsView ? "Stems View" : "Lyrics View"}
-              className={`flex items-center justify-center space-x-2 px-4 py-2.5 rounded-full text-xs font-bold tracking-widest font-display transition-all duration-300 ${isLyricsView
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
-                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800'
-                }`}
-            >
-              {isLyricsView ? <ListMusic className="w-4 h-4" /> : <MessageSquare className="w-4 h-4" />}
-              <span className="hidden sm:inline">{isLyricsView ? 'STEMS' : 'LYRICS'}</span>
-            </button>
+            {!hideLeftToggle && (
+              <button
+                onClick={onLyricsToggle}
+                title={isLyricsView ? "Stems View" : "Lyrics View"}
+                className={`flex items-center justify-center space-x-2 px-4 py-2.5 rounded-full text-xs font-bold tracking-widest font-display transition-all duration-300 ${isLyricsView
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
+                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800'
+                  }`}
+              >
+                {isLyricsView ? <ListMusic className="w-4 h-4" /> : <MessageSquare className="w-4 h-4" />}
+                <span className="hidden sm:inline">{isLyricsView ? leftModeLabels[0] : leftModeLabels[1]}</span>
+              </button>
+            )}
           </div>
 
           {/* Center Section: Playback Controls */}

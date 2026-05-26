@@ -2,7 +2,7 @@ import React from 'react';
 import { ArrowLeft, Share2, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const Header = ({ filename, bpm, onExport, isExporting }) => {
+const Header = ({ filename, bpm, onExport, isExporting, subtitle = "Separated Session", downloadText = "Download Mix" }) => {
   const navigate = useNavigate();
 
   return (
@@ -19,7 +19,7 @@ const Header = ({ filename, bpm, onExport, isExporting }) => {
             {filename}
           </h1>
           <span className="text-[11px] font-bold text-slate-400 font-display tracking-widest uppercase mt-1">
-            Separated Session
+            {subtitle}
           </span>
         </div>
       </div>
@@ -44,7 +44,7 @@ const Header = ({ filename, bpm, onExport, isExporting }) => {
           ) : (
             <Download className="w-4 h-4" />
           )}
-          <span className="text-sm hidden sm:inline">{isExporting ? 'Mixing...' : 'Download Mix'}</span>
+          <span className="text-sm hidden sm:inline">{isExporting ? 'Mixing...' : downloadText}</span>
         </button>
       </div>
     </div>
