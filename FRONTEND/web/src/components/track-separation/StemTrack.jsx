@@ -18,9 +18,30 @@ const StemTrack = ({
   volume, 
   onMuteToggle, 
   onSoloToggle, 
-  onVolumeChange 
+  onVolumeChange,
+  peaks
 }) => {
   const Icon = iconsMap[id] || Music4;
+
+  const getPaths = () => {
+    const genericLine = "M0 30 C 20 30, 30 15, 50 20 S 70 45, 100 40 S 130 10, 150 20 S 180 50, 200 45 S 230 15, 250 25 S 280 40, 300 35 S 330 15, 350 20 S 380 50, 400 40 S 430 10, 450 15 S 480 35, 500 30 S 530 45, 550 40 S 580 15, 600 25 S 630 40, 650 35 S 680 10, 700 20 S 730 45, 750 40 S 780 15, 800 20 S 830 50, 850 40 S 880 10, 900 15 S 930 35, 950 30 S 980 30, 1000 30";
+    if (!peaks || peaks.length === 0) {
+      return { line: genericLine, fill: genericLine + " L 1000 60 L 0 60 Z", type: 'smooth', barWidth: 2.5 };
+    }
+    
+    let d = "";
+    const numBars = peaks.length;
+    const stepX = 1000 / numBars;
+    peaks.forEach((peak, i) => {
+      const h = Math.max(2, peak * 44); // max height 44px
+      const x = (i * stepX + stepX / 2).toFixed(1);
+      const y = (30 - h / 2).toFixed(1);
+      d += `M ${x} ${y} v ${h.toFixed(1)} `;
+    });
+    return { line: d, fill: "", type: 'bars', barWidth: Math.max(1.5, stepX * 0.6) };
+  };
+
+  const { line: pathLine, fill: pathFill, type, barWidth } = getPaths();
 
   return (
     <div className="flex flex-col sm:flex-row bg-white/70 backdrop-blur-xl rounded-3xl border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/40 hover:border-blue-200/60 transition-all duration-300 overflow-hidden mt-5 shrink-0 group">
@@ -79,12 +100,12 @@ const StemTrack = ({
         {/* Animated aesthetic backdrop */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/10 to-transparent group-hover:translate-x-full duration-1000 ease-in-out transition-transform"></div>
 
-        {/* Generic Premium SVG Waveform */}
+        {/* Dynamic SVG Waveform */}
         <svg preserveAspectRatio="none" viewBox="0 0 1000 60" className="w-full h-16 drop-shadow-sm" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id={`gradient-${id}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.8" />
-              <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.1" />
+              <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.9" />
+              <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.2" />
             </linearGradient>
             <linearGradient id={`stroke-${id}`} x1="0" y1="0" x2="1" y2="0">
               <stop offset="0%" stopColor="#60a5fa" />
@@ -92,16 +113,27 @@ const StemTrack = ({
               <stop offset="100%" stopColor="#2563eb" />
             </linearGradient>
           </defs>
-          <path d="M0 30 C 20 30, 30 15, 50 20 S 70 45, 100 40 S 130 10, 150 20 S 180 50, 200 45 S 230 15, 250 25 S 280 40, 300 35 S 330 15, 350 20 S 380 50, 400 40 S 430 10, 450 15 S 480 35, 500 30 S 530 45, 550 40 S 580 15, 600 25 S 630 40, 650 35 S 680 10, 700 20 S 730 45, 750 40 S 780 15, 800 20 S 830 50, 850 40 S 880 10, 900 15 S 930 35, 950 30 S 980 30, 1000 30" 
-            stroke={`url(#stroke-${id})`} 
-            strokeWidth="2.5" 
-            fill="none" 
-            strokeLinecap="round" 
-            strokeLinejoin="round" 
-          />
-          <path d="M0 30 C 20 30, 30 15, 50 20 S 70 45, 100 40 S 130 10, 150 20 S 180 50, 200 45 S 230 15, 250 25 S 280 40, 300 35 S 330 15, 350 20 S 380 50, 400 40 S 430 10, 450 15 S 480 35, 500 30 S 530 45, 550 40 S 580 15, 600 25 S 630 40, 650 35 S 680 10, 700 20 S 730 45, 750 40 S 780 15, 800 20 S 830 50, 850 40 S 880 10, 900 15 S 930 35, 950 30 S 980 30, 1000 30 L 1000 60 L 0 60 Z" 
-            fill={`url(#gradient-${id})`} 
-          />
+          
+          {type === 'bars' ? (
+            <path d={pathLine} 
+              stroke={`url(#gradient-${id})`} 
+              strokeWidth={barWidth} 
+              strokeLinecap="round" 
+            />
+          ) : (
+            <>
+              <path d={pathLine} 
+                stroke={`url(#stroke-${id})`} 
+                strokeWidth="2.5" 
+                fill="none" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+              />
+              <path d={pathFill} 
+                fill={`url(#gradient-${id})`} 
+              />
+            </>
+          )}
         </svg>
       </div>
     </div>

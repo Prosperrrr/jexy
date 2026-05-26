@@ -505,6 +505,18 @@ def mix_stems(job_id):
         # Get public URL
         public_url = supabase.storage.from_('jexy-stems').get_public_url(storage_path)
 
+        # Schedule background cleanup of the mix file after 5 minutes
+        def delete_mix_later(job_id):
+            import time
+            time.sleep(300)  # Wait 5 minutes to ensure download completes
+            try:
+                supabase.storage.from_('jexy-stems').remove([f"{job_id}/mix.mp3"])
+                print(f"Cleaned up mix for job {job_id}")
+            except Exception as e:
+                print(f"Mix cleanup failed: {e}")
+
+        threading.Thread(target=delete_mix_later, args=(job_id,), daemon=True).start()
+
         return jsonify({"url": public_url}), 200
 
     except subprocess.CalledProcessError as e:

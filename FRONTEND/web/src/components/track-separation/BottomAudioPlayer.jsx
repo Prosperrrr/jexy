@@ -14,7 +14,9 @@ const BottomAudioPlayer = ({
   onVolumeChange,
   onVolumeToggle,
   onLyricsToggle,
-  stemsReady
+  stemsReady,
+  isRepeating,
+  onRepeatToggle
 }) => {
   const formatTime = (time) => {
     if (isNaN(time) || time === null || time === undefined) return "0:00";
@@ -94,7 +96,11 @@ const BottomAudioPlayer = ({
                 />
               </div>
             </div>
-            <button title="Repeat" className="text-slate-300 hover:text-slate-600 transition-colors hidden sm:block">
+            <button 
+              onClick={onRepeatToggle}
+              title={isRepeating ? "Repeat: On" : "Repeat: Off"} 
+              className={`transition-colors hidden sm:block ${isRepeating ? 'text-blue-500 hover:text-blue-600' : 'text-slate-300 hover:text-slate-600'}`}
+            >
               <Repeat className="w-4 h-4" />
             </button>
             <span className="text-xs font-bold text-slate-400 font-display tracking-widest w-12 text-right shrink-0">

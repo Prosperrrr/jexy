@@ -40,11 +40,7 @@ const AudioPlayerCard = ({
 
     const loadAudioBlob = async () => {
       try {
-        const response = await fetch(downloadUrl, {
-          headers: {
-            'ngrok-skip-browser-warning': 'true'
-          }
-        });
+        const response = await fetch(downloadUrl);
         if (!response.ok) throw new Error("Failed to load audio");
         const blob = await response.blob();
         if (isMounted) {

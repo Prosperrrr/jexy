@@ -97,12 +97,16 @@ const AudioEnhancerPage = () => {
   // Base URL from env for download link binding
   const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
   
-  // Update downloads to contain full URLs
+  const resolveUrl = (url) => {
+    if (!url || url === '#') return '#';
+    return url.startsWith('http') ? url : `${baseURL}${url}`;
+  };
+
   const fullUrlDownloads = {
-    clean_audio: data?.downloads?.clean_audio ? `${baseURL}${data.downloads.clean_audio}` : '#',
-    transcript_txt: data?.downloads?.transcript_txt ? `${baseURL}${data.downloads.transcript_txt}` : '#',
-    transcript_json: data?.downloads?.transcript_json ? `${baseURL}${data.downloads.transcript_json}` : '#',
-    transcript_srt: data?.downloads?.transcript_srt ? `${baseURL}${data.downloads.transcript_srt}` : '#'
+    clean_audio: resolveUrl(data?.downloads?.clean_audio),
+    transcript_txt: resolveUrl(data?.downloads?.transcript_txt),
+    transcript_json: resolveUrl(data?.downloads?.transcript_json),
+    transcript_srt: resolveUrl(data?.downloads?.transcript_srt),
   };
 
   const safeMetadata = data?.metadata || { filename: 'Audio Session', duration: 0, transcript: [] };
