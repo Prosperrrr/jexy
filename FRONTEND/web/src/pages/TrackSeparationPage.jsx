@@ -302,14 +302,19 @@ const TrackSeparationPage = () => {
 
     setIsExporting(true);
     try {
+      const cleanFilename = data.metadata.filename.replace(/\.mp3$/i, '').replace(/\s+/g, '_');
+
       if (activeStemNames.length === 1) {
+        const fileRes = await fetch(data.stems[activeStemNames[0]].url);
+        const blob = await fileRes.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
-        a.href = data.stems[activeStemNames[0]].url;
-        a.download = `jexy_${activeStemNames[0]}_${data.metadata.filename.replace(/\s+/g, '_')}.mp3`;
-        a.target = "_blank"; // Added target=_blank as fallback for cross-origin downloads
+        a.href = blobUrl;
+        a.download = `jexy_${activeStemNames[0]}_${cleanFilename}.mp3`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+        window.URL.revokeObjectURL(blobUrl);
       } else {
         // Build volumes payload from current slider state
         const volumes = {};
@@ -323,13 +328,19 @@ const TrackSeparationPage = () => {
         });
 
         const mixUrl = response.data.url;
+        const fileRes = await fetch(mixUrl);
+        const blob = await fileRes.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
-        a.href = mixUrl;
-        a.download = `jexy_mix_${data.metadata.filename.replace(/\s+/g, '_')}.mp3`;
-        a.target = "_blank";
+        a.href = blobUrl;
+        
+        const stemLabel = activeStemNames.join('_');
+        a.download = `jexy_${stemLabel}_mix_${cleanFilename}.mp3`;
+        
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+        window.URL.revokeObjectURL(blobUrl);
       }
     } catch (err) {
       console.error("Export mix failed:", err);
