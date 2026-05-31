@@ -18,7 +18,7 @@ export default function Pipeline() {
           </div>
         </FadeIn>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <FadeIn delay={0.2} direction="up" className="group relative bg-white dark:bg-[#121212] rounded-3xl p-8 border border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-all hover:shadow-xl hover:-translate-y-1 hover:border-blue-200 dark:hover:border-blue-900/50 hover:shadow-blue-500/5">
             <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center mb-6 text-slate-700 dark:text-slate-300 font-mono text-xs border border-slate-200 dark:border-slate-800 group-hover:text-blue-500 group-hover:border-blue-200 transition-colors">
               01

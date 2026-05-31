@@ -10,7 +10,7 @@ export default function Creators() {
           </h2>
         </FadeIn>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {/* Podcasters Card */}
           <FadeIn direction="up" delay={0.2} className="group bg-white dark:bg-[#121212] rounded-[2rem] p-10 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-300">
             <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center mb-8">

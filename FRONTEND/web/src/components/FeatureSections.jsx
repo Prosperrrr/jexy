@@ -50,7 +50,7 @@ const InteractiveStems = () => {
 
         return (
           <div key={stem.id} className={`flex ${isSoloed ? 'bg-white/70 dark:bg-slate-900/70 border-blue-200/60 dark:border-blue-900/40 shadow-xl' : 'bg-white/70 dark:bg-slate-900/70 border-slate-200/60 dark:border-slate-700/60 shadow-sm'} backdrop-blur-xl rounded-2xl border overflow-hidden h-[72px] transition-all duration-300`}>
-            <div className={`w-[30%] sm:w-[35%] border-r border-slate-100/50 dark:border-slate-800 p-3 sm:p-4 flex flex-col justify-center gap-3 ${isSoloed ? 'bg-white/90 dark:bg-[#1a1a1a]' : 'bg-white/60 dark:bg-[#151515]'} transition-colors duration-300`}>
+            <div className={`w-[45%] sm:w-[35%] md:w-[30%] border-r border-slate-100/50 dark:border-slate-800 p-3 flex flex-col justify-center gap-3 ${isSoloed ? 'bg-white/90 dark:bg-[#1a1a1a]' : 'bg-white/60 dark:bg-[#151515]'} transition-colors duration-300`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 sm:gap-3">
                   <div className={`p-2 rounded-xl transition-all duration-300 ${isSoloed ? 'bg-blue-600 text-white shadow-[0_4px_15px_rgba(37,99,235,0.4)]' : isMuted ? 'bg-slate-100 text-slate-400 dark:bg-slate-800' : 'bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}>
@@ -71,7 +71,7 @@ const InteractiveStems = () => {
                  </div>
               </div>
             </div>
-            <div className={`w-[70%] sm:w-[65%] relative flex items-center h-full overflow-hidden transition-all duration-300 ${isMuted ? 'opacity-30 grayscale' : 'opacity-100'}`}>
+            <div className={`w-[55%] sm:w-[65%] md:w-[70%] relative flex items-center h-full overflow-hidden transition-all duration-300 ${isMuted ? 'opacity-30 grayscale' : 'opacity-100'}`}>
                {isSoloed && <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/20 dark:via-blue-900/20 to-transparent pointer-events-none"></div>}
                <svg preserveAspectRatio="none" viewBox="0 0 1000 60" className="w-full h-14 drop-shadow-sm px-2 pointer-events-none" fill="none">
                  <defs>
@@ -293,11 +293,11 @@ const KaraokeSyncVisual = () => {
 export default function FeatureSections() {
   return (
     <>
-      <section className="py-24 bg-white dark:bg-black transition-colors duration-300 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="relative py-24 bg-white dark:bg-black transition-colors duration-300 overflow-hidden w-full max-w-[100vw]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
           
           {/* Section 1: Auto-Detection (Text Left, Visual Right) */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-32">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-16 items-center mb-20 md:mb-32">
             <FadeIn direction="right" delay={0.2}>
               <div className="inline-block px-3 py-1 mb-6 border border-slate-200 dark:border-slate-800 rounded-full">
                 <span className="text-xs font-mono text-slate-500 uppercase tracking-widest">Intelligent Classification</span>
@@ -336,7 +336,7 @@ export default function FeatureSections() {
           </div>
 
           {/* Section 2: DAW Interface (Visual Left, Text Right) */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-32">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-16 items-center mb-20 md:mb-32">
             <FadeIn direction="right" delay={0.4} className="order-2 lg:order-1 relative">
               <div className="absolute -inset-4 bg-gradient-to-r from-slate-200 to-slate-100 dark:from-slate-800 dark:to-slate-900 rounded-[2rem] blur-xl opacity-50"></div>
               <div className="relative bg-slate-50 dark:bg-[#0f0f0f] rounded-2xl p-2 border border-slate-200 dark:border-slate-800">
@@ -344,7 +344,7 @@ export default function FeatureSections() {
               </div>
             </FadeIn>
 
-            <FadeIn direction="left" delay={0.2} className="order-1 lg:order-2">
+            <FadeIn direction="left" delay={0.2} className="order-1 lg:order-2 relative w-full">
               <div className="absolute -top-20 -left-20 w-64 h-64 bg-indigo-500/10 blur-[80px] rounded-full pointer-events-none"></div>
               <div className="inline-block px-3 py-1 mb-6 border border-slate-200 dark:border-slate-800 rounded-full">
                 <span className="text-xs font-mono text-slate-500 uppercase tracking-widest">Track Separation</span>
@@ -357,8 +357,8 @@ export default function FeatureSections() {
           </div>
 
           {/* Section 3: Speech Enhancement (Text Left, Visual Right) */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-32">
-            <FadeIn direction="right" delay={0.2} className="relative">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-16 items-center mb-20 md:mb-32">
+            <FadeIn direction="right" delay={0.2} className="relative w-full">
               <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-teal-500/10 blur-[80px] rounded-full pointer-events-none"></div>
               <div className="inline-block px-3 py-1 mb-6 border border-slate-200 dark:border-slate-800 rounded-full">
                 <span className="text-xs font-mono text-slate-500 uppercase tracking-widest">Speech Enhancement</span>
@@ -377,13 +377,13 @@ export default function FeatureSections() {
           </div>
 
           {/* Section 4: Lyrics Extraction (Visual Left, Text Right) */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-32">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-16 items-center mb-20 md:mb-32">
             <FadeIn direction="right" delay={0.4} className="order-2 lg:order-1 relative">
               <div className="absolute -inset-4 bg-gradient-to-r from-blue-200 to-indigo-200 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-[2rem] blur-xl opacity-50"></div>
               <KaraokeSyncVisual />
             </FadeIn>
 
-            <FadeIn direction="left" delay={0.2} className="order-1 lg:order-2">
+            <FadeIn direction="left" delay={0.2} className="order-1 lg:order-2 relative w-full">
               <div className="absolute -top-20 -left-20 w-64 h-64 bg-blue-500/10 blur-[80px] rounded-full pointer-events-none"></div>
               <div className="inline-block px-3 py-1 mb-6 border border-slate-200 dark:border-slate-800 rounded-full">
                 <span className="text-xs font-mono text-slate-500 uppercase tracking-widest">Time-Synced Lyrics</span>
@@ -396,8 +396,8 @@ export default function FeatureSections() {
           </div>
 
           {/* Section 5: Cloud Processing (Text Left, Visual Right) */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <FadeIn direction="right" delay={0.2} className="order-1 lg:order-1">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-16 items-center mb-20 md:mb-32">
+            <FadeIn direction="right" delay={0.2} className="order-1 lg:order-1 relative w-full">
               <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-teal-500/10 blur-[80px] rounded-full pointer-events-none"></div>
               <div className="inline-block px-3 py-1 mb-6 border border-slate-200 dark:border-slate-800 rounded-full">
                 <span className="text-xs font-mono text-slate-500 uppercase tracking-widest">Cloud Infrastructure</span>

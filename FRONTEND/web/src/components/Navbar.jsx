@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 export default function Navbar() {
   return (
     <nav className="fixed top-0 left-0 w-full z-50 pt-2 md:pt-4 px-2 sm:px-4 lg:px-8 transition-colors duration-300 backdrop-blur-md bg-white/20 dark:bg-black/20">
-      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
+      <div className="max-w-7xl mx-auto w-full">
         <div className="flex justify-center items-center h-20">
           <div className="flex justify-between items-center h-14 md:h-16 bg-white dark:bg-zinc-900 px-4 md:px-8 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm w-full">
             {/* Far Left: Logo */}

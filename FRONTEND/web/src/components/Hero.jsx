@@ -64,8 +64,8 @@ export default function Hero() {
 
       <FadeIn delay={0.2} direction="up" className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-8">
 
-        <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-display font-medium tracking-tighter mb-6 leading-tight md:leading-[1.1]">
-          <span className="block h-[1.2em] mb-2 sm:mb-4 inline-grid items-center align-middle">
+        <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-display font-medium tracking-tighter mb-4 sm:mb-6 leading-tight md:leading-[1.1] flex flex-col items-center justify-center">
+          <span className="block min-h-[1.2em] mb-2 sm:mb-4 inline-grid items-center align-middle w-full">
             <AnimatePresence mode="popLayout">
               <motion.span
                 key={words[index]}
@@ -79,9 +79,9 @@ export default function Hero() {
               </motion.span>
             </AnimatePresence>
           </span>
-          <span className="text-slate-400 dark:text-slate-500 block">your audio, instantly.</span>
+          <span className="text-slate-400 dark:text-slate-500 block max-w-[100vw] px-2 break-words">your audio, instantly.</span>
         </h1>
-        <p className="mt-6 text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto font-light leading-relaxed">
+        <p className="mt-4 sm:mt-6 text-base md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto font-light leading-relaxed px-2">
           The AI-powered audio studio in your browser. Upload any song or voice recording, and let Jexy automatically separate stems, remove background noise, and transcribe every word.
         </p>
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
