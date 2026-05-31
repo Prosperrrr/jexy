@@ -23,6 +23,7 @@ const AudioEnhancerPage = () => {
   const [isMuted, setIsMuted] = useState(false);
   const [isLyricsView, setIsLyricsView] = useState(false);
   const [isRepeating, setIsRepeating] = useState(false);
+  const [duration, setDuration] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -62,6 +63,12 @@ const AudioEnhancerPage = () => {
     }
   };
 
+  useEffect(() => {
+    if (data?.metadata?.duration) {
+      setDuration(data.metadata.duration);
+    }
+  }, [data]);
+
   const handleSkipBack = () => setCurrentTime(prev => Math.max(0, prev - 10));
   const handleSkipForward = () => setCurrentTime(prev => {
     return prev + 10;
@@ -70,9 +77,65 @@ const AudioEnhancerPage = () => {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex flex-col items-center justify-center h-[60vh]">
-          <Loader2 className="w-10 h-10 text-blue-500 animate-spin mb-4" />
-          <h2 className="text-xl font-display font-medium text-slate-700">Loading Session...</h2>
+        <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-slate-50/50">
+          {/* Header Skeleton */}
+          <div className="h-[76px] shrink-0 border-b border-slate-200/50 bg-white/50 px-4 sm:px-8 flex items-center justify-between">
+            <div className="flex flex-col space-y-2">
+              <div className="w-48 h-5 bg-slate-200/70 rounded-md animate-pulse"></div>
+              <div className="w-24 h-3 bg-slate-200/70 rounded-md animate-pulse"></div>
+            </div>
+            <div className="w-28 h-9 bg-slate-200/70 rounded-full animate-pulse"></div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-4 sm:px-8 pt-6 pb-32">
+            <div className="max-w-5xl mx-auto flex flex-col space-y-6">
+              {/* AudioPlayerCard Skeleton */}
+              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-sm flex flex-col space-y-6 animate-pulse">
+                <div className="flex items-center space-x-4">
+                  <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 bg-blue-200/50 rounded-full"></div>
+                  </div>
+                  <div className="flex flex-col space-y-2 w-full">
+                    <div className="w-1/3 h-5 bg-slate-200/70 rounded-md"></div>
+                    <div className="w-1/4 h-3 bg-slate-200/70 rounded-md"></div>
+                  </div>
+                </div>
+                <div className="w-full h-12 bg-slate-100 rounded-xl"></div>
+              </div>
+
+              {/* TranscriptionSection Skeleton */}
+              <div className="bg-white rounded-3xl border border-slate-100 shadow-sm flex flex-col animate-pulse">
+                <div className="p-6 sm:p-8 border-b border-slate-50 flex items-center justify-between">
+                  <div className="w-32 h-6 bg-slate-200/70 rounded-md"></div>
+                  <div className="w-24 h-8 bg-slate-200/70 rounded-full"></div>
+                </div>
+                <div className="p-6 sm:p-8 space-y-4">
+                  <div className="w-full h-4 bg-slate-100 rounded-md"></div>
+                  <div className="w-5/6 h-4 bg-slate-100 rounded-md"></div>
+                  <div className="w-4/6 h-4 bg-slate-100 rounded-md"></div>
+                  <div className="w-full h-4 bg-slate-100 rounded-md mt-6"></div>
+                  <div className="w-3/4 h-4 bg-slate-100 rounded-md"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* BottomAudioPlayer Skeleton */}
+          <div className="h-[90px] shrink-0 bg-white/95 backdrop-blur-md border-t border-slate-200/50 px-4 sm:px-8 flex items-center justify-between animate-pulse fixed bottom-0 left-0 w-full z-40 lg:w-[calc(100%-256px)] lg:left-64">
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 bg-slate-200/70 rounded-full"></div>
+              <div className="hidden sm:block w-32 h-4 bg-slate-200/70 rounded-md"></div>
+            </div>
+            <div className="flex items-center space-x-6">
+              <div className="w-8 h-8 bg-slate-200/70 rounded-full"></div>
+              <div className="w-12 h-12 bg-slate-200/70 rounded-full"></div>
+              <div className="w-8 h-8 bg-slate-200/70 rounded-full"></div>
+            </div>
+            <div className="hidden md:flex items-center space-x-3 w-48">
+              <div className="w-5 h-5 bg-slate-200/70 rounded-md"></div>
+              <div className="w-full h-2 bg-slate-200/70 rounded-full"></div>
+            </div>
+          </div>
         </div>
       </DashboardLayout>
     );
@@ -148,6 +211,7 @@ const AudioEnhancerPage = () => {
                 onSeek={handleSeek}
                 onSkipBack={handleSkipBack}
                 onSkipForward={handleSkipForward}
+                onDurationChange={(dur) => setDuration(dur)}
                 downloadUrl={fullUrlDownloads.clean_audio}
                 isRepeating={isRepeating}
               />
@@ -164,7 +228,7 @@ const AudioEnhancerPage = () => {
       <BottomAudioPlayer
         isPlaying={isPlaying}
         currentTime={currentTime}
-        duration={safeMetadata.duration}
+        duration={duration}
         volume={isMuted ? 0 : volume}
         isLyricsView={isLyricsView}
         onPlayPause={() => setIsPlaying(!isPlaying)}

@@ -19,12 +19,21 @@ const AudioPlayerCard = ({
   onSeek,
   onSkipBack,
   onSkipForward,
+  onDurationChange,
   downloadUrl,
   isRepeating
 }) => {
   const audioRef = useRef(null);
   const [audioSrc, setAudioSrc] = useState(null);
   const [audioDuration, setAudioDuration] = useState(metadata?.duration || 0);
+
+  // Web Audio API refs
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const sourceRef = useRef(null);
+  const animationRef = useRef(null);
+  const isAudioSetup = useRef(false);
+  const barRefs = useRef([]);
 
   useEffect(() => {
     if (metadata?.duration) {
@@ -76,6 +85,64 @@ const AudioPlayerCard = ({
       }
     }
   }, [isPlaying, audioSrc]);
+
+  // Web Audio API visualizer sync
+  useEffect(() => {
+    if (isPlaying) {
+      if (!isAudioSetup.current && audioRef.current) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioContextRef.current = new AudioContext();
+        analyserRef.current = audioContextRef.current.createAnalyser();
+        analyserRef.current.fftSize = 512; // 256 bins, allows us to zoom in on vocal frequencies (0-4kHz)
+        analyserRef.current.smoothingTimeConstant = 0.85; // Butter smooth falloff
+        
+        try {
+          sourceRef.current = audioContextRef.current.createMediaElementSource(audioRef.current);
+          sourceRef.current.connect(analyserRef.current);
+          analyserRef.current.connect(audioContextRef.current.destination);
+          isAudioSetup.current = true;
+        } catch (e) {
+          console.error("Audio context setup failed:", e);
+        }
+      }
+
+      if (audioContextRef.current?.state === 'suspended') {
+        audioContextRef.current.resume();
+      }
+
+      const updateData = () => {
+        if (analyserRef.current) {
+          const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+          analyserRef.current.getByteFrequencyData(dataArray);
+          
+          for (let i = 0; i < 45; i++) {
+            if (barRefs.current[i]) {
+              // Skip first 2 bins (muddy sub-bass) and take the next 45 bins (covers up to ~4kHz, perfect for voice)
+              const val = dataArray[i + 2] || 0;
+              const boost = 1 + (i / 30); // Boost higher frequencies so right side bars animate well
+              const height = Math.min(100, Math.max(8, (val / 255) * 100 * boost));
+              barRefs.current[i].style.height = `${height}%`;
+            }
+          }
+        }
+        animationRef.current = requestAnimationFrame(updateData);
+      };
+      
+      updateData();
+    } else {
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      // Reset bars to resting state when paused
+      for (let i = 0; i < 45; i++) {
+        if (barRefs.current[i]) {
+          barRefs.current[i].style.height = '8%';
+        }
+      }
+    }
+
+    return () => {
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    };
+  }, [isPlaying]);
 
   // Sync volume state
   useEffect(() => {
@@ -132,16 +199,10 @@ const AudioPlayerCard = ({
         onLoadedMetadata={(e) => {
           if (e.target.duration && !isNaN(e.target.duration) && e.target.duration !== Infinity) {
             setAudioDuration(e.target.duration);
+            if (onDurationChange) onDurationChange(e.target.duration);
           }
         }}
       />
-      <style>{`
-        @keyframes equalize {
-          0%, 100% { transform: scaleY(0.3); }
-          50% { transform: scaleY(1); }
-        }
-      `}</style>
-      
       {/* Track Info (Left) */}
       <div className="w-full sm:w-64 bg-slate-100/50 p-4 sm:p-6 flex flex-col justify-center shrink-0 border-b sm:border-b-0 sm:border-r border-slate-200/50 transition-colors group-hover:bg-slate-100/80">
         <div className="flex items-center space-x-4">
@@ -157,23 +218,19 @@ const AudioPlayerCard = ({
 
       {/* Waveform Area (Right) */}
       <div className="flex-1 relative overflow-hidden flex items-center justify-center min-h-[120px] bg-slate-50/50 group-hover:bg-slate-50 transition-colors">
-         {/* Animated Equalizer Visualizer (spanning wide) */}
+         {/* Real-time Web Audio API Equalizer */}
          <div className="flex items-center gap-2 h-20 w-full justify-between px-8 opacity-80">
-          {Array.from({ length: 45 }).map((_, i) => {
-            // Predictable pseudo-random heights based on index so it doesn't flicker on re-render
-            const height = 30 + (Math.sin(i * 0.5) * 20) + (Math.cos(i * 1.2) * 30) + 20;
-            return (
-              <div 
-                key={i} 
-                className="w-1.5 bg-gradient-to-t from-blue-600 to-blue-400 rounded-full transition-all duration-300 origin-bottom"
-                style={{ 
-                  height: `${Math.abs(height)}%`,
-                  animation: isPlaying ? `equalize 0.8s ease-in-out infinite` : 'none',
-                  animationDelay: `${(i % 10) * 0.1}s`
-                }}
-              />
-            )
-          })}
+          {Array.from({ length: 45 }).map((_, i) => (
+            <div 
+              key={i} 
+              ref={el => barRefs.current[i] = el}
+              className="w-1.5 bg-gradient-to-t from-blue-600 to-blue-400 rounded-full origin-bottom"
+              style={{ 
+                height: '8%', // Starting resting height
+                transition: 'height 0.05s ease' 
+              }}
+            />
+          ))}
         </div>
       </div>
     </div>

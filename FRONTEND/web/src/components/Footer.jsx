@@ -32,7 +32,7 @@ export default function Footer() {
           <div>
             <h4 className="font-medium mb-6 text-slate-900 dark:text-white">Community</h4>
             <ul className="space-y-3 text-sm text-slate-500 dark:text-slate-400 font-light">
-              <li><a href="#" className="hover:text-black dark:hover:text-white transition-colors">GitHub Discussions</a></li>
+              <li><a href="https://github.com/Prosperrrr/jexy" target="_blank" rel="noopener noreferrer" className="hover:text-black dark:hover:text-white transition-colors">GitHub Discussions</a></li>
               <li><a href="#" className="hover:text-black dark:hover:text-white transition-colors">Discord</a></li>
               <li><a href="#" className="hover:text-black dark:hover:text-white transition-colors">Contributing Guide</a></li>
             </ul>

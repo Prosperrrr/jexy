@@ -30,11 +30,20 @@ const formatStatus = (status, type) => {
   return type === 'music' ? 'SEPARATED' : 'ENHANCED';
 };
 
+const formatDuration = (duration) => {
+  const num = Number(duration);
+  if (isNaN(num) || num <= 0) return '';
+  return `${Math.round(num)}s`;
+};
+
 const SessionHistory = () => {
   const navigate = useNavigate();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const visibleJobs = isExpanded ? jobs : jobs.slice(0, 6);
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -76,7 +85,7 @@ const SessionHistory = () => {
   };
 
   return (
-    <div className="w-full bg-white rounded-3xl border border-slate-100 flex flex-col shadow-sm mt-6 mb-12">
+    <div className="w-full bg-white rounded-3xl border border-slate-100 flex flex-col shadow-sm mt-6 mb-12 transition-all duration-500 ease-in-out">
       {/* Header */}
       <div className="p-5 md:p-8 border-b border-slate-50">
         <div className="flex items-center space-x-3">
@@ -105,11 +114,11 @@ const SessionHistory = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
-            {jobs.map((job) => (
+            {visibleJobs.map((job) => (
               <div 
                 key={job.id} 
                 onClick={() => handleJobClick(job)}
-                className={`bg-slate-50/50 p-5 rounded-2xl border border-slate-100 hover:border-blue-200 hover:shadow-sm transition-all group flex flex-col relative ${job.status === 'completed' ? 'cursor-pointer' : 'cursor-default opacity-80'}`}
+                className={`bg-slate-50/50 p-5 rounded-2xl border border-slate-100 hover:border-blue-200 hover:shadow-sm transition-all group flex flex-col relative ${job.status === 'completed' ? 'cursor-pointer' : 'cursor-default opacity-80'} animate-[fadeIn_0.5s_ease-out_forwards]`}
               >
                 <button 
                   onClick={(e) => handleDelete(e, job.id)}
@@ -132,7 +141,7 @@ const SessionHistory = () => {
                     <span className="text-slate-500">{formatStatus(job.status, job.job_type)}</span>
                   </div>
                   <div className="flex flex-col items-end text-slate-400 space-y-0.5">
-                    <span>{job.metadata?.duration ? `${Math.round(job.metadata.duration)}s` : ''}</span>
+                    <span>{formatDuration(job.metadata?.duration)}</span>
                     <span>{timeAgo(job.created_at)}</span>
                   </div>
                 </div>
@@ -143,11 +152,20 @@ const SessionHistory = () => {
       </div>
 
       {/* Footer / CTA */}
-      <div className="p-5 bg-slate-50/50 rounded-b-3xl mt-auto border-t border-slate-100 items-center justify-center flex">
-        <button className="text-[11px] font-display font-bold text-slate-400 tracking-wider hover:text-slate-900 transition-colors uppercase">
-          VIEW ALL ARCHIVES
-        </button>
-      </div>
+      {jobs.length > 6 && (
+        <div className="p-5 bg-slate-50/50 rounded-b-3xl mt-auto border-t border-slate-100 items-center justify-center flex transition-colors hover:bg-slate-100/50 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
+          <button className="text-[11px] font-display font-bold text-slate-500 tracking-wider transition-colors uppercase">
+            {isExpanded ? 'VIEW LESS' : 'VIEW ALL ARCHIVES'}
+          </button>
+        </div>
+      )}
+      
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 };

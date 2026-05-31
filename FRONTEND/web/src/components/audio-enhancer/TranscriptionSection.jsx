@@ -62,9 +62,6 @@ const TranscriptionSection = ({ transcript, currentTime, downloads }) => {
         </div>
         
         <div className="flex items-center gap-4">
-          <span className="bg-slate-100 text-slate-500 text-xs font-semibold px-2.5 py-1 rounded-md">
-            Whisper V3 Large
-          </span>
           <button 
             onClick={handleCopyText}
             title="Copy Transcript"
