@@ -7,7 +7,7 @@
     font-size: 12px;
   }
   body {
-    @apply font-sans bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 transition-colors duration-300 antialiased selection:bg-slate-200 dark:selection:bg-slate-800;
+    @apply font-sans bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 transition-colors duration-300 antialiased selection:bg-slate-200 dark:selection:bg-slate-800 overflow-x-hidden;
   }
 }
 

@@ -6,10 +6,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const words = [
   "Separate",
-  "Transcribe",
   "Enhance",
-  "Classify",
-  "Perfect"
+  "Transcribe",
+  "Mix",
+  "Master"
 ];
 
 export default function Hero() {
@@ -63,12 +63,7 @@ export default function Hero() {
       </div>
 
       <FadeIn delay={0.2} direction="up" className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-8">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border dark:border-slate-800 bg-white/50 dark:bg-black/50 backdrop-blur-sm mb-6 border-teal-200/50 shadow-[0_0_15px_rgba(20,184,166,0.1)]">
-          <span className="w-2 h-2 rounded-full animate-pulse bg-teal-400"></span>
-          <span className="text-[10px] font-mono font-bold text-teal-600 dark:text-teal-400 tracking-widest uppercase">
-            Open Source Academic Project
-          </span>
-        </div>
+
         <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-display font-medium tracking-tighter mb-6 leading-tight md:leading-[1.1]">
           <span className="block h-[1.2em] mb-2 sm:mb-4 inline-grid items-center align-middle">
             <AnimatePresence mode="popLayout">
@@ -84,21 +79,23 @@ export default function Hero() {
               </motion.span>
             </AnimatePresence>
           </span>
-          <span className="text-slate-400 dark:text-slate-500 block">your audio, effortlessly.</span>
+          <span className="text-slate-400 dark:text-slate-500 block">your audio, instantly.</span>
         </h1>
         <p className="mt-6 text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto font-light leading-relaxed">
-          An experimental pipeline for audio classification, separation, enhancement, and transcription.
+          The AI-powered audio studio in your browser. Upload any song or voice recording, and let Jexy automatically separate stems, remove background noise, and transcribe every word.
         </p>
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
           <button onClick={() => navigate('/login')} className="w-full sm:w-auto group relative px-8 py-4 bg-slate-900 dark:bg-white text-white dark:text-black rounded-full text-lg font-medium overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_20px_rgba(14,165,233,0.3)] bg-gradient-to-r from-slate-900 to-indigo-950 dark:from-white dark:to-blue-50">
             <span className="relative z-10 flex items-center justify-center gap-2">
-              Run Workflow
+              Start Creating
               <span className="material-symbols-outlined text-sm transition-transform group-hover:translate-x-1">arrow_forward</span>
             </span>
           </button>
-          <a href="#" className="w-full sm:w-auto px-8 py-4 rounded-full text-lg font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-transparent hover:border-slate-200 dark:hover:border-slate-800 transition-all flex items-center justify-center gap-2">
-            <span className="material-symbols-outlined text-xl">article</span>
-            Read the Paper
+          <a href="https://github.com/Prosperrrr/jexy" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto px-8 py-4 rounded-full text-lg font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-transparent hover:border-slate-200 dark:hover:border-slate-800 transition-all flex items-center justify-center gap-2">
+            <svg aria-hidden="true" className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+            </svg>
+            View on GitHub
           </a>
         </div>
       </FadeIn>
