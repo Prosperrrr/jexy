@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { auth, googleProvider } from '../lib/firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
@@ -67,7 +67,9 @@ export default function AuthPage() {
 
       <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-8 h-[76px]">
-          <h1 className="font-display font-bold text-4xl tracking-tight text-slate-900 dark:text-white mb-2">jexy</h1>
+          <Link to="/" className="inline-block hover:opacity-80 transition-opacity">
+            <h1 className="font-display font-bold text-4xl tracking-tight text-slate-900 dark:text-white mb-2">jexy</h1>
+          </Link>
           <div className="h-5 flex justify-center items-center">
             <AnimatePresence mode="wait">
               <motion.p 

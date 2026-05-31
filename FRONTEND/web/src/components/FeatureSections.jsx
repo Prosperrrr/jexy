@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import FadeIn from './FadeIn';
-import { motion } from 'framer-motion';
+import { motion, useInView } from 'framer-motion';
 import { Mic2, Drum, Speaker, VolumeX, Volume2 } from 'lucide-react';
 
 const InteractiveStems = () => {
@@ -212,6 +212,8 @@ const SimpleDenoiseVisual = () => {
 
 const KaraokeSyncVisual = () => {
   const [activeIndex, setActiveIndex] = useState(0);
+  const containerRef = useRef(null);
+  const isInView = useInView(containerRef, { once: false, margin: "-20%" });
   
   // Real timings for "Joha" by Asake
   const lines = [
@@ -222,6 +224,11 @@ const KaraokeSyncVisual = () => {
   ];
 
   React.useEffect(() => {
+    if (!isInView) {
+      setActiveIndex(0);
+      return;
+    }
+
     let timeoutId;
     const playNext = (index) => {
       setActiveIndex(index);
@@ -233,10 +240,10 @@ const KaraokeSyncVisual = () => {
     timeoutId = setTimeout(() => playNext(1), lines[0].duration);
     
     return () => clearTimeout(timeoutId);
-  }, []);
+  }, [isInView]);
 
   return (
-    <div className="relative bg-slate-50 dark:bg-[#0f0f0f] rounded-2xl w-full h-[320px] sm:h-96 flex flex-col p-6 sm:p-8 transition-colors duration-300 overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm">
+    <div ref={containerRef} className="relative bg-slate-50 dark:bg-[#0f0f0f] rounded-2xl w-full h-[320px] sm:h-96 flex flex-col p-6 sm:p-8 transition-colors duration-300 overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm">
       
       {/* Label */}
       <div className="mb-4 z-10 relative flex justify-between items-center">

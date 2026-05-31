@@ -8,9 +8,9 @@ export default function Navbar() {
           <div className="flex justify-between items-center h-14 md:h-16 bg-white dark:bg-zinc-900 px-4 md:px-8 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm w-full">
             {/* Far Left: Logo */}
             <div className="flex-1 flex justify-start">
-              <span className="font-display font-bold text-2xl tracking-tight text-slate-900 dark:text-white">
+              <Link to="/" className="font-display font-bold text-2xl tracking-tight text-slate-900 dark:text-white hover:opacity-80 transition-opacity">
                 jexy
-              </span>
+              </Link>
             </div>
             {/* Center: Navigation */}
             <div className="hidden md:flex items-center gap-8">
@@ -20,9 +20,9 @@ export default function Navbar() {
               <a href="#" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white transition-colors">
                 Workflow
               </a>
-              <a href="#" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white transition-colors">
-                Documentation
-              </a>
+              <Link to="/how-it-works" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white transition-colors">
+                How it works
+              </Link>
             </div>
             {/* Far Right: Actions */}
             <div className="flex-1 flex justify-end items-center gap-4 md:gap-6">

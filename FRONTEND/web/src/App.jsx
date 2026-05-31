@@ -4,12 +4,14 @@ import AuthPage from './pages/AuthPage';
 import DashboardPage from './pages/DashboardPage';
 import TrackSeparationPage from './pages/TrackSeparationPage';
 import AudioEnhancerPage from './pages/AudioEnhancerPage';
+import HowItWorksPage from './pages/HowItWorksPage';
 
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/how-it-works" element={<HowItWorksPage />} />
         <Route path="/login" element={<AuthPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
 
