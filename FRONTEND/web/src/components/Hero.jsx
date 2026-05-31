@@ -64,8 +64,8 @@ export default function Hero() {
 
       <FadeIn delay={0.2} direction="up" className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-8">
 
-        <h1 className="text-[12vw] leading-none sm:text-6xl md:text-7xl lg:text-8xl font-display font-medium tracking-tight sm:tracking-tighter mb-4 sm:mb-6 flex flex-col items-center justify-center">
-          <span className="block min-h-[1.1em] mb-1 sm:mb-4 inline-grid items-center align-middle w-full">
+        <h1 className="text-[14vw] leading-none sm:text-6xl md:text-7xl lg:text-[5.5rem] font-display font-medium tracking-tight sm:tracking-tighter mb-4 sm:mb-6 flex flex-col items-center justify-center">
+          <span className="block min-h-[1.1em] mb-1 sm:mb-2 inline-grid items-center align-middle w-full">
             <AnimatePresence mode="popLayout">
               <motion.span
                 key={words[index]}
@@ -79,9 +79,9 @@ export default function Hero() {
               </motion.span>
             </AnimatePresence>
           </span>
-          <span className="text-slate-400 dark:text-slate-500 flex flex-col w-full text-center">
-            <span>your audio,</span>
-            <span>instantly.</span>
+          <span className="text-slate-400 dark:text-slate-500 flex flex-col sm:inline sm:flex-none w-full text-center sm:text-left leading-tight mt-1 sm:mt-0 text-[9vw] sm:text-[inherit]">
+            <span className="block sm:inline">your audio,</span>
+            <span className="block sm:inline sm:ml-4">instantly.</span>
           </span>
         </h1>
         <p className="mt-6 text-[15px] sm:text-base md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto font-light leading-relaxed px-8 sm:px-4">

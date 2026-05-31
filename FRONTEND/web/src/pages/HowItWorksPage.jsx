@@ -49,11 +49,11 @@ export default function HowItWorksPage() {
       <Navbar />
       
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 overflow-hidden">
+      <section className="relative pt-40 pb-20 overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-96 bg-blue-100/50 dark:bg-blue-900/20 blur-[120px] rounded-full pointer-events-none"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <FadeIn delay={0.1} direction="up">
-            <h1 className="text-5xl sm:text-6xl md:text-7xl font-display font-medium tracking-tight mb-6">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold tracking-tight mb-6">
               How Jexy Works
             </h1>
             <p className="text-lg sm:text-xl text-slate-500 dark:text-slate-400 max-w-2xl mx-auto font-light leading-relaxed">
@@ -68,31 +68,31 @@ export default function HowItWorksPage() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           
           {/* Vertical Connecting Line (Desktop) */}
-          <div className="hidden md:block absolute left-1/2 top-10 bottom-10 w-px bg-slate-200 dark:bg-slate-800 -translate-x-1/2"></div>
+          <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-slate-200 dark:bg-slate-800 -translate-x-1/2 z-0"></div>
 
-          <div className="space-y-16 md:space-y-32">
+          <div className="space-y-12 md:space-y-24 relative z-10">
             {steps.map((step, index) => {
               const Icon = step.icon;
               const isEven = index % 2 === 0;
               
               return (
-                <div key={index} className="relative flex flex-col md:flex-row items-center justify-between w-full">
+                <div key={index} className="relative flex flex-col md:flex-row items-center justify-between w-full group">
                   {/* Step Dot (Desktop) */}
-                  <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white dark:bg-black border border-slate-200 dark:border-slate-800 items-center justify-center z-10 shadow-sm">
-                    <span className="font-display font-medium text-slate-400">{index + 1}</span>
+                  <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white dark:bg-zinc-900 border-2 border-slate-200 dark:border-slate-700 items-center justify-center z-20 shadow-sm transition-colors group-hover:border-blue-400 dark:group-hover:border-blue-500">
+                    <span className="font-display font-medium text-slate-500 dark:text-slate-400 group-hover:text-blue-500">{index + 1}</span>
                   </div>
 
                   {/* Content Container */}
                   <FadeIn 
                     direction={isEven ? "right" : "left"} 
-                    delay={0.2}
-                    className={`w-full md:w-[45%] ${isEven ? 'md:mr-auto' : 'md:ml-auto'}`}
+                    delay={0.1}
+                    className={`w-full md:w-[45%] ${isEven ? 'md:mr-auto md:pr-8' : 'md:ml-auto md:pl-8'}`}
                   >
-                    <div className="bg-white dark:bg-zinc-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/20 dark:shadow-none relative group hover:-translate-y-1 transition-transform duration-300">
+                    <div className="bg-white dark:bg-zinc-900/80 p-8 sm:p-10 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/20 dark:shadow-none hover:-translate-y-1 transition-transform duration-300">
                       <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 bg-gradient-to-br ${step.color} shadow-lg text-white`}>
                         <Icon className="w-6 h-6" />
                       </div>
-                      <h3 className="text-2xl font-display font-medium mb-3">{step.title}</h3>
+                      <h3 className="text-2xl font-display font-bold mb-3 tracking-tight">{step.title}</h3>
                       <p className="text-slate-500 dark:text-slate-400 leading-relaxed font-light">{step.description}</p>
                     </div>
                   </FadeIn>
