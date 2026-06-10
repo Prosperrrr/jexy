@@ -79,7 +79,7 @@ export default function Hero() {
               </motion.span>
             </AnimatePresence>
           </span>
-          <span className="text-slate-400 dark:text-slate-500 flex flex-col sm:inline sm:flex-none w-full text-center sm:text-left leading-tight mt-1 sm:mt-0 text-[9vw] sm:text-[inherit]">
+          <span className="text-slate-400 dark:text-slate-500 flex flex-col sm:inline sm:flex-none w-full text-center sm:text-left leading-tight mt-1 sm:mt-0 text-[10vw] sm:text-6xl md:text-7xl lg:text-[5.5rem]">
             <span className="block sm:inline">your audio,</span>
             <span className="block sm:inline sm:ml-4">instantly.</span>
           </span>
