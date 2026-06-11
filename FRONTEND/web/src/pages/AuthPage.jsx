@@ -194,19 +194,13 @@ export default function AuthPage() {
     setError(null);
     setLoading(true);
     try {
-      if (isSignIn) {
-        await signIn.authenticateWithRedirect({
-          strategy: "oauth_google",
-          redirectUrl: "/sso-callback",
-          redirectUrlComplete: "/dashboard"
-        });
-      } else {
-        await signUp.authenticateWithRedirect({
-          strategy: "oauth_google",
-          redirectUrl: "/sso-callback",
-          redirectUrlComplete: "/dashboard"
-        });
-      }
+      // Clerk recommends ALWAYS using signIn for OAuth. 
+      // If the user doesn't exist, Clerk will seamlessly create the account!
+      await signIn.authenticateWithRedirect({
+        strategy: "oauth_google",
+        redirectUrl: "/sso-callback",
+        redirectUrlComplete: "/dashboard"
+      });
     } catch (err) {
       console.error(err);
       let errorMessage = "An unexpected error occurred. Please try again.";
