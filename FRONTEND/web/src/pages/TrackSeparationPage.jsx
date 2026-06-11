@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import posthog from 'posthog-js';
 import DashboardLayout from '../components/DashboardLayout';
 import Header from '../components/track-separation/Header';
 import TimelineRuler from '../components/track-separation/TimelineRuler';
@@ -387,6 +388,10 @@ const TrackSeparationPage = () => {
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(blobUrl);
+
+        posthog?.capture('Export Stem', {
+          stem: activeStemNames[0],
+        });
       } else {
         // Build volumes payload from current slider state
         const volumes = {};
@@ -413,6 +418,11 @@ const TrackSeparationPage = () => {
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(blobUrl);
+
+        posthog?.capture('Export Mix', {
+          stems_count: activeStemNames.length,
+          stems: activeStemNames,
+        });
       }
     } catch (err) {
       console.error("Export mix failed:", err);

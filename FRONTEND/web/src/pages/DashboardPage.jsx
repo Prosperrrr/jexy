@@ -263,28 +263,7 @@ const DashboardPage = () => {
     switch (currentState) {
       case STATES.IDLE:
         return (
-          <div className="space-y-6 animate-in fade-in duration-500">
-            {persistedJob && (
-              <div className="bg-slate-900 rounded-3xl p-6 border border-slate-800 flex flex-col sm:flex-row items-center justify-between shadow-2xl relative overflow-hidden group">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="flex items-center space-x-4 mb-4 sm:mb-0 z-10 w-full sm:w-auto">
-                  <div className="w-12 h-12 bg-white/10 text-white rounded-full flex items-center justify-center shrink-0">
-                    <CheckCircle2 className="w-6 h-6 text-emerald-400" />
-                  </div>
-                  <div className="truncate pr-4">
-                    <h4 className="font-display font-bold text-white text-[15px] truncate">{persistedJob.filename}</h4>
-                    <p className="text-[13px] text-slate-400 font-medium mt-0.5">Processing completed • {persistedJob.type === 'music' ? 'Stem Separation' : 'Speech Denoising'}</p>
-                  </div>
-                </div>
-                <div className="flex gap-3 w-full sm:w-auto z-10 shrink-0">
-                  <button onClick={() => navigate(persistedJob.type === 'speech' ? '/audio-enhancer' : '/track-separation')} className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-2.5 rounded-full transition-colors whitespace-nowrap text-sm shadow-[0_0_15px_rgba(37,99,235,0.4)] hover:shadow-[0_0_20px_rgba(37,99,235,0.6)] active:scale-95">
-                    View Results
-                  </button>
-                </div>
-              </div>
-            )}
-            <IdleView onFileSelect={handleFileSelect} />
-          </div>
+          <IdleView onFileSelect={handleFileSelect} />
         );
 
       case STATES.UPLOADING:

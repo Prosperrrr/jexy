@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import posthog from 'posthog-js';
 import DashboardLayout from '../components/DashboardLayout';
 import AudioPlayerCard from '../components/audio-enhancer/AudioPlayerCard';
 import TranscriptionSection from '../components/audio-enhancer/TranscriptionSection';
@@ -190,6 +191,7 @@ const AudioEnhancerPage = () => {
             link.href = fullUrlDownloads.clean_audio;
             link.download = `jexy_enhanced_${safeMetadata.filename || 'audio'}`;
             link.click();
+            posthog?.capture('Export Enhanced Audio');
           }}
           isExporting={false}
         />

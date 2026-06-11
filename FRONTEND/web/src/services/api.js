@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { auth } from '@/lib/firebase';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000',
@@ -9,7 +8,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     config.headers['ngrok-skip-browser-warning'] = 'true';
-    const uid = auth.currentUser?.uid;
+    const uid = window.Clerk?.user?.id;
     if (uid) {
       config.headers['X-User-ID'] = uid;
     }
