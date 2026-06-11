@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { History, FileAudio, Loader2, AlertCircle, Trash2 } from 'lucide-react';
+import { History, FileAudio, Loader2, AlertCircle, Trash2, Search } from 'lucide-react';
 import { getUserJobs, deleteJob } from '../../services/api';
 import { useNavigate } from 'react-router-dom';
 
@@ -42,8 +42,13 @@ const SessionHistory = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const visibleJobs = isExpanded ? jobs : jobs.slice(0, 6);
+  const filteredJobs = jobs.filter(job => 
+    job.filename?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const visibleJobs = isExpanded ? filteredJobs : filteredJobs.slice(0, 6);
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -87,10 +92,27 @@ const SessionHistory = () => {
   return (
     <div className="w-full bg-white rounded-3xl border border-slate-100 flex flex-col shadow-sm mt-6 mb-12 transition-all duration-500 ease-in-out">
       {/* Header */}
-      <div className="p-5 md:p-8 border-b border-slate-50">
+      <div className="p-5 md:p-8 border-b border-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center space-x-3">
           <History className="w-5 h-5 text-slate-800" />
           <h2 className="font-display font-bold text-slate-900 text-lg">Session History</h2>
+          {!loading && (
+            <span className="bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full text-xs font-semibold shrink-0">
+              {jobs.length} Total
+            </span>
+          )}
+        </div>
+        
+        {/* Search Input */}
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search sessions..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full sm:w-64 pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-slate-300 focus:bg-white transition-all text-slate-600 placeholder:text-slate-400"
+          />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
         </div>
       </div>
 
@@ -111,6 +133,12 @@ const SessionHistory = () => {
             <History className="w-12 h-12 mb-4 opacity-20" />
             <p className="text-[15px] font-medium text-slate-500">No sessions yet</p>
             <p className="text-sm">Upload an audio file to get started.</p>
+          </div>
+        ) : filteredJobs.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+            <Search className="w-12 h-12 mb-4 opacity-20" />
+            <p className="text-[15px] font-medium text-slate-500">No results found</p>
+            <p className="text-sm">No sessions match your search query.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
@@ -152,7 +180,7 @@ const SessionHistory = () => {
       </div>
 
       {/* Footer / CTA */}
-      {jobs.length > 6 && (
+      {filteredJobs.length > 6 && (
         <div className="p-5 bg-slate-50/50 rounded-b-3xl mt-auto border-t border-slate-100 items-center justify-center flex transition-colors hover:bg-slate-100/50 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
           <button className="text-[11px] font-display font-bold text-slate-500 tracking-wider transition-colors uppercase">
             {isExpanded ? 'VIEW LESS' : 'VIEW ALL ARCHIVES'}
