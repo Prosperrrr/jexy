@@ -8,7 +8,8 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     config.headers['ngrok-skip-browser-warning'] = 'true';
-    const uid = window.Clerk?.user?.id;
+    const clerkUser = window.Clerk?.user;
+    const uid = clerkUser?.externalId || clerkUser?.id;
     if (uid) {
       config.headers['X-User-ID'] = uid;
     }
