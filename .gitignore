@@ -6,6 +6,7 @@ BACKEND/venv/
 BACKEND/.venv/
 
 # Frontend
+node_modules/
 FRONTEND/node_modules/
 FRONTEND/web/node_modules/
 FRONTEND/web/dist/
