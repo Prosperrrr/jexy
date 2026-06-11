@@ -32,7 +32,15 @@ function App() {
           <Route path="/how-it-works" element={<HowItWorksPage />} />
           
           {/* SSO Callback */}
-          <Route path="/sso-callback" element={<AuthenticateWithRedirectCallback signUpForceRedirectUrl="/dashboard" signInForceRedirectUrl="/dashboard" />} />
+          <Route path="/sso-callback" element={
+            <div className="min-h-screen bg-slate-50 dark:bg-[#0a0a0a] flex flex-col items-center justify-center">
+              <div className="flex flex-col items-center gap-4">
+                <span className="material-symbols-outlined animate-spin-slow text-4xl text-slate-400 dark:text-slate-500">loop</span>
+                <p className="text-slate-500 dark:text-slate-400 font-light tracking-wide text-sm">Completing sign in...</p>
+              </div>
+              <AuthenticateWithRedirectCallback signUpForceRedirectUrl="/dashboard" signInForceRedirectUrl="/dashboard" />
+            </div>
+          } />
         
         {/* Auth Routes */}
         <Route path="/login" element={
