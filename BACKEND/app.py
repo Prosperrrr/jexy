@@ -67,6 +67,7 @@ os.makedirs('processed', exist_ok=True)
 # Store for tracking background jobs and file metadata
 processing_jobs = {}
 uploaded_files = {}  # Store file info before starting processing
+cancelled_jobs = set()  # Track jobs cancelled by the user
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -239,7 +240,18 @@ def confirm_and_process(file_id):
 def process_music_background(filepath, job_id):
     """Background function to process music"""
     try:
+        # Check cancellation before starting the heavy work
+        if job_id in cancelled_jobs:
+            app.logger.info(f"Job {job_id} was cancelled before music processing started.")
+            return
+
         result = music_processor.process(filepath, job_id)
+
+        # Check cancellation after the long Demucs/Whisper step finishes
+        if job_id in cancelled_jobs:
+            app.logger.info(f"Job {job_id} was cancelled after processing; skipping completion.")
+            return
+
         processing_jobs[job_id] = {"status": "completed", "type": "music"}
         # Update Supabase: status + metadata + stems_data
         try:
@@ -263,6 +275,10 @@ def process_music_background(filepath, job_id):
         except Exception as e:
             app.logger.error(f"Supabase update failed for job {job_id}: {e}")
     except Exception as e:
+        # Don't mark as failed if it was intentionally cancelled
+        if job_id in cancelled_jobs:
+            app.logger.info(f"Music job {job_id} raised exception after cancellation (expected): {e}")
+            return
         processing_jobs[job_id] = {"status": "failed", "type": "music", "error": str(e)}
         # Update Supabase job status
         try:
@@ -273,7 +289,18 @@ def process_music_background(filepath, job_id):
 def process_speech_background(filepath, job_id):
     """Background function to process speech"""
     try:
+        # Check cancellation before starting the heavy work
+        if job_id in cancelled_jobs:
+            app.logger.info(f"Job {job_id} was cancelled before speech processing started.")
+            return
+
         result = speech_processor.process(filepath, job_id)
+
+        # Check cancellation after the long DeepFilterNet/Whisper step finishes
+        if job_id in cancelled_jobs:
+            app.logger.info(f"Job {job_id} was cancelled after processing; skipping completion.")
+            return
+
         processing_jobs[job_id] = {"status": "completed", "type": "speech"}
         # Update Supabase: status + metadata + transcript
         try:
@@ -291,6 +318,10 @@ def process_speech_background(filepath, job_id):
         except Exception as e:
             app.logger.error(f"Supabase update failed for job {job_id}: {e}")
     except Exception as e:
+        # Don't mark as failed if it was intentionally cancelled
+        if job_id in cancelled_jobs:
+            app.logger.info(f"Speech job {job_id} raised exception after cancellation (expected): {e}")
+            return
         processing_jobs[job_id] = {"status": "failed", "type": "speech", "error": str(e)}
         # Update Supabase job status
         try:
@@ -303,6 +334,10 @@ def process_speech_background(filepath, job_id):
 @app.route('/api/process/music/<job_id>/status', methods=['GET'])
 def get_music_status(job_id):
     """Check status of music processing job"""
+    # Return cancelled status gracefully if the job was cancelled
+    if job_id in cancelled_jobs:
+        return jsonify({"status": "cancelled", "job_id": job_id}), 200
+
     # First check if job is currently processing (in memory)
     if job_id in processing_jobs:
         job_info = processing_jobs[job_id]
@@ -536,6 +571,10 @@ def mix_stems(job_id):
 @app.route('/api/process/speech/<job_id>/status', methods=['GET'])
 def get_speech_status(job_id):
     """Check status of speech processing job"""
+    # Return cancelled status gracefully if the job was cancelled
+    if job_id in cancelled_jobs:
+        return jsonify({"status": "cancelled", "job_id": job_id}), 200
+
     # First check if job is currently processing (in memory)
     if job_id in processing_jobs:
         job_info = processing_jobs[job_id]
@@ -692,6 +731,45 @@ def get_user_jobs():
         return jsonify({"error": str(e)}), 500
 
 import shutil
+
+@app.route('/api/jobs/<job_id>/cancel', methods=['POST'])
+def cancel_job(job_id):
+    """Cancel an actively processing job, stop the worker, and clean up all data."""
+    user_id = request.headers.get('X-User-ID')
+    if not user_id:
+        return jsonify({"error": "X-User-ID header is required"}), 401
+
+    try:
+        # Verify job belongs to user before allowing cancellation
+        result = supabase.table('jobs').select('user_id').eq('id', job_id).execute()
+        if result.data and result.data[0]['user_id'] != user_id:
+            return jsonify({"error": "Unauthorized"}), 403
+    except Exception as e:
+        app.logger.warning(f"Could not verify job ownership for {job_id} (may already be deleted): {e}")
+
+    # 1. Signal the background thread to abort at its next checkpoint
+    cancelled_jobs.add(job_id)
+
+    # 2. Update in-memory status immediately so polling stops cleanly
+    if job_id in processing_jobs:
+        processing_jobs[job_id]['status'] = 'cancelled'
+
+    # 3. Delete record from Supabase (so it never appears in history)
+    try:
+        supabase.table('jobs').delete().eq('id', job_id).execute()
+    except Exception as e:
+        app.logger.error(f"Supabase delete failed during cancellation of job {job_id}: {e}")
+
+    # 4. Delete any partially-written files from the filesystem
+    job_dir = os.path.join(PROCESSED_DIR, job_id)
+    if os.path.exists(job_dir):
+        try:
+            shutil.rmtree(job_dir)
+        except Exception as e:
+            app.logger.error(f"Filesystem cleanup failed for job {job_id}: {e}")
+
+    app.logger.info(f"Job {job_id} cancelled and cleaned up.")
+    return jsonify({"success": True, "message": "Job cancelled successfully"}), 200
 
 @app.route('/api/jobs/<job_id>', methods=['DELETE'])
 def delete_job(job_id):

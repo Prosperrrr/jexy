@@ -48,29 +48,47 @@ export const IdleView = ({ onFileSelect }) => {
   );
 };
 
-export const UploadingView = ({ progress, filename, onCancel }) => {
+export const UploadingView = ({ progress, filename, isClassifying = false, onCancel }) => {
   return (
     <div className="bg-white rounded-3xl p-6 md:p-16 border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center relative overflow-hidden h-auto min-h-[400px] md:h-[460px]">
       <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-8">
         <div className="w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
-      <h2 className="text-2xl md:text-3xl font-display font-bold text-slate-900 mb-3 tracking-tight">Uploading audio file...</h2>
-      <p className="text-slate-400 mb-10 max-w-sm mx-auto font-medium">
-        Sending signals to YAMNet for classification.
-      </p>
+      
+      <div className="relative h-20 w-full flex flex-col items-center justify-center mb-6">
+        <div className={`absolute transition-all duration-500 flex flex-col items-center w-full ${isClassifying ? '-translate-y-4 opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
+          <h2 className="text-2xl md:text-3xl font-display font-bold text-slate-900 mb-3 tracking-tight">Uploading audio file...</h2>
+          <p className="text-slate-400 max-w-sm mx-auto font-medium">Transferring securely to cloud...</p>
+        </div>
+        <div className={`absolute transition-all duration-500 flex flex-col items-center w-full ${isClassifying ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0 pointer-events-none'}`}>
+          <h2 className="text-2xl md:text-3xl font-display font-bold text-slate-900 mb-3 tracking-tight">Processing audio...</h2>
+          <p className="text-slate-400 max-w-sm mx-auto font-medium">Intelligently Classifying Audio File.</p>
+        </div>
+      </div>
 
       {/* Upload Progress Bar container */}
       <div className="w-full max-w-md bg-slate-100 rounded-full h-2 mb-4 overflow-hidden relative">
-        <div 
-          className="bg-blue-500 h-2 rounded-full transition-all duration-300 left-0 top-0 absolute" 
-          style={{ width: `${progress}%` }}
-        ></div>
+        {isClassifying ? (
+          <div className="h-2 rounded-full absolute top-0 bg-blue-500 w-1/2 animate-[progress-indeterminate_1.5s_ease-in-out_infinite]"></div>
+        ) : (
+          <div 
+            className="bg-blue-500 h-2 rounded-full transition-all duration-300 left-0 top-0 absolute" 
+            style={{ width: `${progress}%` }}
+          ></div>
+        )}
       </div>
       
       <div className="flex flex-col sm:flex-row justify-between items-center w-full max-w-md text-sm font-semibold mt-8 text-slate-400 space-y-3 sm:space-y-0">
         <span className="font-display truncate max-w-[200px] text-slate-900">{filename}</span>
-        <button onClick={onCancel} className="font-display text-red-500 hover:text-red-600 uppercase tracking-wider text-xs font-bold">CANCEL UPLOAD</button>
+        <button onClick={onCancel} className="font-display text-red-500 hover:text-red-600 uppercase tracking-wider text-xs font-bold transition-colors">CANCEL UPLOAD</button>
       </div>
+
+      <style>{`
+        @keyframes progress-indeterminate {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(200%); }
+        }
+      `}</style>
     </div>
   );
 };
@@ -90,7 +108,7 @@ export const ConfirmingView = ({ type, confidence, onConfirm, onToggle }) => {
         {isMusic ? 'Music Detected' : 'Speech Detected'}
       </h2>
       <p className="text-slate-500 mb-10 max-w-md mx-auto">
-        YAMNet classified audio as {isMusic ? 'Music' : 'Speech'} with {confidence}% confidence
+        Audio file was classified as {isMusic ? 'Music' : 'Speech'} with {confidence}% confidence
       </p>
       
       <div className="w-full max-w-md mb-10">
@@ -124,7 +142,7 @@ export const ConfirmingView = ({ type, confidence, onConfirm, onToggle }) => {
   );
 };
 
-export const ProcessingView = ({ title, subtitle, progress, isIndeterminate = false, activeTask, type }) => {
+export const ProcessingView = ({ title, subtitle, progress, isIndeterminate = false, activeTask, type, onCancel }) => {
   const isMusic = type === 'music';
   const colorClass = isMusic ? 'bg-purple-500' : 'bg-blue-500';
   const lightColorClass = isMusic ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600';
@@ -148,7 +166,7 @@ export const ProcessingView = ({ title, subtitle, progress, isIndeterminate = fa
         </div>
         <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden relative">
           {isIndeterminate ? (
-            <div className={`h-2 rounded-full absolute top-0 ${colorClass} w-1/3 animate-[pulse_2s_ease-in-out_infinite]`}></div>
+            <div className={`h-2 rounded-full absolute top-0 ${colorClass} w-1/2 animate-[progress-indeterminate_1.5s_ease-in-out_infinite]`}></div>
           ) : (
             <div className={`h-2 rounded-full absolute left-0 top-0 transition-all duration-300 ${colorClass}`} style={{ width: `${progress}%` }}></div>
           )}
@@ -159,10 +177,24 @@ export const ProcessingView = ({ title, subtitle, progress, isIndeterminate = fa
         {subtitle}
       </p>
 
-      <button className={`mt-10 font-display w-full sm:w-auto justify-center ${lightColorClass} font-bold py-4 px-12 rounded-full pointer-events-none flex items-center space-x-2`}>
-        <RefreshCcw className="w-5 h-5 animate-spin" />
-        <span>PROCESSING...</span>
-      </button>
+      <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4 mt-10 w-full">
+        <button className={`font-display w-full sm:w-auto justify-center ${lightColorClass} font-bold py-4 px-12 rounded-full pointer-events-none flex items-center space-x-2`}>
+          <RefreshCcw className="w-5 h-5 animate-spin" />
+          <span>PROCESSING...</span>
+        </button>
+        {onCancel && (
+          <button onClick={onCancel} className="font-display w-full sm:w-auto bg-white hover:bg-slate-50 border border-slate-200 text-slate-500 hover:text-red-500 font-bold py-4 px-8 rounded-full transition-colors">
+            Cancel
+          </button>
+        )}
+      </div>
+
+      <style>{`
+        @keyframes progress-indeterminate {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(200%); }
+        }
+      `}</style>
     </div>
   );
 };

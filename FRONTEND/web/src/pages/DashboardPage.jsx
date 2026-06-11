@@ -4,7 +4,7 @@ import { CheckCircle2 } from 'lucide-react';
 import DashboardLayout from '../components/DashboardLayout';
 import SessionHistory from '../components/dashboard/SessionHistory';
 import ProcessingPipeline from '../components/dashboard/ProcessingPipeline';
-import { uploadAudio, confirmAndProcess, getMusicStatus, getSpeechStatus } from '../services/api';
+import { uploadAudio, confirmAndProcess, getMusicStatus, getSpeechStatus, cancelJob } from '../services/api';
 import {
   IdleView,
   UploadingView,
@@ -62,15 +62,15 @@ const DashboardPage = () => {
     setUploadProgress(0);
     setErrorMessage('');
 
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 5;
-      if (progress <= 90) setUploadProgress(progress);
-    }, 200);
-
     try {
-      const result = await uploadAudio(selectedFile);
-      clearInterval(interval);
+      const result = await uploadAudio(selectedFile, (progressEvent) => {
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        if (percentCompleted <= 100) {
+          setUploadProgress(percentCompleted);
+        }
+      });
+      
+      // Upload finished, now waiting for classification to complete
       setUploadProgress(100);
       setFileId(result.file_id);
       setConfidence(result.confidence);
@@ -80,7 +80,6 @@ const DashboardPage = () => {
         setCurrentState(isSpeech ? STATES.CONFIRMING_SPEECH : STATES.CONFIRMING_MUSIC);
       }, 500);
     } catch (error) {
-      clearInterval(interval);
       setErrorMessage(error.response?.data?.error || error.message || 'Upload failed');
       setCurrentState(STATES.ERROR);
     }
@@ -90,6 +89,21 @@ const DashboardPage = () => {
     setCurrentState(STATES.IDLE);
     setFile(null);
     setFileId(null);
+    setUploadProgress(0);
+  };
+
+  const cancelProcessing = async () => {
+    if (jobId) {
+      try {
+        await cancelJob(jobId);
+      } catch (error) {
+        console.error("Cancellation failed", error);
+      }
+    }
+    setCurrentState(STATES.IDLE);
+    setFile(null);
+    setFileId(null);
+    setJobId(null);
     setUploadProgress(0);
   };
 
@@ -134,6 +148,13 @@ const DashboardPage = () => {
         if (statusData.status === 'completed') {
           setCurrentState(STATES.COMPLETE);
           clearInterval(intervalId);
+        } else if (statusData.status === 'cancelled') {
+          // Backend confirmed cancellation — reset cleanly, no error shown
+          clearInterval(intervalId);
+          setCurrentState(STATES.IDLE);
+          setFile(null);
+          setFileId(null);
+          setJobId(null);
         } else if (statusData.status === 'failed') {
           setErrorMessage(statusData.error || 'Processing failed');
           setCurrentState(STATES.ERROR);
@@ -143,13 +164,13 @@ const DashboardPage = () => {
              if (statusData.current_step?.toLowerCase().includes('transcrib')) {
                setCurrentState(STATES.PROCESSING_MUSIC_TRANSCRIPT);
              } else {
-               setCurrentState(STATES.PROCESSING_MUSIC_STEMS);
+               setCurrentState(prev => prev === STATES.PROCESSING_MUSIC_TRANSCRIPT ? prev : STATES.PROCESSING_MUSIC_STEMS);
              }
           } else {
              if (statusData.current_step?.toLowerCase().includes('transcrib')) {
                setCurrentState(STATES.PROCESSING_SPEECH_TRANSCRIPT);
              } else {
-               setCurrentState(STATES.PROCESSING_SPEECH_DENOISE);
+               setCurrentState(prev => prev === STATES.PROCESSING_SPEECH_TRANSCRIPT ? prev : STATES.PROCESSING_SPEECH_DENOISE);
              }
           }
         }
@@ -271,6 +292,7 @@ const DashboardPage = () => {
           <UploadingView
             progress={uploadProgress}
             filename={file?.name || 'audio_file.wav'}
+            isClassifying={uploadProgress === 100}
             onCancel={cancelUpload}
           />
         );
@@ -299,11 +321,12 @@ const DashboardPage = () => {
         return (
           <ProcessingView
             title="Stem Separation"
-            subtitle="Separating raw audio signal into 4 distinct instrument stems using Demucs."
+            subtitle="Separating audio into clean, high-fidelity stems."
             activeTask="Separating Audio Stems"
             type="music"
             progress={100}
             isIndeterminate={true}
+            onCancel={cancelProcessing}
           />
         );
 
@@ -311,11 +334,12 @@ const DashboardPage = () => {
         return (
           <ProcessingView
             title="Neural Transcription"
-            subtitle="Extracting high-fidelity text from separated vocal stems using the Whisper large-v3 model."
+            subtitle="Extracting text from isolated vocals."
             activeTask="Transcribing Audio Stems"
             type="music"
             progress={100}
             isIndeterminate={true}
+            onCancel={cancelProcessing}
           />
         );
 
@@ -323,11 +347,12 @@ const DashboardPage = () => {
         return (
           <ProcessingView
             title="Speech Denoising"
-            subtitle="Improving overall quality and reducing background noise using DeepFilterNet."
+            subtitle="Applying AI noise suppression and speech enhancement."
             activeTask="Denoising Audio..."
             type="speech"
             progress={100}
             isIndeterminate={true}
+            onCancel={cancelProcessing}
           />
         );
 
@@ -335,11 +360,12 @@ const DashboardPage = () => {
         return (
           <ProcessingView
             title="Transcribing Audio"
-            subtitle="Extracting high-fidelity text from the enhanced speech file using the whisper large-v3 model."
+            subtitle="Generating accurate, timestamped transcripts from enhanced audio."
             activeTask="Transcribing Speech Content"
             type="speech"
             progress={100}
             isIndeterminate={true}
+            onCancel={cancelProcessing}
           />
         );
 

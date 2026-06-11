@@ -24,7 +24,7 @@ api.interceptors.request.use(
  * Upload an audio file for initial classification
  * POST /api/upload
  */
-export const uploadAudio = async (file) => {
+export const uploadAudio = async (file, onUploadProgress) => {
   const formData = new FormData();
   formData.append('file', file);
   
@@ -32,6 +32,7 @@ export const uploadAudio = async (file) => {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
+    onUploadProgress,
   });
   return response.data;
 };
@@ -96,6 +97,15 @@ export const getUserJobs = async () => {
  */
 export const deleteJob = async (job_id) => {
   const response = await api.delete(`/api/jobs/${job_id}`);
+  return response.data;
+};
+
+/**
+ * Cancel an actively processing job
+ * POST /api/jobs/{job_id}/cancel
+ */
+export const cancelJob = async (job_id) => {
+  const response = await api.post(`/api/jobs/${job_id}/cancel`);
   return response.data;
 };
 
