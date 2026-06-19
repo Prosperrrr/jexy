@@ -8,6 +8,7 @@ import torch
 from df.enhance import enhance, init_df, load_audio, save_audio as df_save_audio
 from pathlib import Path
 from datetime import datetime
+import redis
 
 class SpeechProcessor:
     """
@@ -29,8 +30,9 @@ class SpeechProcessor:
         # Supabase client (optional — enables cloud storage upload)
         self.supabase = supabase
         
-        # Progress tracking
-        self.current_progress = {}
+        # Redis client for progress tracking (shared with Flask web server)
+        redis_url = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+        self.redis_client = redis.Redis.from_url(redis_url)
         
         print("Speech processor initialized!")
     
@@ -306,21 +308,24 @@ class SpeechProcessor:
             }
     
     def _update_progress(self, job_id, percent, message):
-        """Update processing progress for a job"""
-        self.current_progress[job_id] = {
+        """Update processing progress for a job (stored in Redis)"""
+        progress_data = json.dumps({
             "percent": percent,
             "message": message,
             "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
+        })
+        self.redis_client.setex(f"progress:{job_id}", 3600, progress_data)
     
     def _clear_progress(self, job_id):
         """Clear progress tracking after job completes"""
-        if job_id in self.current_progress:
-            del self.current_progress[job_id]
+        self.redis_client.delete(f"progress:{job_id}")
     
     def get_progress(self, job_id):
         """Get current progress for a job"""
-        return self.current_progress.get(job_id, None)
+        raw = self.redis_client.get(f"progress:{job_id}")
+        if raw:
+            return json.loads(raw)
+        return None
     
     def export_transcript_txt(self, job_id):
         """Export transcript as plain text file"""

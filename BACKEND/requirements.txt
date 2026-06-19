@@ -24,3 +24,7 @@ torchaudio>=2.3.0
 
 #database
 supabase
+
+# Task Queue & Caching
+celery==5.3.6
+redis==5.0.1

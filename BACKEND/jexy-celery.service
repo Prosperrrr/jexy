@@ -1,0 +1,27 @@
+[Unit]
+Description=Jexy Celery Worker (Audio Processing)
+After=network.target redis-server.service
+Requires=redis-server.service
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/root/JEXY/BACKEND
+Environment="PATH=/root/JEXY/BACKEND/venv/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="CUDA_VISIBLE_DEVICES=0"
+ExecStart=/root/JEXY/BACKEND/venv/bin/celery -A celery_app worker --loglevel=info --pool=solo --concurrency=1
+
+# Restart policy
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=append:/var/log/jexy-celery.log
+StandardError=append:/var/log/jexy-celery-error.log
+
+# Give the worker 30s to gracefully finish a task before SIGKILL
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

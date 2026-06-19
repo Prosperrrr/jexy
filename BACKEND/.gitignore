@@ -2,3 +2,6 @@ uploads/
 processed/
 .env
 .venv/
+venv/
+project_files/
+__pycache__/

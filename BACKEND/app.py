@@ -24,12 +24,13 @@ from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import threading
+import json
 import uuid
-from models.classifier import AudioClassifier
-from models.music_processor import MusicProcessor
-from models.speech_processor import SpeechProcessor
+import shutil
+import redis
 from models.yamnet_classifier import YAMNetClassifier
 from utils.rate_limiter import RateLimiter
+from celery_app import celery_app, process_music_task, process_speech_task
 
 from supabase import create_client, Client
 
@@ -41,13 +42,15 @@ SUPABASE_URL = os.environ.get('SUPABASE_URL')
 SUPABASE_SERVICE_KEY = os.environ.get('SUPABASE_SERVICE_KEY')
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
+# Initialize Redis client (shared state across Gunicorn workers)
+REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+redis_client = redis.Redis.from_url(REDIS_URL)
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROCESSED_DIR = os.path.join(BASE_DIR, 'processed')
 
-# Initialize models
-# classifier = AudioClassifier()  # Old classifier this is kept for documentation/backup    
-music_processor = MusicProcessor(supabase=supabase)
-speech_processor = SpeechProcessor(supabase=supabase)
+# Initialize models — only YAMNet needed in the web server (lightweight classifier)
+# Demucs, Whisper, DeepFilterNet now load inside the Celery worker process only
 yamnet_classifier = YAMNetClassifier()  #Google YAMNet classifier 
 
 
@@ -64,11 +67,6 @@ ALLOWED_EXTENSIONS = {'mp3', 'wav', 'ogg', 'flac', 'm4a'}
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs('processed', exist_ok=True)
 
-# Store for tracking background jobs and file metadata
-processing_jobs = {}
-uploaded_files = {}  # Store file info before starting processing
-cancelled_jobs = set()  # Track jobs cancelled by the user
-
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
@@ -78,7 +76,7 @@ def allowed_file(filename):
 def home():
     return jsonify({
         "message": "Welcome to Jexy API",
-        "version": "1.1.0",
+        "version": "2.0.0",
         "status": "running"
     })
 
@@ -103,7 +101,7 @@ def upload_audio():
             "error": "Rate limit exceeded",
             "message": f"Too many uploads. Please wait {reset_time} seconds.",
             "retry_after": reset_time
-        }), 429  # HTTP 429 Too Many Requests
+        }), 429  # HTTP 429, i.e Too Many Requests
     
     if 'file' not in request.files:
         return jsonify({"error": "No file provided"}), 400
@@ -122,7 +120,7 @@ def upload_audio():
         file_id = str(uuid.uuid4())
         
         try:
-            # Classify with YAMNet (takes ~5 seconds)
+            # Classify with the YAMNet model 
             result = yamnet_classifier.classify(filepath)
             
             if result is None:
@@ -132,14 +130,14 @@ def upload_audio():
                     "suggestion": "Please specify if this is music or speech"
                 }), 500
             
-            # Store file info for later processing
-            uploaded_files[file_id] = {
+            # Store file info in Redis with 1-hour TTL (shared across all Gunicorn workers)
+            redis_client.setex(f"upload:{file_id}", 3600, json.dumps({
                 "filename": filename,
                 "filepath": filepath,
                 "detected_type": result['classification'],
                 "confidence": result['confidence'],
                 "top_predictions": result['top_predictions']
-            }
+            }))
             
             return jsonify({
                 "file_id": file_id,
@@ -162,12 +160,14 @@ def upload_audio():
 @app.route('/api/process/<file_id>', methods=['POST'])
 def confirm_and_process(file_id):
     """
-    STAGE 2: User confirms content type and starts processing
+    STAGE 2: User confirms content type and starts processing via Celery
     """
-    if file_id not in uploaded_files:
-        return jsonify({"error": "File ID not found"}), 404
+    # Look up file info from Redis (instead of in-memory dict)
+    file_info_raw = redis_client.get(f"upload:{file_id}")
+    if not file_info_raw:
+        return jsonify({"error": "File ID not found or expired"}), 404
     
-    file_info = uploaded_files[file_id]
+    file_info = json.loads(file_info_raw)
     
     # Get user's confirmed content type (or use detected)
     data = request.get_json() or {}
@@ -179,7 +179,7 @@ def confirm_and_process(file_id):
     # Generate processing job ID
     job_id = str(uuid.uuid4())
 
-    # Get user_id from request header (Firebase UID sent by frontend)
+    # Get user_id from request header (Clerk UID sent by frontend)
     user_id = request.headers.get('X-User-ID', None)
 
     # Save job record to Supabase
@@ -196,15 +196,9 @@ def confirm_and_process(file_id):
     except Exception as e:
         app.logger.error(f"Supabase insert failed for job {job_id}: {e}")
 
-    # Start processing
+    # Dispatch processing to Celery worker (returns immediately)
     if content_type == "music":
-        processing_jobs[job_id] = {"status": "processing", "type": "music"}
-        thread = threading.Thread(
-            target=process_music_background,
-            args=(file_info['filepath'], job_id)
-        )
-        thread.daemon = True
-        thread.start()
+        task = process_music_task.delay(file_info['filepath'], job_id)
         
         return jsonify({
             "job_id": job_id,
@@ -218,13 +212,7 @@ def confirm_and_process(file_id):
         }), 200
         
     elif content_type == "speech":
-        processing_jobs[job_id] = {"status": "processing", "type": "speech"}
-        thread = threading.Thread(
-            target=process_speech_background,
-            args=(file_info['filepath'], job_id)
-        )
-        thread.daemon = True
-        thread.start()
+        task = process_speech_task.delay(file_info['filepath'], job_id)
         
         return jsonify({
             "job_id": job_id,
@@ -237,139 +225,69 @@ def confirm_and_process(file_id):
             "estimated_time": "-"
         }), 200
 
-def process_music_background(filepath, job_id):
-    """Background function to process music"""
-    try:
-        # Check cancellation before starting the heavy work
-        if job_id in cancelled_jobs:
-            app.logger.info(f"Job {job_id} was cancelled before music processing started.")
-            return
-
-        result = music_processor.process(filepath, job_id)
-
-        # Check cancellation after the long Demucs/Whisper step finishes
-        if job_id in cancelled_jobs:
-            app.logger.info(f"Job {job_id} was cancelled after processing; skipping completion.")
-            return
-
-        processing_jobs[job_id] = {"status": "completed", "type": "music"}
-        # Update Supabase: status + metadata + stems_data
-        try:
-            music_metadata = {
-                "key": result.get('key'),
-                "bpm": result.get('bpm'),
-                "duration": result.get('duration'),
-                "sample_rate": result.get('sample_rate'),
-                "lyrics": result.get('lyrics'),
-                "processed_at": result.get('processed_at')
-            }
-            stems_data = {
-                name: {"active": info.get('active'), "url": info.get('url', '')}
-                for name, info in (result.get('stems') or {}).items()
-            }
-            supabase.table('jobs').update({
-                'status': 'completed',
-                'metadata': music_metadata,
-                'stems_data': stems_data
-            }).eq('id', job_id).execute()
-        except Exception as e:
-            app.logger.error(f"Supabase update failed for job {job_id}: {e}")
-    except Exception as e:
-        # Don't mark as failed if it was intentionally cancelled
-        if job_id in cancelled_jobs:
-            app.logger.info(f"Music job {job_id} raised exception after cancellation (expected): {e}")
-            return
-        processing_jobs[job_id] = {"status": "failed", "type": "music", "error": str(e)}
-        # Update Supabase job status
-        try:
-            supabase.table('jobs').update({'status': 'failed'}).eq('id', job_id).execute()
-        except Exception as db_e:
-            app.logger.error(f"Supabase update failed for job {job_id}: {db_e}")
-
-def process_speech_background(filepath, job_id):
-    """Background function to process speech"""
-    try:
-        # Check cancellation before starting the heavy work
-        if job_id in cancelled_jobs:
-            app.logger.info(f"Job {job_id} was cancelled before speech processing started.")
-            return
-
-        result = speech_processor.process(filepath, job_id)
-
-        # Check cancellation after the long DeepFilterNet/Whisper step finishes
-        if job_id in cancelled_jobs:
-            app.logger.info(f"Job {job_id} was cancelled after processing; skipping completion.")
-            return
-
-        processing_jobs[job_id] = {"status": "completed", "type": "speech"}
-        # Update Supabase: status + metadata + transcript
-        try:
-            speech_metadata = {
-                "duration": result.get('duration'),
-                "sample_rate": result.get('sample_rate'),
-                "clean_audio_url": result.get('clean_audio_url', ''),
-                "processed_at": result.get('processed_at')
-            }
-            supabase.table('jobs').update({
-                'status': 'completed',
-                'metadata': speech_metadata,
-                'transcript': result.get('transcript')
-            }).eq('id', job_id).execute()
-        except Exception as e:
-            app.logger.error(f"Supabase update failed for job {job_id}: {e}")
-    except Exception as e:
-        # Don't mark as failed if it was intentionally cancelled
-        if job_id in cancelled_jobs:
-            app.logger.info(f"Speech job {job_id} raised exception after cancellation (expected): {e}")
-            return
-        processing_jobs[job_id] = {"status": "failed", "type": "speech", "error": str(e)}
-        # Update Supabase job status
-        try:
-            supabase.table('jobs').update({'status': 'failed'}).eq('id', job_id).execute()
-        except Exception as db_e:
-            app.logger.error(f"Supabase update failed for job {job_id}: {db_e}")
-
 # MUSIC PROCESSING route
 
 @app.route('/api/process/music/<job_id>/status', methods=['GET'])
 def get_music_status(job_id):
     """Check status of music processing job"""
     # Return cancelled status gracefully if the job was cancelled
-    if job_id in cancelled_jobs:
+    if redis_client.sismember('cancelled_jobs', job_id):
         return jsonify({"status": "cancelled", "job_id": job_id}), 200
 
-    # First check if job is currently processing (in memory)
-    if job_id in processing_jobs:
-        job_info = processing_jobs[job_id]
+    # Check Supabase for the job's current status
+    try:
+        result = supabase.table('jobs').select('status').eq('id', job_id).execute()
+        if result.data:
+            db_status = result.data[0]['status']
+            if db_status == 'completed':
+                return jsonify({
+                    "status": "completed",
+                    "job_id": job_id,
+                    "message": "Processing complete"
+                }), 200
+            elif db_status == 'failed':
+                return jsonify({
+                    "status": "failed",
+                    "job_id": job_id,
+                    "error": "Processing failed"
+                }), 200
+    except Exception as e:
+        app.logger.error(f"Supabase status check failed for job {job_id}: {e}")
+
+    # Check Celery task state for progress
+    celery_task_id = redis_client.get(f"celery_task:{job_id}")
+    if celery_task_id:
+        celery_task_id = celery_task_id.decode('utf-8')
+        task_result = celery_app.AsyncResult(celery_task_id)
         
-        # Get detailed progress if available
-        progress_info = music_processor.get_progress(job_id)
-        
-        if job_info['status'] == 'processing':
+        if task_result.state == 'STARTED' or task_result.state == 'PENDING':
+            # Check for progress stored by the processor
+            progress_raw = redis_client.get(f"progress:{job_id}")
             response = {
                 "status": "processing",
                 "job_id": job_id,
                 "message": "Processing audio..."
             }
-            
-            # Add progress details if available
-            if progress_info:
-                response["progress"] = progress_info["percent"]
-                response["current_step"] = progress_info["message"]
-                response["updated_at"] = progress_info["updated_at"]
-            
+            if progress_raw:
+                progress_info = json.loads(progress_raw)
+                response["progress"] = progress_info.get("percent", 0)
+                response["current_step"] = progress_info.get("message", "Processing...")
+                response["updated_at"] = progress_info.get("updated_at", "")
             return jsonify(response), 200
-            
-        elif job_info['status'] == 'failed':
+        
+        elif task_result.state == 'FAILURE':
             return jsonify({
                 "status": "failed",
                 "job_id": job_id,
-                "error": job_info.get('error', 'Unknown error')
+                "error": str(task_result.info)
             }), 200
-    
-    # If not in memory, check metadata file (completed jobs)
-    status_info = music_processor.get_status(job_id)
-    return jsonify(status_info), 200
+
+    # Default: assume still processing (task may not have started yet)
+    return jsonify({
+        "status": "processing",
+        "job_id": job_id,
+        "message": "Processing audio..."
+    }), 200
 
 @app.route('/api/process/music/<job_id>', methods=['GET'])
 def get_music_results(job_id):
@@ -438,7 +356,6 @@ def download_stem(job_id, stem_file):
 def mix_stems(job_id):
     """Mix selected stems into a single MP3, upload to Supabase, return URL"""
     import requests as http_requests
-    import shutil
     import subprocess
 
     data = request.get_json() or {}
@@ -572,41 +489,63 @@ def mix_stems(job_id):
 def get_speech_status(job_id):
     """Check status of speech processing job"""
     # Return cancelled status gracefully if the job was cancelled
-    if job_id in cancelled_jobs:
+    if redis_client.sismember('cancelled_jobs', job_id):
         return jsonify({"status": "cancelled", "job_id": job_id}), 200
 
-    # First check if job is currently processing (in memory)
-    if job_id in processing_jobs:
-        job_info = processing_jobs[job_id]
+    # Check Supabase for the job's current status
+    try:
+        result = supabase.table('jobs').select('status').eq('id', job_id).execute()
+        if result.data:
+            db_status = result.data[0]['status']
+            if db_status == 'completed':
+                return jsonify({
+                    "status": "completed",
+                    "job_id": job_id,
+                    "message": "Processing complete"
+                }), 200
+            elif db_status == 'failed':
+                return jsonify({
+                    "status": "failed",
+                    "job_id": job_id,
+                    "error": "Processing failed"
+                }), 200
+    except Exception as e:
+        app.logger.error(f"Supabase status check failed for job {job_id}: {e}")
+
+    # Check Celery task state for progress
+    celery_task_id = redis_client.get(f"celery_task:{job_id}")
+    if celery_task_id:
+        celery_task_id = celery_task_id.decode('utf-8')
+        task_result = celery_app.AsyncResult(celery_task_id)
         
-        # Get detailed progress if available
-        progress_info = speech_processor.get_progress(job_id)
-        
-        if job_info['status'] == 'processing':
+        if task_result.state == 'STARTED' or task_result.state == 'PENDING':
+            # Check for progress stored by the processor
+            progress_raw = redis_client.get(f"progress:{job_id}")
             response = {
                 "status": "processing",
                 "job_id": job_id,
                 "message": "Processing speech..."
             }
-            
-            # Add progress details if available
-            if progress_info:
-                response["progress"] = progress_info["percent"]
-                response["current_step"] = progress_info["message"]
-                response["updated_at"] = progress_info["updated_at"]
-            
+            if progress_raw:
+                progress_info = json.loads(progress_raw)
+                response["progress"] = progress_info.get("percent", 0)
+                response["current_step"] = progress_info.get("message", "Processing...")
+                response["updated_at"] = progress_info.get("updated_at", "")
             return jsonify(response), 200
-            
-        elif job_info['status'] == 'failed':
+        
+        elif task_result.state == 'FAILURE':
             return jsonify({
                 "status": "failed",
                 "job_id": job_id,
-                "error": job_info.get('error', 'Unknown error')
+                "error": str(task_result.info)
             }), 200
-    
-    # If not in memory, check metadata file (completed jobs)
-    status_info = speech_processor.get_status(job_id)
-    return jsonify(status_info), 200
+
+    # Default: assume still processing
+    return jsonify({
+        "status": "processing",
+        "job_id": job_id,
+        "message": "Processing speech..."
+    }), 200
 
 @app.route('/api/process/speech/<job_id>', methods=['GET'])
 def get_speech_results(job_id):
@@ -661,13 +600,20 @@ def download_speech_audio(job_id, filename):
     
     if not os.path.exists(file_path):
         return jsonify({"error": "File not found"}), 404
-        
-    metadata = speech_processor.get_metadata(job_id)
+    
+    # Try to get metadata for a nicer download name
+    metadata_path = os.path.join(PROCESSED_DIR, job_id, "metadata.json")
     download_name = filename
-    if metadata and 'filename' in metadata:
-        download_name = f"Enhanced_{metadata['filename']}"
-        if not download_name.endswith('.wav'):
-            download_name += '.wav'
+    if os.path.exists(metadata_path):
+        try:
+            with open(metadata_path, 'r') as f:
+                metadata = json.load(f)
+            if 'filename' in metadata:
+                download_name = f"Enhanced_{metadata['filename']}"
+                if not download_name.endswith('.wav'):
+                    download_name += '.wav'
+        except Exception:
+            pass
     
     return send_file(file_path, as_attachment=True, download_name=download_name)
 
@@ -681,12 +627,34 @@ def download_transcript(job_id, format):
         return jsonify({"error": "Invalid format. Use: txt, json, or srt"}), 400
     
     try:
+        # Read transcript from Supabase
+        result = supabase.table('jobs').select('transcript, filename').eq('id', job_id).execute()
+        if not result.data:
+            return jsonify({"error": "Job not found"}), 404
+        
+        transcript = result.data[0].get('transcript') or {}
+        job_dir = os.path.join(PROCESSED_DIR, job_id)
+        os.makedirs(job_dir, exist_ok=True)
+        
         if format == 'txt':
-            file_path = speech_processor.export_transcript_txt(job_id)
+            file_path = os.path.join(job_dir, "transcript.txt")
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(transcript.get('plain', ''))
         elif format == 'json':
-            file_path = speech_processor.export_transcript_json(job_id)
+            file_path = os.path.join(job_dir, "transcript.json")
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(transcript, f, indent=2, ensure_ascii=False)
         elif format == 'srt':
-            file_path = speech_processor.export_transcript_srt(job_id)
+            file_path = os.path.join(job_dir, "transcript.srt")
+            segments = transcript.get('segments', [])
+            with open(file_path, 'w', encoding='utf-8') as f:
+                for i, segment in enumerate(segments, 1):
+                    start = _format_timestamp_srt(segment['start'])
+                    end = _format_timestamp_srt(segment['end'])
+                    text = segment['text']
+                    f.write(f"{i}\n")
+                    f.write(f"{start} --> {end}\n")
+                    f.write(f"{text}\n\n")
         
         if not file_path or not os.path.exists(file_path):
             return jsonify({"error": "Transcript not found"}), 404
@@ -695,6 +663,14 @@ def download_transcript(job_id, format):
         
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+def _format_timestamp_srt(seconds):
+    """Format timestamp for SRT format (HH:MM:SS,mmm)"""
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    secs = int(seconds % 60)
+    millis = int((seconds % 1) * 1000)
+    return f"{hours:02d}:{minutes:02d}:{secs:02d},{millis:03d}"
 
 # Routes Not Being Used ===========
 
@@ -730,11 +706,9 @@ def get_user_jobs():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-import shutil
-
 @app.route('/api/jobs/<job_id>/cancel', methods=['POST'])
 def cancel_job(job_id):
-    """Cancel an actively processing job, stop the worker, and clean up all data."""
+    """Cancel an actively processing job, revoke Celery task, and clean up all data."""
     user_id = request.headers.get('X-User-ID')
     if not user_id:
         return jsonify({"error": "X-User-ID header is required"}), 401
@@ -747,12 +721,15 @@ def cancel_job(job_id):
     except Exception as e:
         app.logger.warning(f"Could not verify job ownership for {job_id} (may already be deleted): {e}")
 
-    # 1. Signal the background thread to abort at its next checkpoint
-    cancelled_jobs.add(job_id)
+    # 1. Mark as cancelled in Redis so the Celery task checks at its next checkpoint
+    redis_client.sadd('cancelled_jobs', job_id)
 
-    # 2. Update in-memory status immediately so polling stops cleanly
-    if job_id in processing_jobs:
-        processing_jobs[job_id]['status'] = 'cancelled'
+    # 2. Revoke the Celery task (terminate=True sends SIGTERM to the worker)
+    celery_task_id = redis_client.get(f"celery_task:{job_id}")
+    if celery_task_id:
+        celery_task_id = celery_task_id.decode('utf-8')
+        celery_app.control.revoke(celery_task_id, terminate=True, signal='SIGTERM')
+        app.logger.info(f"Revoked Celery task {celery_task_id} for job {job_id}")
 
     # 3. Delete record from Supabase (so it never appears in history)
     try:

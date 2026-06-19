@@ -10,6 +10,7 @@ import torchaudio
 from pathlib import Path
 import uuid
 from datetime import datetime
+import redis
 
 class MusicProcessor:
     """
@@ -17,7 +18,7 @@ class MusicProcessor:
     """
     
     def __init__(self, supabase=None):
-        print("Loading Demucs model (this may take a minute)...")
+        print("Loading Demucs model...")
         self.demucs_model = get_model('htdemucs_6s')  # 6 stems model
         
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -26,7 +27,7 @@ class MusicProcessor:
         self.demucs_model.to(self.device)
         
         print("Loading Whisper model...")
-        # explicitly pass the device to Whisper so it doesn't guess
+        # explicitly pass the device to Whisper so it doesn't guess that it should
         self.whisper_model = whisper.load_model("base", device=self.device) 
         
         self.sample_rate = 44100
@@ -37,8 +38,9 @@ class MusicProcessor:
         # Supabase client (optional — enables cloud storage upload)
         self.supabase = supabase
         
-        # Progress tracking
-        self.current_progress = {}  # Store progress for each job_id
+        # Redis client for progress tracking (shared with Flask web server)
+        redis_url = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+        self.redis_client = redis.Redis.from_url(redis_url)
         
     def process(self, audio_path, job_id):
         """
@@ -146,21 +148,24 @@ class MusicProcessor:
             return error_metadata
     
     def _update_progress(self, job_id, percent, message):
-        """Update processing progress for a job"""
-        self.current_progress[job_id] = {
+        """Update processing progress for a job (stored in Redis)"""
+        progress_data = json.dumps({
             "percent": percent,
             "message": message,
             "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
+        })
+        self.redis_client.setex(f"progress:{job_id}", 3600, progress_data)
     
     def _clear_progress(self, job_id):
         """Clear progress tracking after job completes"""
-        if job_id in self.current_progress:
-            del self.current_progress[job_id]
+        self.redis_client.delete(f"progress:{job_id}")
     
     def get_progress(self, job_id):
         """Get current progress for a job"""
-        return self.current_progress.get(job_id, None)
+        raw = self.redis_client.get(f"progress:{job_id}")
+        if raw:
+            return json.loads(raw)
+        return None
     
     def separate_stems(self, audio_path, output_dir, job_id=None):
         """
@@ -409,18 +414,21 @@ class MusicProcessor:
             }
     
     def _update_progress(self, job_id, percent, message):
-        """Update processing progress for a job"""
-        self.current_progress[job_id] = {
+        """Update processing progress for a job (stored in Redis)"""
+        progress_data = json.dumps({
             "percent": percent,
             "message": message,
             "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
+        })
+        self.redis_client.setex(f"progress:{job_id}", 3600, progress_data)
     
     def _clear_progress(self, job_id):
         """Clear progress tracking after job completes"""
-        if job_id in self.current_progress:
-            del self.current_progress[job_id]
+        self.redis_client.delete(f"progress:{job_id}")
     
     def get_progress(self, job_id):
         """Get current progress for a job"""
-        return self.current_progress.get(job_id, None)
+        raw = self.redis_client.get(f"progress:{job_id}")
+        if raw:
+            return json.loads(raw)
+        return None
