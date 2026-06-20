@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@clerk/clerk-sdk-node": "^4.13.23",
     "posthog-js": "^1.386.3"
   }
 }

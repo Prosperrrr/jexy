@@ -4,14 +4,19 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000',
 });
 
-// Add a request interceptor to attach the X-User-ID header and bypass ngrok
+// Add a request interceptor to attach the Clerk JWT token and bypass ngrok
 api.interceptors.request.use(
-  (config) => {
+  async (config) => {
     config.headers['ngrok-skip-browser-warning'] = 'true';
-    const clerkUser = window.Clerk?.user;
-    const uid = clerkUser?.externalId || clerkUser?.id;
-    if (uid) {
-      config.headers['X-User-ID'] = uid;
+    try {
+      if (window.Clerk && window.Clerk.session) {
+        const token = await window.Clerk.session.getToken();
+        if (token) {
+          config.headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+    } catch (e) {
+      console.error("Failed to get Clerk token", e);
     }
     return config;
   },

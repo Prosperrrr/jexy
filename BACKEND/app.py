@@ -22,6 +22,8 @@ load_dotenv()
 
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
+import jwt
+from jwt import PyJWKClient
 from werkzeug.utils import secure_filename
 import threading
 import json
@@ -35,7 +37,32 @@ from celery_app import celery_app, process_music_task, process_speech_task
 from supabase import create_client, Client
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for React frontend
+# Restrict CORS to specific frontend origins to prevent unauthorized access
+CORS(app, origins=["http://localhost:5173", "https://jexy.me", "https://www.jexy.me", "http://localhost:5174"])
+
+# Setup Clerk JWKS client for JWT verification
+# Using the JWKS URL derived from the frontend Clerk publishable key
+CLERK_JWKS_URL = "https://ideal-rhino-12.clerk.accounts.dev/.well-known/jwks.json"
+jwks_client = PyJWKClient(CLERK_JWKS_URL)
+
+def get_user_id_from_request():
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return None
+    
+    token = auth_header.split(' ')[1]
+    try:
+        signing_key = jwks_client.get_signing_key_from_jwt(token)
+        data = jwt.decode(
+            token,
+            signing_key.key,
+            algorithms=["RS256"],
+            options={"verify_aud": False}
+        )
+        return data.get("sub")
+    except Exception as e:
+        app.logger.error(f"JWT Verification failed: {e}")
+        return None
 
 # Initialize Supabase client
 SUPABASE_URL = os.environ.get('SUPABASE_URL')
@@ -179,8 +206,8 @@ def confirm_and_process(file_id):
     # Generate processing job ID
     job_id = str(uuid.uuid4())
 
-    # Get user_id from request header (Clerk UID sent by frontend)
-    user_id = request.headers.get('X-User-ID', None)
+    # Get user_id from verified JWT
+    user_id = get_user_id_from_request()
 
     # Save job record to Supabase
     try:
@@ -341,16 +368,6 @@ def get_music_results(job_id):
         "stems": stems_urls,
         "active_stems": active_stems
     }), 200
-
-@app.route('/api/download/<job_id>/<stem_file>', methods=['GET'])
-def download_stem(job_id, stem_file):
-    """Download individual stem file"""
-    stem_path = os.path.join(PROCESSED_DIR, job_id, 'stems', stem_file)
-    
-    if not os.path.exists(stem_path):
-        return jsonify({"error": "File not found"}), 404
-    
-    return send_file(stem_path, mimetype='audio/mpeg', conditional=True)
 
 @app.route('/api/mix/<job_id>', methods=['POST'])
 def mix_stems(job_id):
@@ -569,11 +586,8 @@ def get_speech_results(job_id):
     db_metadata = row.get('metadata') or {}
     transcript  = row.get('transcript') or {}
 
-    # Prefer stored Supabase URL; fall back to local download endpoint
-    clean_audio_url = (
-        db_metadata.get('clean_audio_url')
-        or f"/api/download/speech/{job_id}/clean_audio.wav"
-    )
+    # Prefer stored Supabase URL
+    clean_audio_url = db_metadata.get('clean_audio_url')
 
     return jsonify({
         "job_id": job_id,
@@ -593,113 +607,14 @@ def get_speech_results(job_id):
         }
     }), 200
 
-@app.route('/api/download/speech/<job_id>/<filename>', methods=['GET'])
-def download_speech_audio(job_id, filename):
-    """Download processed speech audio"""
-    file_path = os.path.join(PROCESSED_DIR, job_id, filename)
-    
-    if not os.path.exists(file_path):
-        return jsonify({"error": "File not found"}), 404
-    
-    # Try to get metadata for a nicer download name
-    metadata_path = os.path.join(PROCESSED_DIR, job_id, "metadata.json")
-    download_name = filename
-    if os.path.exists(metadata_path):
-        try:
-            with open(metadata_path, 'r') as f:
-                metadata = json.load(f)
-            if 'filename' in metadata:
-                download_name = f"Enhanced_{metadata['filename']}"
-                if not download_name.endswith('.wav'):
-                    download_name += '.wav'
-        except Exception:
-            pass
-    
-    return send_file(file_path, as_attachment=True, download_name=download_name)
-
-@app.route('/api/download/transcript/<job_id>/<format>', methods=['GET'])
-def download_transcript(job_id, format):
-    """
-    Download transcript in specified format
-    Formats: txt, json, srt
-    """
-    if format not in ['txt', 'json', 'srt']:
-        return jsonify({"error": "Invalid format. Use: txt, json, or srt"}), 400
-    
-    try:
-        # Read transcript from Supabase
-        result = supabase.table('jobs').select('transcript, filename').eq('id', job_id).execute()
-        if not result.data:
-            return jsonify({"error": "Job not found"}), 404
-        
-        transcript = result.data[0].get('transcript') or {}
-        job_dir = os.path.join(PROCESSED_DIR, job_id)
-        os.makedirs(job_dir, exist_ok=True)
-        
-        if format == 'txt':
-            file_path = os.path.join(job_dir, "transcript.txt")
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(transcript.get('plain', ''))
-        elif format == 'json':
-            file_path = os.path.join(job_dir, "transcript.json")
-            with open(file_path, 'w', encoding='utf-8') as f:
-                json.dump(transcript, f, indent=2, ensure_ascii=False)
-        elif format == 'srt':
-            file_path = os.path.join(job_dir, "transcript.srt")
-            segments = transcript.get('segments', [])
-            with open(file_path, 'w', encoding='utf-8') as f:
-                for i, segment in enumerate(segments, 1):
-                    start = _format_timestamp_srt(segment['start'])
-                    end = _format_timestamp_srt(segment['end'])
-                    text = segment['text']
-                    f.write(f"{i}\n")
-                    f.write(f"{start} --> {end}\n")
-                    f.write(f"{text}\n\n")
-        
-        if not file_path or not os.path.exists(file_path):
-            return jsonify({"error": "Transcript not found"}), 404
-        
-        return send_file(file_path, as_attachment=True)
-        
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-def _format_timestamp_srt(seconds):
-    """Format timestamp for SRT format (HH:MM:SS,mmm)"""
-    hours = int(seconds // 3600)
-    minutes = int((seconds % 3600) // 60)
-    secs = int(seconds % 60)
-    millis = int((seconds % 1) * 1000)
-    return f"{hours:02d}:{minutes:02d}:{secs:02d},{millis:03d}"
-
-# Routes Not Being Used ===========
-
-@app.route('/api/process/music', methods=['POST'])
-def process_music():
-    """
-    old endpoint - use /api/upload instead
-    """
-    return jsonify({"message": "Use /api/upload endpoint instead"}), 400
-
-#left here for documentation
-
-@app.route('/api/process/speech', methods=['POST'])
-def process_speech():
-    """
-    old endpoint - use /api/upload + /api/process/{file_id} instead
-    """
-    return jsonify({"message": "Use /api/upload endpoint instead"}), 400
-
-#left here for documentation
-
 #Utils Routes
 
 @app.route('/api/jobs', methods=['GET'])
 def get_user_jobs():
-    """Get all jobs for the authenticated user (filtered by X-User-ID header)"""
-    user_id = request.headers.get('X-User-ID')
+    """Get all jobs for the authenticated user"""
+    user_id = get_user_id_from_request()
     if not user_id:
-        return jsonify({"error": "X-User-ID header is required"}), 401
+        return jsonify({"error": "Unauthorized"}), 401
     try:
         result = supabase.table('jobs').select('*').eq('user_id', user_id).order('created_at', desc=True).execute()
         return jsonify({"jobs": result.data}), 200
@@ -709,9 +624,9 @@ def get_user_jobs():
 @app.route('/api/jobs/<job_id>/cancel', methods=['POST'])
 def cancel_job(job_id):
     """Cancel an actively processing job, revoke Celery task, and clean up all data."""
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_user_id_from_request()
     if not user_id:
-        return jsonify({"error": "X-User-ID header is required"}), 401
+        return jsonify({"error": "Unauthorized"}), 401
 
     try:
         # Verify job belongs to user before allowing cancellation
@@ -719,19 +634,18 @@ def cancel_job(job_id):
         if result.data and result.data[0]['user_id'] != user_id:
             return jsonify({"error": "Unauthorized"}), 403
     except Exception as e:
-        app.logger.warning(f"Could not verify job ownership for {job_id} (may already be deleted): {e}")
+        app.logger.warning(f"Could not verify job ownership for {job_id}: {e}")
 
-    # 1. Mark as cancelled in Redis so the Celery task checks at its next checkpoint
+    # 1. Mark as cancelled in Redis
     redis_client.sadd('cancelled_jobs', job_id)
 
-    # 2. Revoke the Celery task (terminate=True sends SIGTERM to the worker)
+    # 2. Revoke the Celery task
     celery_task_id = redis_client.get(f"celery_task:{job_id}")
     if celery_task_id:
         celery_task_id = celery_task_id.decode('utf-8')
         celery_app.control.revoke(celery_task_id, terminate=True, signal='SIGTERM')
-        app.logger.info(f"Revoked Celery task {celery_task_id} for job {job_id}")
 
-    # 3. Delete record from Supabase (so it never appears in history)
+    # 3. Delete record from Supabase
     try:
         supabase.table('jobs').delete().eq('id', job_id).execute()
     except Exception as e:
@@ -745,15 +659,14 @@ def cancel_job(job_id):
         except Exception as e:
             app.logger.error(f"Filesystem cleanup failed for job {job_id}: {e}")
 
-    app.logger.info(f"Job {job_id} cancelled and cleaned up.")
     return jsonify({"success": True, "message": "Job cancelled successfully"}), 200
 
 @app.route('/api/jobs/<job_id>', methods=['DELETE'])
 def delete_job(job_id):
-    """Delete a job from Supabase and delete its files from the processed directory"""
-    user_id = request.headers.get('X-User-ID')
+    """Delete a specific job"""
+    user_id = get_user_id_from_request()
     if not user_id:
-        return jsonify({"error": "X-User-ID header is required"}), 401
+        return jsonify({"error": "Unauthorized"}), 401
     try:
         # Verify job belongs to user
         result = supabase.table('jobs').select('user_id').eq('id', job_id).execute()
