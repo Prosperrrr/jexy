@@ -86,27 +86,9 @@ function App() {
           </>
         } />
         
-        <Route path="/track-separation" element={
-          <>
-            <SignedIn>
-              <TrackSeparationPage />
-            </SignedIn>
-            <SignedOut>
-              <Navigate to="/login" replace />
-            </SignedOut>
-          </>
-        } />
+        <Route path="/track-separation" element={<TrackSeparationPage />} />
         
-        <Route path="/audio-enhancer" element={
-          <>
-            <SignedIn>
-              <AudioEnhancerPage />
-            </SignedIn>
-            <SignedOut>
-              <Navigate to="/login" replace />
-            </SignedOut>
-          </>
-        } />
+        <Route path="/audio-enhancer" element={<AudioEnhancerPage />} />
         
         {/* 404 Not Found */}
         <Route path="*" element={<NotFoundPage />} />

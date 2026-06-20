@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '@clerk/clerk-react';
 import posthog from 'posthog-js';
 import DashboardLayout from '../components/DashboardLayout';
 import AudioPlayerCard from '../components/audio-enhancer/AudioPlayerCard';
@@ -11,9 +12,17 @@ import { getSpeechResults } from '../services/api';
 import { Loader2 } from 'lucide-react';
 
 const AudioEnhancerPage = () => {
+  const { isLoaded, isSignedIn } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const jobId = location.state?.jobId;
+  const queryParams = new URLSearchParams(location.search);
+  const jobId = location.state?.jobId || queryParams.get('jobId');
+
+  useEffect(() => {
+    if (isLoaded && !isSignedIn && !jobId) {
+      navigate('/login');
+    }
+  }, [isLoaded, isSignedIn, jobId, navigate]);
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);

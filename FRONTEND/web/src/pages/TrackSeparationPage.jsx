@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '@clerk/clerk-react';
 import posthog from 'posthog-js';
 import DashboardLayout from '../components/DashboardLayout';
 import { mixStemsClientSide } from '../utils/audioMixer';
@@ -17,10 +18,17 @@ const formatStemName = (name) => {
 };
 
 const TrackSeparationPage = () => {
+  const { isLoaded, isSignedIn } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const queryParams = new URLSearchParams(location.search);
   const jobId = location.state?.jobId || queryParams.get('jobId');
+
+  useEffect(() => {
+    if (isLoaded && !isSignedIn && !jobId) {
+      navigate('/login');
+    }
+  }, [isLoaded, isSignedIn, jobId, navigate]);
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
