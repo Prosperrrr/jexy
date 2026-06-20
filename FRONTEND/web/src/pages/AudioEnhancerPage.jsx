@@ -202,6 +202,25 @@ const AudioEnhancerPage = () => {
 
   const safeMetadata = data?.metadata || { filename: 'Audio Session', duration: 0, transcript: [] };
 
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/audio-enhancer?jobId=${jobId}`;
+    const shareData = {
+      title: 'Jexy Enhanced Audio',
+      text: `Listen to enhanced audio for ${safeMetadata.filename || 'Session'}`,
+      url: shareUrl,
+    };
+    try {
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        await navigator.share(shareData);
+      } else {
+        navigator.clipboard.writeText(shareUrl);
+      }
+    } catch (err) {
+      console.log('Share failed', err);
+      navigator.clipboard.writeText(shareUrl);
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-slate-50/50">
@@ -217,6 +236,7 @@ const AudioEnhancerPage = () => {
             posthog?.capture('Export Enhanced Audio');
           }}
           isExporting={false}
+          onShare={handleShare}
         />
 
         <div className="flex-1 overflow-y-auto overflow-x-hidden relative scroll-smooth pb-32">
