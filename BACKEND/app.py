@@ -50,11 +50,18 @@ def get_user_id_from_request():
     
     token = auth_header.split(' ')[1]
     try:
-        # 1. Decode unverified to get the issuer (Clerk instance URL)
+        # 1. Decode unverified to get the issuer
         unverified_payload = jwt.decode(token, options={"verify_signature": False})
-        issuer = unverified_payload.get("iss")
+        issuer = unverified_payload.get('iss')
+        
         if not issuer:
             app.logger.error("JWT Verification failed: Missing issuer")
+            return None
+            
+        # VERY IMPORTANT: Verify the issuer matches our expected Clerk instance!
+        expected_issuer = os.environ.get('CLERK_ISSUER')
+        if expected_issuer and issuer != expected_issuer:
+            app.logger.error(f"JWT Verification failed: Invalid issuer {issuer}")
             return None
             
         # 2. Get or create a PyJWKClient for this issuer

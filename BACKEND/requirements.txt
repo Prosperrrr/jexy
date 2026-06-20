@@ -19,8 +19,8 @@ deepfilternet==0.5.6
 numpy>=1.24.3
 scipy==1.11.4
 python-dotenv==1.0.0
-torch>=2.3.0
-torchaudio>=2.3.0
+torch==2.2.0
+torchaudio==2.2.0  # Pinned — DeepFilterNet 0.5.6 requires torchaudio.backend, removed in 2.3+
 
 #database
 supabase
@@ -28,3 +28,7 @@ supabase
 # Task Queue & Caching
 celery==5.3.6
 redis==5.0.1
+
+# Security & Authentication
+PyJWT==2.13.0
+cryptography==48.0.1
