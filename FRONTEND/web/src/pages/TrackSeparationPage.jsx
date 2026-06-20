@@ -12,8 +12,6 @@ import BottomAudioPlayer from '../components/track-separation/BottomAudioPlayer'
 import api, { getMusicResults } from '../services/api';
 import { Loader2 } from 'lucide-react';
 
-const SILENT_AUDIO_URI = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
-
 const formatStemName = (name) => {
   return name.charAt(0).toUpperCase() + name.slice(1);
 };
@@ -21,7 +19,8 @@ const formatStemName = (name) => {
 const TrackSeparationPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const jobId = location.state?.jobId;
+  const queryParams = new URLSearchParams(location.search);
+  const jobId = location.state?.jobId || queryParams.get('jobId');
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -365,7 +364,7 @@ const TrackSeparationPage = () => {
 
   useEffect(() => {
     applyVolumes();
-  }, [stemStates, globalVolume, isGlobalMuted, data]);
+  }, [stemStates, globalVolume, isGlobalMuted, data, stemsReady]);
 
   // Save state to localStorage whenever it changes
   useEffect(() => {
@@ -467,11 +466,18 @@ const TrackSeparationPage = () => {
   const handleSkipBack = () => handleSeek(currentTime - 10);
   const handleSkipForward = () => handleSeek(currentTime + 10);
 
+  // Ensure the silent audio is heavily muted so users don't hear an echo
+  useEffect(() => {
+    if (silentAudioRef.current) {
+      silentAudioRef.current.volume = 0.01;
+    }
+  }, [stemUrls, data]);
+
   const handleShare = async () => {
-    const shareUrl = window.location.href;
+    const shareUrl = `${window.location.origin}/track-separation?jobId=${jobId}`;
     const shareData = {
       title: data?.metadata?.filename ? `Jexy - ${data.metadata.filename}` : 'Jexy Separated Stems',
-      text: 'Check out this separated track on Jexy!',
+      text: data?.metadata?.filename ? `Check out my separated track "${data.metadata.filename}" on Jexy!` : 'Check out this separated track on Jexy!',
       url: shareUrl,
     };
 
@@ -613,7 +619,13 @@ const TrackSeparationPage = () => {
 
   return (
     <DashboardLayout>
-      <audio ref={silentAudioRef} src={SILENT_AUDIO_URI} loop playsInline style={{ display: 'none' }} />
+      <audio 
+        ref={silentAudioRef} 
+        src={data?.active_stems?.[0] ? stemUrls[data.active_stems[0]] : undefined} 
+        loop 
+        playsInline 
+        style={{ display: 'none' }} 
+      />
       <div className="flex flex-col h-full relative" style={{ paddingBottom: '160px' }}>
         <Header
           filename={data.metadata.filename}
