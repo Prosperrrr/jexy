@@ -40,10 +40,8 @@ app = Flask(__name__)
 # Restrict CORS to specific frontend origins to prevent unauthorized access
 CORS(app, origins=["http://localhost:5173", "https://jexy.me", "https://www.jexy.me", "http://localhost:5174"])
 
-# Setup Clerk JWKS client for JWT verification
-# Using the JWKS URL derived from the frontend Clerk publishable key
-CLERK_JWKS_URL = "https://ideal-rhino-12.clerk.accounts.dev/.well-known/jwks.json"
-jwks_client = PyJWKClient(CLERK_JWKS_URL)
+# Cache for JWK clients keyed by issuer URL to avoid creating too many clients
+jwks_clients = {}
 
 def get_user_id_from_request():
     auth_header = request.headers.get('Authorization')
@@ -52,6 +50,21 @@ def get_user_id_from_request():
     
     token = auth_header.split(' ')[1]
     try:
+        # 1. Decode unverified to get the issuer (Clerk instance URL)
+        unverified_payload = jwt.decode(token, options={"verify_signature": False})
+        issuer = unverified_payload.get("iss")
+        if not issuer:
+            app.logger.error("JWT Verification failed: Missing issuer")
+            return None
+            
+        # 2. Get or create a PyJWKClient for this issuer
+        jwks_url = f"{issuer.rstrip('/')}/.well-known/jwks.json"
+        if jwks_url not in jwks_clients:
+            jwks_clients[jwks_url] = PyJWKClient(jwks_url)
+            
+        jwks_client = jwks_clients[jwks_url]
+        
+        # 3. Get the signing key and verify
         signing_key = jwks_client.get_signing_key_from_jwt(token)
         data = jwt.decode(
             token,
