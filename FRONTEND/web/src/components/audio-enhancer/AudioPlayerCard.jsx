@@ -35,6 +35,56 @@ const AudioPlayerCard = ({
   const isAudioSetup = useRef(false);
   const barRefs = useRef([]);
 
+  // MediaSession refs
+  const setIsPlayingRef = useRef(setIsPlaying);
+  const handleSeekInternalRef = useRef();
+  const handleSkipBackInternalRef = useRef();
+  const handleSkipForwardInternalRef = useRef();
+
+  useEffect(() => { setIsPlayingRef.current = setIsPlaying; }, [setIsPlaying]);
+
+  useEffect(() => {
+    if ('mediaSession' in navigator && metadata) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: metadata.filename || 'Enhanced Audio',
+        artist: 'Jexy Enhancer',
+        album: 'Jexy',
+        artwork: [
+          { src: 'https://www.jexy.me/og-image.png', sizes: '512x512', type: 'image/png' }
+        ]
+      });
+
+      navigator.mediaSession.setActionHandler('play', () => {
+        if (setIsPlayingRef.current) setIsPlayingRef.current(true);
+      });
+      navigator.mediaSession.setActionHandler('pause', () => {
+        if (setIsPlayingRef.current) setIsPlayingRef.current(false);
+      });
+      navigator.mediaSession.setActionHandler('seekto', (details) => {
+        if (handleSeekInternalRef.current && details.seekTime !== undefined) {
+          handleSeekInternalRef.current(details.seekTime);
+        }
+      });
+      navigator.mediaSession.setActionHandler('previoustrack', () => {
+        if (handleSkipBackInternalRef.current) handleSkipBackInternalRef.current();
+      });
+      navigator.mediaSession.setActionHandler('nexttrack', () => {
+        if (handleSkipForwardInternalRef.current) handleSkipForwardInternalRef.current();
+      });
+    }
+
+    return () => {
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = null;
+        navigator.mediaSession.setActionHandler('play', null);
+        navigator.mediaSession.setActionHandler('pause', null);
+        navigator.mediaSession.setActionHandler('seekto', null);
+        navigator.mediaSession.setActionHandler('previoustrack', null);
+        navigator.mediaSession.setActionHandler('nexttrack', null);
+      }
+    };
+  }, [metadata]);
+
   useEffect(() => {
     if (metadata?.duration) {
       setAudioDuration(metadata.duration);
@@ -144,6 +194,19 @@ const AudioPlayerCard = ({
     };
   }, [isPlaying]);
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = "";
+      }
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close().catch(() => {});
+      }
+    };
+  }, []);
+
   // Sync volume state
   useEffect(() => {
     if (audioRef.current) {
@@ -183,6 +246,10 @@ const AudioPlayerCard = ({
       onSkipForward(); // Keep parent in sync
     }
   };
+
+  handleSeekInternalRef.current = handleSeekInternal;
+  handleSkipBackInternalRef.current = handleSkipBackInternal;
+  handleSkipForwardInternalRef.current = handleSkipForwardInternal;
 
   return (
     <div className="flex flex-col sm:flex-row bg-white/70 backdrop-blur-xl rounded-3xl border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-500 overflow-hidden group w-full relative z-10">

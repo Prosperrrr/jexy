@@ -12,6 +12,7 @@ import ModelsPage from './pages/ModelsPage';
 import WorkflowPage from './pages/WorkflowPage';
 import ChangelogPage from './pages/ChangelogPage';
 import NotFoundPage from './pages/NotFoundPage';
+import ScrollToTop from './components/ScrollToTop';
 
 function App() {
   const { user } = useUser();
@@ -29,6 +30,7 @@ function App() {
 
   return (
     <Router>
+      <ScrollToTop />
       <div className="App">
         <Routes>
           {/* Public Routes */}

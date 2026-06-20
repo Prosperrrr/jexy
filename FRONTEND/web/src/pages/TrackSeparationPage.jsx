@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import posthog from 'posthog-js';
 import DashboardLayout from '../components/DashboardLayout';
+import { mixStemsClientSide } from '../utils/audioMixer';
 import SessionHistory from '../components/dashboard/SessionHistory';
 import Header from '../components/track-separation/Header';
 import TimelineRuler from '../components/track-separation/TimelineRuler';
@@ -10,6 +11,8 @@ import LyricsView from '../components/track-separation/LyricsView';
 import BottomAudioPlayer from '../components/track-separation/BottomAudioPlayer';
 import api, { getMusicResults } from '../services/api';
 import { Loader2 } from 'lucide-react';
+
+const SILENT_AUDIO_URI = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
 
 const formatStemName = (name) => {
   return name.charAt(0).toUpperCase() + name.slice(1);
@@ -43,6 +46,68 @@ const TrackSeparationPage = () => {
   const isRepeatingRef = React.useRef(isRepeating);
   const [stemPeaks, setStemPeaks] = useState({});
   
+  // Hacks for mobile background playback & Media Session
+  const silentAudioRef = React.useRef(null);
+  const togglePlayRef = React.useRef();
+  const handleSeekRef = React.useRef();
+  const currentTimeRef = React.useRef(currentTime);
+
+  useEffect(() => { currentTimeRef.current = currentTime; }, [currentTime]);
+
+  useEffect(() => {
+    if (silentAudioRef.current) {
+      if (isPlaying) {
+        silentAudioRef.current.play().catch(() => {});
+        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+      } else {
+        silentAudioRef.current.pause();
+        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+      }
+    }
+  }, [isPlaying]);
+
+  useEffect(() => {
+    if ('mediaSession' in navigator && data?.metadata) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: data.metadata.filename || 'Separated Audio',
+        artist: 'Jexy Stems',
+        album: 'Jexy',
+        artwork: [
+          { src: 'https://www.jexy.me/og-image.png', sizes: '512x512', type: 'image/png' }
+        ]
+      });
+
+      navigator.mediaSession.setActionHandler('play', () => {
+        if (togglePlayRef.current) togglePlayRef.current();
+      });
+      navigator.mediaSession.setActionHandler('pause', () => {
+        if (togglePlayRef.current) togglePlayRef.current();
+      });
+      navigator.mediaSession.setActionHandler('seekto', (details) => {
+        if (handleSeekRef.current && details.seekTime !== undefined) {
+           handleSeekRef.current(details.seekTime);
+        }
+      });
+      navigator.mediaSession.setActionHandler('previoustrack', () => {
+        if (handleSeekRef.current) handleSeekRef.current(Math.max(0, currentTimeRef.current - 10));
+      });
+      navigator.mediaSession.setActionHandler('nexttrack', () => {
+        if (handleSeekRef.current) handleSeekRef.current(currentTimeRef.current + 10);
+      });
+    }
+    
+    return () => {
+      if ('mediaSession' in navigator) {
+         navigator.mediaSession.metadata = null;
+         navigator.mediaSession.setActionHandler('play', null);
+         navigator.mediaSession.setActionHandler('pause', null);
+         navigator.mediaSession.setActionHandler('seekto', null);
+         navigator.mediaSession.setActionHandler('previoustrack', null);
+         navigator.mediaSession.setActionHandler('nexttrack', null);
+      }
+    };
+  }, [data]);
+
   // Web Audio API refs
   const audioCtx = React.useRef(null);
   const audioBuffers = React.useRef({});
@@ -197,6 +262,24 @@ const TrackSeparationPage = () => {
     fetchBuffers();
     return () => { isMounted = false; };
   }, [data]);
+
+  // Cleanup Web Audio API when unmounting
+  useEffect(() => {
+    return () => {
+      if (reqAnimFrameId.current) {
+        cancelAnimationFrame(reqAnimFrameId.current);
+      }
+      Object.keys(sourceNodes.current).forEach(stem => {
+        if (sourceNodes.current[stem]) {
+          try { sourceNodes.current[stem].stop(); } catch (e) {}
+          try { sourceNodes.current[stem].disconnect(); } catch (e) {}
+        }
+      });
+      if (audioCtx.current && audioCtx.current.state !== 'closed') {
+        audioCtx.current.close().catch(() => {});
+      }
+    };
+  }, []);
 
   const updateCurrentTime = () => {
     if (!audioCtx.current || !data) return;
@@ -391,20 +474,17 @@ const TrackSeparationPage = () => {
           stem: activeStemNames[0],
         });
       } else {
-        // Build volumes payload from current slider state
-        const volumes = {};
-        activeStemNames.forEach(stem => {
-          volumes[stem] = stemStates[stem].volume ?? 100;
+        // Build stems payload for client-side mixing
+        const stemsToMix = activeStemNames.map(stem => {
+          const stemInfo = data.stems[stem];
+          return {
+            name: stem,
+            url: stemInfo.url,
+            volume: stemStates[stem].volume ?? 100
+          };
         });
 
-        const response = await api.post(`/api/mix/${data.job_id}`, {
-          stems: activeStemNames,
-          volumes
-        });
-
-        const mixUrl = response.data.url;
-        const fileRes = await fetch(mixUrl);
-        const blob = await fileRes.blob();
+        const blob = await mixStemsClientSide(stemsToMix);
         const blobUrl = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = blobUrl;
@@ -428,6 +508,9 @@ const TrackSeparationPage = () => {
       setIsExporting(false);
     }
   };
+
+  togglePlayRef.current = togglePlay;
+  handleSeekRef.current = handleSeek;
 
   if (showHistory) {
     return (
@@ -481,6 +564,7 @@ const TrackSeparationPage = () => {
 
   return (
     <DashboardLayout>
+      <audio ref={silentAudioRef} src={SILENT_AUDIO_URI} loop playsInline style={{ display: 'none' }} />
       <div className="flex flex-col h-full relative" style={{ paddingBottom: '160px' }}>
         <Header
           filename={data.metadata.filename}
