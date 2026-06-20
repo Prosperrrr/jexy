@@ -11,7 +11,7 @@ export default defineConfig({
   plugins: [
     react(),
     Sitemap({
-      hostname: 'https://jexy.me',
+      hostname: 'https://www.jexy.me',
       dynamicRoutes: [
         '/',
         '/dashboard',

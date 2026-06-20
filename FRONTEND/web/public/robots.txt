@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /track-separation
+Disallow: /audio-enhancer
+
+Sitemap: https://www.jexy.me/sitemap.xml
