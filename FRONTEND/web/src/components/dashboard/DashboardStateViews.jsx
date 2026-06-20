@@ -1,19 +1,32 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Plus, RefreshCcw, CheckCircle2, XCircle } from 'lucide-react';
 
 export const IdleView = ({ onFileSelect }) => {
   const fileInputRef = useRef(null);
+  const [error, setError] = useState(null);
 
   const handleFileChange = (e) => {
+    setError(null);
     if (e.target.files && e.target.files.length > 0) {
-      onFileSelect(e.target.files[0]);
+      const selectedFile = e.target.files[0];
+      if (selectedFile.size > 50 * 1024 * 1024) {
+        setError("File too large. Maximum size is 50MB.");
+        return;
+      }
+      onFileSelect(selectedFile);
     }
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
+    setError(null);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      onFileSelect(e.dataTransfer.files[0]);
+      const selectedFile = e.dataTransfer.files[0];
+      if (selectedFile.size > 50 * 1024 * 1024) {
+        setError("File too large. Maximum size is 50MB.");
+        return;
+      }
+      onFileSelect(selectedFile);
     }
   };
 
@@ -26,11 +39,26 @@ export const IdleView = ({ onFileSelect }) => {
       <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-8">
         <Plus className="w-6 h-6 text-slate-900" />
       </div>
-      <h2 className="text-2xl md:text-3xl font-display font-bold text-slate-900 mb-3 tracking-tight">Initialize New Session</h2>
-      <p className="text-slate-400 mb-10 max-w-sm mx-auto font-medium">
-        Select your audio source (WAV, FLAC, MP3) to begin processing in the cloud.
-      </p>
+      <h2 className="text-2xl md:text-3xl font-display font-bold text-slate-900 mb-8 tracking-tight">Initialize New Session</h2>
       
+      {error && (
+        <div className="text-red-500 font-medium text-sm mb-4 px-4 py-2 bg-red-50 rounded-lg">
+          {error}
+        </div>
+      )}
+
+      <button 
+        onClick={() => fileInputRef.current?.click()}
+        className="font-display w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-semibold py-4 px-12 rounded-full transition-colors shadow-lg mb-6"
+      >
+        Upload Audio
+      </button>
+
+      <div className="text-xs sm:text-sm text-slate-400 font-medium space-y-1">
+        <div>Supported formats: MP3 · WAV · M4A · FLAC</div>
+        <div>Max size: 50MB</div>
+      </div>
+
       <input
         type="file"
         ref={fileInputRef}
@@ -38,12 +66,6 @@ export const IdleView = ({ onFileSelect }) => {
         className="hidden"
         accept=".mp3,.wav,.flac,.ogg,.m4a"
       />
-      <button 
-        onClick={() => fileInputRef.current?.click()}
-        className="font-display w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-semibold py-4 px-12 rounded-full transition-colors shadow-lg"
-      >
-        Select Raw Audio
-      </button>
     </div>
   );
 };

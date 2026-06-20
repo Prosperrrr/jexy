@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import posthog from 'posthog-js';
 import DashboardLayout from '../components/DashboardLayout';
+import SessionHistory from '../components/dashboard/SessionHistory';
 import Header from '../components/track-separation/Header';
 import TimelineRuler from '../components/track-separation/TimelineRuler';
 import StemTrack from '../components/track-separation/StemTrack';
 import LyricsView from '../components/track-separation/LyricsView';
 import BottomAudioPlayer from '../components/track-separation/BottomAudioPlayer';
-import api, { getMusicResults, getUserJobs } from '../services/api';
+import api, { getMusicResults } from '../services/api';
 import { Loader2 } from 'lucide-react';
 
 const formatStemName = (name) => {
@@ -22,6 +23,7 @@ const TrackSeparationPage = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showHistory, setShowHistory] = useState(false);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const isPlayingRef = React.useRef(isPlaying);
@@ -57,17 +59,13 @@ const TrackSeparationPage = () => {
         let activeJobId = jobId;
 
         if (!activeJobId) {
-          const history = await getUserJobs();
-          const musicJobs = history.jobs?.filter(j => j.job_type === 'music' && j.status === 'completed');
-
-          if (musicJobs && musicJobs.length > 0) {
-            activeJobId = musicJobs[0].id;
-          } else {
-            setError('No session ID provided. Please start a new session from the Dashboard.');
-            setLoading(false);
-            return;
-          }
+          setShowHistory(true);
+          setLoading(false);
+          return;
         }
+
+        setShowHistory(false);
+        setLoading(true);
 
         const result = await getMusicResults(activeJobId);
 
@@ -430,6 +428,22 @@ const TrackSeparationPage = () => {
       setIsExporting(false);
     }
   };
+
+  if (showHistory) {
+    return (
+      <DashboardLayout activeTab="stems">
+         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-16">
+            <SessionHistory 
+              title="Music History"
+              filterType="music" 
+              emptyTitle="No Music History Found" 
+              emptyMessage="You haven't separated any tracks yet. Process an audio file on the dashboard to get started." 
+              emptyAction={{ label: 'Back to Dashboard', onClick: () => navigate('/dashboard') }}
+            />
+         </div>
+      </DashboardLayout>
+    );
+  }
 
   if (loading) {
     return (

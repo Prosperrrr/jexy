@@ -3,7 +3,7 @@ import FadeIn from './FadeIn';
 import { motion, useInView } from 'framer-motion';
 import { Mic2, Drum, Speaker, VolumeX, Volume2 } from 'lucide-react';
 
-const InteractiveStems = () => {
+export const InteractiveStems = () => {
   const [stems, setStems] = useState([
     { id: 'bass', name: 'Bass', icon: Speaker, muted: true, soloed: false, volume: 80, gradient: '#3b82f6', phase: 0.2, freq: 0.5 },
     { id: 'drums', name: 'Drums', icon: Drum, muted: true, soloed: false, volume: 80, gradient: '#3b82f6', phase: 0.8, freq: 0.1 },
@@ -210,17 +210,18 @@ const SimpleDenoiseVisual = () => {
   )
 }
 
-const KaraokeSyncVisual = () => {
+export const KaraokeSyncVisual = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const containerRef = useRef(null);
   const isInView = useInView(containerRef, { once: false, margin: "-20%" });
   
-  // Real timings for "Joha" by Asake
   const lines = [
-    { text: "Apala no be soca, see my team dem no be feeders", duration: 4000 },
-    { text: "Premier League is not UEFA, small body, my engine bigger gan ni (l'Eko)", duration: 5500 },
-    { text: "Mo ni show ah (joha)", duration: 2500 },
-    { text: "T'oba wa (joha)", duration: 3000 }
+    { text: "One more time", duration: 3000 },
+    { text: "We're like the legend of the Phoenix", duration: 4000 },
+    { text: "Yeah, our ins we're bikinins", duration: 3500 },
+    { text: "Oh, oh, oh, oh, it keeps the planets spinning", duration: 4500 },
+    { text: "The force will never be human", duration: 3500 },
+    { text: "We've come to fire", duration: 3000 }
   ];
 
   React.useEffect(() => {
@@ -258,8 +259,8 @@ const KaraokeSyncVisual = () => {
         style={{ WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)' }}
       >
         <motion.div 
-          className="absolute w-full flex flex-col space-y-4 pt-12"
-          animate={{ y: activeIndex * -48 }}
+          className="absolute w-full flex flex-col space-y-6 pt-32"
+          animate={{ y: activeIndex * -72 }}
           transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
         >
           {lines.map((line, idx) => {
@@ -289,7 +290,7 @@ const KaraokeSyncVisual = () => {
       </div>
       <div className="absolute bottom-4 right-6 z-20">
         <span className="text-slate-400 dark:text-slate-500 text-[10px] sm:text-xs font-medium italic flex items-center gap-1.5">
-          <span className="text-blue-500">♪</span> Joha - Asake
+          <span className="text-blue-500">♪</span> Daft Punk - Pentatonix
         </span>
       </div>
 

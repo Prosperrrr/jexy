@@ -4,7 +4,7 @@ import Hero from '../components/Hero';
 import Pipeline from '../components/Pipeline';
 import FeatureSections from '../components/FeatureSections';
 import Creators from '../components/Creators';
-import Contribute from '../components/Contribute';
+import CallToAction from '../components/CallToAction';
 import Footer from '../components/Footer';
 
 export default function LandingPage() {
@@ -23,7 +23,7 @@ export default function LandingPage() {
       <Pipeline />
       <FeatureSections />
       <Creators />
-      <Contribute />
+      <CallToAction />
       <Footer />
     </div>
   );

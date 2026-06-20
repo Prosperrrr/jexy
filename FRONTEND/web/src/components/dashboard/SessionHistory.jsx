@@ -36,7 +36,7 @@ const formatDuration = (duration) => {
   return `${Math.round(num)}s`;
 };
 
-const SessionHistory = () => {
+const SessionHistory = ({ filterType = null, title = "Session History", emptyTitle = "No sessions yet", emptyMessage = "Upload an audio file to get started.", emptyAction = null }) => {
   const navigate = useNavigate();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -44,7 +44,8 @@ const SessionHistory = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredJobs = jobs.filter(job => 
+  const typeFilteredJobs = jobs.filter(job => filterType ? job.job_type === filterType : true);
+  const filteredJobs = typeFilteredJobs.filter(job => 
     job.filename?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -95,7 +96,7 @@ const SessionHistory = () => {
       <div className="p-5 md:p-8 border-b border-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center space-x-3">
           <History className="w-5 h-5 text-slate-800" />
-          <h2 className="font-display font-bold text-slate-900 text-lg">Session History</h2>
+          <h2 className="font-display font-bold text-slate-900 text-lg">{title}</h2>
           {!loading && (
             <span className="bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full text-xs font-semibold shrink-0">
               {jobs.length} Total
@@ -128,11 +129,19 @@ const SessionHistory = () => {
             <AlertCircle className="w-8 h-8 mb-3" />
             <p className="text-sm font-medium">{error}</p>
           </div>
-        ) : jobs.length === 0 ? (
+        ) : typeFilteredJobs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-slate-400">
             <History className="w-12 h-12 mb-4 opacity-20" />
-            <p className="text-[15px] font-medium text-slate-500">No sessions yet</p>
-            <p className="text-sm">Upload an audio file to get started.</p>
+            <p className="text-[15px] font-medium text-slate-500 mb-1">{emptyTitle}</p>
+            <p className="text-sm mb-6 text-center">{emptyMessage}</p>
+            {emptyAction && (
+              <button 
+                onClick={emptyAction.onClick} 
+                className="px-6 py-2.5 bg-slate-900 text-white rounded-full text-sm font-semibold hover:bg-slate-800 transition-colors"
+              >
+                {emptyAction.label}
+              </button>
+            )}
           </div>
         ) : filteredJobs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-slate-400">

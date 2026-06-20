@@ -81,12 +81,12 @@ const BottomAudioPlayer = ({
           </div>
 
           {/* Right Section: Volume & Duration */}
-          <div className="flex items-center justify-end space-x-4 md:space-x-8 w-1/3">
-            <div className="hidden md:flex items-center space-x-3 w-32 justify-end">
-              <button onClick={onVolumeToggle} title="Mute" className="focus:outline-none transition-colors group">
+          <div className="flex items-center justify-end space-x-3 md:space-x-8 w-1/3">
+            <div className="flex items-center space-x-3 w-auto md:w-32 justify-end">
+              <button onClick={onVolumeToggle} title="Mute" className="focus:outline-none transition-colors group shrink-0">
                 {volume === 0 ? <VolumeX className="w-4 h-4 text-slate-300 group-hover:text-red-400" /> : <Volume2 className="w-4 h-4 text-slate-500 group-hover:text-blue-500" />}
               </button>
-              <div className="relative w-20 h-1.5 bg-slate-200 rounded-full flex items-center group/vol">
+              <div className="relative w-20 h-1.5 bg-slate-200 rounded-full hidden md:flex items-center group/vol">
                 <div
                   className="absolute left-0 top-0 h-full bg-slate-400 rounded-full group-hover/vol:bg-blue-500 transition-colors pointer-events-none"
                   style={{ width: `${volume}%` }}
@@ -103,11 +103,11 @@ const BottomAudioPlayer = ({
             <button 
               onClick={onRepeatToggle}
               title={isRepeating ? "Repeat: On" : "Repeat: Off"} 
-              className={`transition-colors hidden sm:block ${isRepeating ? 'text-blue-500 hover:text-blue-600' : 'text-slate-300 hover:text-slate-600'}`}
+              className={`transition-colors shrink-0 ${isRepeating ? 'text-blue-500 hover:text-blue-600' : 'text-slate-300 hover:text-slate-600'}`}
             >
               <Repeat className="w-4 h-4" />
             </button>
-            <span className="text-xs font-bold text-slate-400 font-display tracking-widest w-12 text-right shrink-0">
+            <span className="text-xs font-bold text-slate-400 font-display tracking-widest w-10 sm:w-12 text-right shrink-0">
               {formatTime(duration)}
             </span>
           </div>

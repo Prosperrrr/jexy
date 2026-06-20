@@ -18,12 +18,12 @@ export default function Navbar() {
             </div>
             {/* Center: Navigation */}
             <div className="hidden md:flex items-center gap-8">
-              <a href="#" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white transition-colors">
+              <Link to="/models" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white transition-colors">
                 Models
-              </a>
-              <a href="#" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white transition-colors">
+              </Link>
+              <Link to="/workflow" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white transition-colors">
                 Workflow
-              </a>
+              </Link>
               <Link to="/how-it-works" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white transition-colors">
                 How it works
               </Link>
@@ -48,6 +48,21 @@ export default function Navbar() {
                       label="Dashboard" 
                       labelIcon={<LayoutDashboard className="w-4 h-4" />} 
                       href="/dashboard" 
+                    />
+                    <UserButton.Link 
+                      label="Models" 
+                      labelIcon={<span className="material-symbols-outlined text-sm">auto_awesome</span>} 
+                      href="/models" 
+                    />
+                    <UserButton.Link 
+                      label="Workflow" 
+                      labelIcon={<span className="material-symbols-outlined text-sm">schema</span>} 
+                      href="/workflow" 
+                    />
+                    <UserButton.Link 
+                      label="How it works" 
+                      labelIcon={<span className="material-symbols-outlined text-sm">help</span>} 
+                      href="/how-it-works" 
                     />
                   </UserButton.MenuItems>
                 </UserButton>

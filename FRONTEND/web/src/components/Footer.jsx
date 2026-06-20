@@ -9,9 +9,6 @@ export default function Footer() {
             <div className="flex items-center gap-3 mb-6">
               <Link to="/" className="font-display font-bold text-2xl tracking-tight text-slate-900 dark:text-white hover:opacity-80 transition-opacity">jexy</Link>
             </div>
-            <p className="text-slate-500 dark:text-slate-400 text-sm max-w-xs mb-6 font-light">
-              Advancing the field of audio AI through open-source collaboration and transparent research.
-            </p>
           </div>
           <div>
             <h4 className="font-medium mb-6 text-slate-900 dark:text-white">Made For</h4>

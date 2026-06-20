@@ -8,6 +8,8 @@ import DashboardPage from './pages/DashboardPage';
 import TrackSeparationPage from './pages/TrackSeparationPage';
 import AudioEnhancerPage from './pages/AudioEnhancerPage';
 import HowItWorksPage from './pages/HowItWorksPage';
+import ModelsPage from './pages/ModelsPage';
+import WorkflowPage from './pages/WorkflowPage';
 
 function App() {
   const { user } = useUser();
@@ -30,6 +32,8 @@ function App() {
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/how-it-works" element={<HowItWorksPage />} />
+          <Route path="/models" element={<ModelsPage />} />
+          <Route path="/workflow" element={<WorkflowPage />} />
           
           {/* SSO Callback */}
           <Route path="/sso-callback" element={

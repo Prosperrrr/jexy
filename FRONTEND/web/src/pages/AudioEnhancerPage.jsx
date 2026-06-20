@@ -4,9 +4,10 @@ import posthog from 'posthog-js';
 import DashboardLayout from '../components/DashboardLayout';
 import AudioPlayerCard from '../components/audio-enhancer/AudioPlayerCard';
 import TranscriptionSection from '../components/audio-enhancer/TranscriptionSection';
+import SessionHistory from '../components/dashboard/SessionHistory';
 import Header from '../components/track-separation/Header';
 import BottomAudioPlayer from '../components/track-separation/BottomAudioPlayer';
-import { getSpeechResults, getUserJobs } from '../services/api';
+import { getSpeechResults } from '../services/api';
 import { Loader2 } from 'lucide-react';
 
 const AudioEnhancerPage = () => {
@@ -17,6 +18,7 @@ const AudioEnhancerPage = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showHistory, setShowHistory] = useState(false);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -32,17 +34,13 @@ const AudioEnhancerPage = () => {
         let activeJobId = jobId;
 
         if (!activeJobId) {
-          const history = await getUserJobs();
-          const speechJobs = history.jobs?.filter(j => j.job_type === 'speech' && j.status === 'completed');
-
-          if (speechJobs && speechJobs.length > 0) {
-            activeJobId = speechJobs[0].id;
-          } else {
-            setError('No session ID provided. Please start a new session from the Dashboard.');
-            setLoading(false);
-            return;
-          }
+          setShowHistory(true);
+          setLoading(false);
+          return;
         }
+
+        setShowHistory(false);
+        setLoading(true);
 
         const result = await getSpeechResults(activeJobId);
         setData(result);
@@ -74,6 +72,22 @@ const AudioEnhancerPage = () => {
   const handleSkipForward = () => setCurrentTime(prev => {
     return prev + 10;
   });
+
+  if (showHistory) {
+    return (
+      <DashboardLayout activeTab="enhance">
+         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-16">
+            <SessionHistory 
+              title="Speech History"
+              filterType="speech" 
+              emptyTitle="No Speech History Found" 
+              emptyMessage="You haven't enhanced any audio yet. Process a speech file on the dashboard to get started." 
+              emptyAction={{ label: 'Back to Dashboard', onClick: () => navigate('/dashboard') }}
+            />
+         </div>
+      </DashboardLayout>
+    );
+  }
 
   if (loading) {
     return (

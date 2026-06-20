@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { UploadCloud, Cpu, Headphones, Download } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import CallToAction from '../components/CallToAction';
 import FadeIn from '../components/FadeIn';
 
 export default function HowItWorksPage() {
@@ -16,7 +17,7 @@ export default function HowItWorksPage() {
   const steps = [
     {
       title: "1. Upload Your Audio",
-      description: "Simply drag and drop your audio or video file. We support all major formats including MP3, WAV, FLAC, and MP4. No file size limits for pro users.",
+      description: "Simply drag and drop your audio or video file. We support all major formats including MP3, WAV, FLAC, and MP4.",
       icon: UploadCloud,
       color: "from-sky-400 to-blue-500",
       bgClass: "bg-sky-50 dark:bg-sky-900/10"
@@ -103,16 +104,7 @@ export default function HowItWorksPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-32 relative text-center px-4">
-        <FadeIn delay={0.2} direction="up">
-          <h2 className="text-4xl font-display font-medium mb-6">Ready to enhance your audio?</h2>
-          <p className="text-slate-500 dark:text-slate-400 mb-10 max-w-md mx-auto">Join thousands of creators who are already using Jexy to power their workflows.</p>
-          <a href="/login" className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-slate-900 dark:bg-white text-white dark:text-black rounded-full text-lg font-medium hover:scale-105 transition-all shadow-lg">
-            Start Creating Free
-          </a>
-        </FadeIn>
-      </section>
+      <CallToAction />
 
       <Footer />
     </div>
