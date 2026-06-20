@@ -10,6 +10,8 @@ import AudioEnhancerPage from './pages/AudioEnhancerPage';
 import HowItWorksPage from './pages/HowItWorksPage';
 import ModelsPage from './pages/ModelsPage';
 import WorkflowPage from './pages/WorkflowPage';
+import ChangelogPage from './pages/ChangelogPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 function App() {
   const { user } = useUser();
@@ -34,6 +36,7 @@ function App() {
           <Route path="/how-it-works" element={<HowItWorksPage />} />
           <Route path="/models" element={<ModelsPage />} />
           <Route path="/workflow" element={<WorkflowPage />} />
+          <Route path="/changelog" element={<ChangelogPage />} />
           
           {/* SSO Callback */}
           <Route path="/sso-callback" element={
@@ -102,6 +105,9 @@ function App() {
             </SignedOut>
           </>
         } />
+        
+        {/* 404 Not Found */}
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
       </div>
     </Router>

@@ -30,7 +30,7 @@ const NoiseSuppressionGraph = () => {
   return (
     <div className="flex flex-col gap-3 w-full relative z-10 bg-slate-50/50 dark:bg-[#0a0a0a]/50 p-4 rounded-2xl border border-slate-200/50 dark:border-slate-800/50">
       <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1 text-center">
-        Jexy Output vs Adobe Podcast
+        <span className="font-display font-bold tracking-tight">jexy</span> Output vs Adobe Podcast
       </div>
       
       {/* Raw Input */}
@@ -43,10 +43,10 @@ const NoiseSuppressionGraph = () => {
         </svg>
       </div>
       
-      {/* Jexy Output */}
+      {/* jexy Output */}
       <div className="bg-white dark:bg-[#151515] rounded-xl p-4 border border-slate-200 dark:border-slate-800 relative overflow-hidden shadow-md">
         <div className="flex justify-between items-center mb-2 relative z-10">
-          <span className="text-xs font-medium text-slate-500">Jexy Output</span>
+          <span className="text-xs font-medium text-slate-500"><span className="font-display font-bold tracking-tight">jexy</span> Output</span>
         </div>
         <svg viewBox="0 0 200 100" className="w-full h-16 relative z-10" preserveAspectRatio="none">
           <polyline points={generateData('jexy')} fill="none" stroke="#3b82f6" strokeWidth="1.5" />
@@ -95,10 +95,10 @@ export default function ModelsPage() {
               <h2 className="text-3xl md:text-4xl font-display font-medium mb-6">YAMNet — Intelligent Audio Router</h2>
               <h3 className="text-xl text-slate-700 dark:text-slate-300 mb-4 font-medium">Zero-click classification</h3>
               <p className="text-lg text-slate-600 dark:text-slate-400 mb-6 font-light leading-relaxed">
-                Jexy uses Google's YAMNet convolutional neural network to analyze every uploaded file before processing begins. Trained on Google's AudioSet over 2 million human-labeled audio clips YAMNet generates probability scores across 521 audio classes every 0.96 seconds.
+                <span className="font-display font-bold tracking-tight">jexy</span> uses Google's YAMNet convolutional neural network to analyze every uploaded file before processing begins. Trained on Google's AudioSet over 2 million human-labeled audio clips YAMNet generates probability scores across 521 audio classes every 0.96 seconds.
               </p>
               <p className="text-lg text-slate-600 dark:text-slate-400 font-light leading-relaxed">
-                Jexy aggregates these scores into two custom groups: Music (55 classes) and Speech (21 classes). The category with the highest cumulative score wins and the file is routed upon user confirmation.
+                <span className="font-display font-bold tracking-tight">jexy</span> aggregates these scores into two custom groups: Music (55 classes) and Speech (21 classes). The category with the highest cumulative score wins and the file is routed upon user confirmation.
               </p>
               <div className="flex items-center gap-4 p-4 mt-8 bg-white dark:bg-[#151515] rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
                 <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center shrink-0">
@@ -151,7 +151,7 @@ export default function ModelsPage() {
               <h2 className="text-3xl md:text-4xl font-display font-medium mb-6">Demucs htdemucs_6s — Studio-Grade Stem Separation</h2>
               <h3 className="text-xl text-slate-700 dark:text-slate-300 mb-4 font-medium">Waveform-based source separation</h3>
               <p className="text-lg text-slate-600 dark:text-slate-400 mb-6 font-light leading-relaxed">
-                For music processing, Jexy uses Meta's Demucs htdemucs_6s a hybrid transformer architecture that operates directly on raw audio waveforms. Unlike older separation models that rely purely on spectrogram analysis, Demucs combines both time-domain and frequency-domain processing to achieve superior harmonic separation.
+                For music processing, <span className="font-display font-bold tracking-tight">jexy</span> uses Meta's Demucs htdemucs_6s a hybrid transformer architecture that operates directly on raw audio waveforms. Unlike older separation models that rely purely on spectrogram analysis, Demucs combines both time-domain and frequency-domain processing to achieve superior harmonic separation.
               </p>
               <p className="text-lg text-slate-600 dark:text-slate-400 font-light leading-relaxed">
                 It isolates 6 individual stems from any mixed track: vocals, drums, bass, guitar, piano, and other instruments. Each stem is independently controllable — mute, solo, adjust volume, or download individually.
@@ -188,7 +188,7 @@ export default function ModelsPage() {
               <h2 className="text-3xl md:text-4xl font-display font-medium mb-6">DeepFilterNet AI Noise Suppression</h2>
               <h3 className="text-xl text-slate-700 dark:text-slate-300 mb-4 font-medium">Full-band speech enhancement</h3>
               <p className="text-lg text-slate-600 dark:text-slate-400 mb-6 font-light leading-relaxed">
-                For speech processing, Jexy uses DeepFilterNet3 a deep learning model specifically designed for real-world noise suppression. It operates in the frequency domain, estimating spectral masks that aggressively suppress broadband environmental interference traffic, rain, fan noise, crowd ambience while preserving the natural characteristics of the speaker's voice.
+                For speech processing, <span className="font-display font-bold tracking-tight">jexy</span> uses DeepFilterNet3 a deep learning model specifically designed for real-world noise suppression. It operates in the frequency domain, estimating spectral masks that aggressively suppress broadband environmental interference traffic, rain, fan noise, crowd ambience while preserving the natural characteristics of the speaker's voice.
               </p>
               <p className="text-lg text-slate-600 dark:text-slate-400 font-light leading-relaxed">
                 Unlike simple noise gates that cut audio below a threshold, DeepFilterNet understands the difference between noise and speech at a fundamental frequency level, recovering speech boundaries that would otherwise be lost.
@@ -225,10 +225,10 @@ export default function ModelsPage() {
               <h2 className="text-3xl md:text-4xl font-display font-medium mb-6">Whisper — Automated Transcription</h2>
               <h3 className="text-xl text-slate-700 dark:text-slate-300 mb-4 font-medium">Speech to synchronized text</h3>
               <p className="text-lg text-slate-600 dark:text-slate-400 mb-6 font-light leading-relaxed">
-                Jexy uses OpenAI's Whisper automatic speech recognition model for transcription. Whisper is a transformer-based encoder-decoder model trained on 680,000 hours of multilingual audio making it robust to accents, background noise, and varied speaking styles.
+                <span className="font-display font-bold tracking-tight">jexy</span> uses OpenAI's Whisper automatic speech recognition model for transcription. Whisper is a transformer-based encoder-decoder model trained on 680,000 hours of multilingual audio making it robust to accents, background noise, and varied speaking styles.
               </p>
               <p className="text-lg text-slate-600 dark:text-slate-400 font-light leading-relaxed">
-                In Jexy's pipeline, Whisper receives clean audio either the isolated vocal stem from Demucs or the enhanced speech from DeepFilterNet ensuring maximum transcription accuracy. The output is a fully timestamped transcript synchronized to the audio timeline, exportable as TXT, JSON, or SRT subtitle files.
+                In <span className="font-display font-bold tracking-tight">jexy</span>'s pipeline, Whisper receives clean audio either the isolated vocal stem from Demucs or the enhanced speech from DeepFilterNet ensuring maximum transcription accuracy. The output is a fully timestamped transcript synchronized to the audio timeline, exportable as TXT, JSON, or SRT subtitle files.
               </p>
               <div className="flex items-center gap-4 p-4 mt-8 bg-slate-50 dark:bg-[#0f0f0f] rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
                 <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center shrink-0">

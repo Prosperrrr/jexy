@@ -85,7 +85,7 @@ export default function Hero() {
           </span>
         </h1>
         <p className="mt-6 text-[15px] sm:text-base md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto font-light leading-relaxed px-8 sm:px-4">
-          The AI-powered audio studio in your browser. Upload any song or voice recording, and let Jexy automatically separate stems, remove background noise, and transcribe every word.
+          The AI-powered audio studio in your browser. Upload any song or voice recording, and let <span className="font-display font-bold tracking-tight">jexy</span> automatically separate stems, remove background noise, and transcribe every word.
         </p>
         <div className="mt-10 sm:mt-12 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 px-6 sm:px-0">
           <button onClick={() => navigate('/login')} className="w-full sm:w-auto px-8 py-3.5 bg-slate-900 dark:bg-white text-white dark:text-black rounded-full text-base font-medium flex items-center justify-center gap-2 hover:scale-105 transition-all shadow-md">

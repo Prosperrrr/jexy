@@ -26,7 +26,7 @@ export default function Pipeline() {
             <h3 className="text-xl font-display font-medium mb-2">Intelligent Auto-Routing</h3>
             <div className="text-xs font-mono text-accent mb-4">Model: YAMNet</div>
             <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
-              Jexy automatically detects if your file is music or speech and routes it to the right pipeline.
+              <span className="font-display font-bold tracking-tight">jexy</span> automatically detects if your file is music or speech and routes it to the right pipeline.
             </p>
           </FadeIn>
 

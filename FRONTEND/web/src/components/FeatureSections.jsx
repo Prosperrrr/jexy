@@ -312,7 +312,7 @@ export default function FeatureSections() {
               </div>
               <h2 className="text-3xl md:text-4xl font-display font-medium mb-6 text-slate-900 dark:text-white">Zero-Click Auto-Detection</h2>
               <p className="text-lg text-slate-600 dark:text-slate-400 mb-8 font-light leading-relaxed">
-                You never have to configure settings before uploading. Jexy analyzes your audio in real-time. If it hears a song, it routes to Track Separation. If it hears a podcast or voice note, it routes to Speech Enhancement. Just upload, and let the AI do the heavy lifting.
+                You never have to configure settings before uploading. <span className="font-display font-bold tracking-tight">jexy</span> analyzes your audio in real-time. If it hears a song, it routes to Track Separation. If it hears a podcast or voice note, it routes to Speech Enhancement. Just upload, and let the AI do the heavy lifting.
               </p>
             </FadeIn>
 
@@ -359,7 +359,7 @@ export default function FeatureSections() {
               </div>
               <h2 className="text-3xl md:text-4xl font-display font-medium mb-6 text-slate-900 dark:text-white">A DAW-Style Experience in Your Browser</h2>
               <p className="text-lg text-slate-600 dark:text-slate-400 mb-8 font-light leading-relaxed">
-                Forget clunky desktop software. Jexy gives you a beautiful, timeline-based interface with waveform visualization. Create custom volume mixes, solo specific instruments, and export exactly what you hear.
+                Forget clunky desktop software. <span className="font-display font-bold tracking-tight">jexy</span> gives you a beautiful, timeline-based interface with waveform visualization. Create custom volume mixes, solo specific instruments, and export exactly what you hear.
               </p>
             </FadeIn>
           </div>
@@ -373,7 +373,7 @@ export default function FeatureSections() {
               </div>
               <h2 className="text-3xl md:text-4xl font-display font-medium mb-6 text-slate-900 dark:text-white">Crystal Clear Denoising</h2>
               <p className="text-lg text-slate-600 dark:text-slate-400 mb-8 font-light leading-relaxed">
-                Jexy removes background noise, wind, and room echo. Whether you're recording a podcast in a noisy area or a voice note on the street, your audio comes out sounding like it was recorded in a professional studio.
+                <span className="font-display font-bold tracking-tight">jexy</span> removes background noise, wind, and room echo. Whether you're recording a podcast in a noisy area or a voice note on the street, your audio comes out sounding like it was recorded in a professional studio.
               </p>
             </FadeIn>
 
@@ -412,7 +412,7 @@ export default function FeatureSections() {
               </div>
               <h2 className="text-3xl md:text-4xl font-display font-medium mb-6 text-slate-900 dark:text-white">Cloud-Powered Processing</h2>
               <p className="text-lg text-slate-600 dark:text-slate-400 mb-8 font-light leading-relaxed">
-                Jexy runs entirely in the cloud. No software to install, no expensive hardware required. Upload your file and get professional results in minutes, from any device.
+                <span className="font-display font-bold tracking-tight">jexy</span> runs entirely in the cloud. No software to install, no expensive hardware required. Upload your file and get professional results in minutes, from any device.
               </p>
             </FadeIn>
 

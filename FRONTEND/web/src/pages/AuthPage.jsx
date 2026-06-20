@@ -492,7 +492,7 @@ export default function AuthPage() {
         </div>
 
         <div className="mt-8 text-center text-xs text-slate-500 dark:text-slate-400 font-light tracking-wide px-4">
-          By continuing, you agree to Jexy's <a href="#" className="underline decoration-slate-300 hover:text-slate-700 dark:decoration-zinc-600 dark:hover:text-slate-300 transition-colors">Terms of Service</a> and <a href="#" className="underline decoration-slate-300 hover:text-slate-700 dark:decoration-zinc-600 dark:hover:text-slate-300 transition-colors">Privacy Policy</a>.
+          By continuing, you agree to <span className="font-display font-bold tracking-tight">jexy</span>'s <a href="#" className="underline decoration-slate-300 hover:text-slate-700 dark:decoration-zinc-600 dark:hover:text-slate-300 transition-colors">Terms of Service</a> and <a href="#" className="underline decoration-slate-300 hover:text-slate-700 dark:decoration-zinc-600 dark:hover:text-slate-300 transition-colors">Privacy Policy</a>.
         </div>
       </div>
     </div>

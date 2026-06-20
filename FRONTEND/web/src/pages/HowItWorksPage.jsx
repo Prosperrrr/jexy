@@ -55,7 +55,7 @@ export default function HowItWorksPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <FadeIn delay={0.1} direction="up">
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold tracking-tight mb-6">
-              How Jexy Works
+              How <span className="font-display font-bold tracking-tight">jexy</span> Works
             </h1>
             <p className="text-lg sm:text-xl text-slate-500 dark:text-slate-400 max-w-2xl mx-auto font-light leading-relaxed">
               From raw upload to studio-quality isolated stems in four simple, lightning-fast steps.

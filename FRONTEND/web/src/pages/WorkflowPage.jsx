@@ -20,7 +20,7 @@ export default function WorkflowPage() {
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-emerald-500">More Creating.</span>
             </h1>
             <p className="text-xl text-slate-500 dark:text-slate-400 max-w-2xl mx-auto font-light leading-relaxed">
-              Jexy's workflow is designed to get out of your way. Upload your files, let the asynchronous task queue handle the heavy lifting, and playback and download your results.
+              <span className="font-display font-bold tracking-tight">jexy</span>'s workflow is designed to get out of your way. Upload your files, let the asynchronous task queue handle the heavy lifting, and playback and download your results.
             </p>
           </FadeIn>
         </div>
@@ -39,7 +39,7 @@ export default function WorkflowPage() {
             <FadeIn direction="up" delay={0.2} className="flex-1 bg-white dark:bg-[#121212] rounded-[2rem] p-8 md:p-12 border border-slate-200 dark:border-slate-800 shadow-sm">
               <h3 className="text-2xl font-display font-medium mb-4">1. Smart Routing</h3>
               <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
-                As soon as you upload an audio file, Jexy analyzes its characteristics. Whether you drop in a lengthy podcast or a dense pop track, our routing engine automatically suggests the optimal processing pipeline (Track Separation or Speech Enhancement). Just review the classification, click confirm, and let Jexy do the rest.
+                As soon as you upload an audio file, <span className="font-display font-bold tracking-tight">jexy</span> analyzes its characteristics. Whether you drop in a lengthy podcast or a dense pop track, our routing engine automatically suggests the optimal processing pipeline (Track Separation or Speech Enhancement). Just review the classification, click confirm, and let <span className="font-display font-bold tracking-tight">jexy</span> do the rest.
               </p>
             </FadeIn>
           </div>
