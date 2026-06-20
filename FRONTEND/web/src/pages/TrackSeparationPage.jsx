@@ -57,10 +57,8 @@ const TrackSeparationPage = () => {
   useEffect(() => {
     if (silentAudioRef.current) {
       if (isPlaying) {
-        silentAudioRef.current.play().catch(() => {});
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
       } else {
-        silentAudioRef.current.pause();
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
       }
     }
@@ -151,11 +149,22 @@ const TrackSeparationPage = () => {
 
         setData(result);
 
-        const initialStems = (result.active_stems || []).reduce((acc, stem) => {
-          acc[stem] = { muted: false, soloed: false, volume: 80 };
-          return acc;
-        }, {});
-        setStemStates(initialStems);
+        const savedState = localStorage.getItem(`jexy_state_${activeJobId}`);
+        if (savedState) {
+          try {
+            const parsed = JSON.parse(savedState);
+            if (parsed.stemStates) setStemStates(parsed.stemStates);
+            if (parsed.globalVolume !== undefined) setGlobalVolume(parsed.globalVolume);
+            if (parsed.isGlobalMuted !== undefined) setIsGlobalMuted(parsed.isGlobalMuted);
+            if (parsed.isLyricsView !== undefined) setIsLyricsView(parsed.isLyricsView);
+          } catch(e) { console.error('Failed to parse saved state', e); }
+        } else {
+          const initialStems = (result.active_stems || []).reduce((acc, stem) => {
+            acc[stem] = { muted: false, soloed: false, volume: 80 };
+            return acc;
+          }, {});
+          setStemStates(initialStems);
+        }
 
       } catch (err) {
         setError(err.response?.data?.error || err.message || 'Failed to load results');
@@ -304,6 +313,7 @@ const TrackSeparationPage = () => {
        stopPlayback();
        setCurrentTime(0);
        pausedAtRef.current = 0;
+       if (silentAudioRef.current) silentAudioRef.current.pause();
        return;
     }
     
@@ -357,6 +367,19 @@ const TrackSeparationPage = () => {
     applyVolumes();
   }, [stemStates, globalVolume, isGlobalMuted, data]);
 
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    if (jobId && stemsReady && data) {
+      const stateToSave = {
+        stemStates,
+        globalVolume,
+        isGlobalMuted,
+        isLyricsView
+      };
+      localStorage.setItem(`jexy_state_${jobId}`, JSON.stringify(stateToSave));
+    }
+  }, [stemStates, globalVolume, isGlobalMuted, isLyricsView, jobId, stemsReady, data]);
+
   // Handle browser suspending AudioContext when tab is backgrounded
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -388,9 +411,11 @@ const TrackSeparationPage = () => {
     if (nextState) {
        startPlayback(pausedAtRef.current);
        reqAnimFrameId.current = requestAnimationFrame(updateCurrentTime);
+       if (silentAudioRef.current) silentAudioRef.current.play().catch(() => {});
     } else {
        stopPlayback();
        if (reqAnimFrameId.current) cancelAnimationFrame(reqAnimFrameId.current);
+       if (silentAudioRef.current) silentAudioRef.current.pause();
     }
   };
 
@@ -432,6 +457,7 @@ const TrackSeparationPage = () => {
         stopPlayback();
         pausedAtRef.current = clamped;
         startPlayback(clamped);
+        if (silentAudioRef.current) silentAudioRef.current.play().catch(() => {});
       } else {
         pausedAtRef.current = clamped;
       }
@@ -440,6 +466,29 @@ const TrackSeparationPage = () => {
 
   const handleSkipBack = () => handleSeek(currentTime - 10);
   const handleSkipForward = () => handleSeek(currentTime + 10);
+
+  const handleShare = async () => {
+    const shareUrl = window.location.href;
+    const shareData = {
+      title: data?.metadata?.filename ? `Jexy - ${data.metadata.filename}` : 'Jexy Separated Stems',
+      text: 'Check out this separated track on Jexy!',
+      url: shareUrl,
+    };
+
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+           navigator.clipboard.writeText(shareUrl);
+           alert('Link copied to clipboard!');
+        }
+      }
+    } else {
+      navigator.clipboard.writeText(shareUrl);
+      alert('Link copied to clipboard!');
+    }
+  };
 
   const handleExport = async () => {
     if (!data || isExporting) return;
@@ -571,6 +620,7 @@ const TrackSeparationPage = () => {
           bpm={data.metadata.bpm}
           onExport={handleExport}
           isExporting={isExporting}
+          onShare={handleShare}
         />
 
         {showDecodingToast && (

@@ -2,7 +2,7 @@ import React from 'react';
 import { ArrowLeft, Share2, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const Header = ({ filename, bpm, onExport, isExporting, subtitle = "Separated Session", downloadText = "Download Mix" }) => {
+const Header = ({ filename, bpm, onExport, isExporting, onShare, subtitle = "Separated Session", downloadText = "Download Mix" }) => {
   const navigate = useNavigate();
 
   return (
@@ -30,7 +30,10 @@ const Header = ({ filename, bpm, onExport, isExporting, subtitle = "Separated Se
             <span>{bpm} BPM</span>
           </div>
         )}
-        <button className="w-11 h-11 flex items-center justify-center bg-white border border-slate-200/60 text-slate-500 hover:text-slate-900 hover:shadow-md rounded-full transition-all hover:scale-105 active:scale-95">
+        <button 
+          onClick={onShare}
+          className="w-11 h-11 flex items-center justify-center bg-white border border-slate-200/60 text-slate-500 hover:text-slate-900 hover:shadow-md rounded-full transition-all hover:scale-105 active:scale-95"
+        >
           <Share2 className="w-4 h-4" />
         </button>
         <button 
