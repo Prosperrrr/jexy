@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useEffect } from 'react';
 import { useUser, SignedIn, SignedOut, AuthenticateWithRedirectCallback } from '@clerk/clerk-react';
 import posthog from 'posthog-js';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import LandingPage from './pages/LandingPage';
 import AuthPage from './pages/AuthPage';
 import DashboardPage from './pages/DashboardPage';
@@ -34,6 +35,7 @@ function App() {
   return (
     <Router>
       <ScrollToTop />
+      <SpeedInsights />
       <div className="App">
         <Routes>
           {/* Public Routes */}

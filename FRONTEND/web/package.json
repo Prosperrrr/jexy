@@ -14,6 +14,7 @@
     "@ffmpeg/core": "^0.12.10",
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@ffmpeg/util": "^0.12.2",
+    "@vercel/speed-insights": "^2.0.0",
     "axios": "^1.13.6",
     "dotenv": "^17.4.2",
     "framer-motion": "^12.38.0",
