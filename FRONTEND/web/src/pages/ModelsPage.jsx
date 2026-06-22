@@ -6,61 +6,50 @@ import FadeIn from '../components/FadeIn';
 import { Cpu, Music, Mic, Layers, Zap, Filter, FileText, Activity } from 'lucide-react';
 import { InteractiveStems, KaraokeSyncVisual } from '../components/FeatureSections';
 import { motion } from 'framer-motion';
+import modelsWaveforms from '../data/modelsWaveforms.json';
 
 const NoiseSuppressionGraph = () => {
-  const generateData = (type) => {
-    const points = [];
-    for (let i = 0; i < 200; i++) {
-      const x = i;
-      let y = 0;
-      const isSpeech = (i > 15 && i < 35) || (i > 65 && i < 80) || (i > 105 && i < 135) || (i > 155 && i < 185);
-      
-      if (type === 'raw') {
-        y = (Math.random() - 0.5) * 80 + (isSpeech ? (Math.random() - 0.5) * 60 : 0);
-      } else if (type === 'jexy') {
-        y = isSpeech ? (Math.random() - 0.5) * 90 : (Math.random() - 0.5) * 5;
-      } else if (type === 'adobe') {
-        y = isSpeech ? (Math.random() - 0.5) * 70 : (Math.random() - 0.5) * 20;
-      }
-      points.push(`${x},${50 + y}`);
-    }
-    return points.join(' ');
-  };
+  const renderWaveform = (peaks, colorClass) => (
+    <div className="w-full h-16 flex items-center justify-between gap-[1px] relative z-10 px-1 mt-2">
+      {peaks.map((peak, i) => (
+        <div 
+          key={i} 
+          className={`flex-1 rounded-full transition-all duration-300 ${colorClass}`}
+          style={{ height: `${Math.max(4, peak * 100)}%` }}
+        />
+      ))}
+    </div>
+  );
 
   return (
-    <div className="flex flex-col gap-3 w-full relative z-10 bg-slate-50/50 dark:bg-[#0a0a0a]/50 p-4 rounded-2xl border border-slate-200/50 dark:border-slate-800/50">
+    <div className="flex flex-col gap-3 w-full relative z-10 bg-slate-50/50 dark:bg-[#0a0a0a]/50 p-4 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 backdrop-blur-sm shadow-sm">
       <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1 text-center">
         <span className="font-display font-bold tracking-tight">jexy</span> Output vs Adobe Podcast
       </div>
       
       {/* Raw Input */}
       <div className="bg-white dark:bg-[#151515] rounded-xl p-4 border border-slate-200 dark:border-slate-800 relative overflow-hidden shadow-sm">
-        <div className="flex justify-between items-center mb-2 relative z-10">
+        <div className="flex justify-between items-center mb-1 relative z-10">
           <span className="text-xs font-medium text-slate-500">Raw Input: Noisy Audio</span>
         </div>
-        <svg viewBox="0 0 200 100" className="w-full h-16 relative z-10" preserveAspectRatio="none">
-          <polyline points={generateData('raw')} fill="none" stroke="#a855f7" strokeWidth="1" opacity="0.8" />
-        </svg>
+        {renderWaveform(modelsWaveforms.raw, 'bg-purple-400 dark:bg-purple-500 opacity-70')}
       </div>
       
       {/* jexy Output */}
-      <div className="bg-white dark:bg-[#151515] rounded-xl p-4 border border-slate-200 dark:border-slate-800 relative overflow-hidden shadow-md">
-        <div className="flex justify-between items-center mb-2 relative z-10">
-          <span className="text-xs font-medium text-slate-500"><span className="font-display font-bold tracking-tight">jexy</span> Output</span>
+      <div className="bg-white dark:bg-[#151515] rounded-xl p-4 border border-blue-200 dark:border-blue-900/50 relative overflow-hidden shadow-md">
+        <div className="absolute inset-0 bg-blue-50/30 dark:bg-blue-900/10 pointer-events-none"></div>
+        <div className="flex justify-between items-center mb-1 relative z-10">
+          <span className="text-xs font-medium text-blue-600 dark:text-blue-400"><span className="font-display font-bold tracking-tight">jexy</span> Enhanced Output</span>
         </div>
-        <svg viewBox="0 0 200 100" className="w-full h-16 relative z-10" preserveAspectRatio="none">
-          <polyline points={generateData('jexy')} fill="none" stroke="#3b82f6" strokeWidth="1.5" />
-        </svg>
+        {renderWaveform(modelsWaveforms.jexy, 'bg-blue-500 dark:bg-blue-500')}
       </div>
 
       {/* Adobe Output */}
       <div className="bg-white dark:bg-[#151515] rounded-xl p-4 border border-slate-200 dark:border-slate-800 relative overflow-hidden shadow-sm">
-        <div className="flex justify-between items-center mb-2 relative z-10">
+        <div className="flex justify-between items-center mb-1 relative z-10">
           <span className="text-xs font-medium text-slate-500">Adobe Podcast Output</span>
         </div>
-        <svg viewBox="0 0 200 100" className="w-full h-16 relative z-10" preserveAspectRatio="none">
-          <polyline points={generateData('adobe')} fill="none" stroke="#ef4444" strokeWidth="1" opacity="0.9" />
-        </svg>
+        {renderWaveform(modelsWaveforms.adobe, 'bg-red-400 dark:bg-red-500 opacity-80')}
       </div>
     </div>
   );

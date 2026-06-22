@@ -23,6 +23,7 @@ const TrackSeparationPage = () => {
   const navigate = useNavigate();
   const queryParams = new URLSearchParams(location.search);
   const jobId = location.state?.jobId || queryParams.get('jobId');
+  const stateFilename = location.state?.filename;
 
   useEffect(() => {
     if (isLoaded && !isSignedIn && !jobId) {
@@ -72,9 +73,9 @@ const TrackSeparationPage = () => {
   }, [isPlaying]);
 
   useEffect(() => {
-    if ('mediaSession' in navigator && data?.metadata) {
+    if ('mediaSession' in navigator && (data?.metadata || stateFilename)) {
       navigator.mediaSession.metadata = new MediaMetadata({
-        title: data.metadata.filename || 'Separated Audio',
+        title: data?.metadata?.filename || stateFilename || 'Separated Audio',
         artist: 'Jexy Stems',
         album: 'Jexy',
         artwork: [
@@ -484,8 +485,8 @@ const TrackSeparationPage = () => {
   const handleShare = async () => {
     const shareUrl = `${window.location.origin}/track-separation?jobId=${jobId}`;
     const shareData = {
-      title: data?.metadata?.filename ? `Jexy - ${data.metadata.filename}` : 'Jexy Separated Stems',
-      text: data?.metadata?.filename ? `Check out my separated track "${data.metadata.filename}" on Jexy!` : 'Check out this separated track on Jexy!',
+      title: data?.metadata?.filename || stateFilename ? `Jexy - ${data?.metadata?.filename || stateFilename}` : 'Jexy Separated Stems',
+      text: data?.metadata?.filename || stateFilename ? `Check out my separated track "${data?.metadata?.filename || stateFilename}" on Jexy!` : 'Check out this separated track on Jexy!',
       url: shareUrl,
     };
 
@@ -519,7 +520,8 @@ const TrackSeparationPage = () => {
 
     setIsExporting(true);
     try {
-      const cleanFilename = data.metadata.filename.replace(/\.mp3$/i, '').replace(/\s+/g, '_');
+    const baseFilename = data?.metadata?.filename || stateFilename || 'track';
+    const cleanFilename = baseFilename.replace(/\.mp3$/i, '').replace(/\s+/g, '_');
 
       if (activeStemNames.length === 1) {
         const fileRes = await fetch(data.stems[activeStemNames[0]].url);
@@ -636,7 +638,7 @@ const TrackSeparationPage = () => {
       />
       <div className="flex flex-col h-full relative" style={{ paddingBottom: '160px' }}>
         <Header
-          filename={data.metadata.filename}
+          filename={data.metadata.filename || stateFilename}
           bpm={data.metadata.bpm}
           onExport={handleExport}
           isExporting={isExporting}
@@ -651,7 +653,7 @@ const TrackSeparationPage = () => {
         )}
 
         {isLyricsView ? (
-          <LyricsView lyrics={data.metadata.lyrics?.timestamped || []} currentTime={currentTime} />
+          <LyricsView lyrics={data.metadata.lyrics?.timestamped || []} currentTime={currentTime} filename={data.metadata.filename || stateFilename} />
         ) : (
           <div className="flex-1 overflow-x-hidden overflow-y-auto w-full relative pb-48">
             {!stemsReady ? (

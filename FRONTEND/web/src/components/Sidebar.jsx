@@ -1,7 +1,8 @@
 import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { LayoutDashboard, ScissorsLineDashed, SlidersHorizontal, ChevronLeft, ChevronRight } from 'lucide-react';
-import { UserButton, useUser } from '@clerk/clerk-react';
+import { useUser } from '@clerk/clerk-react';
+import CustomUserButton from './CustomUserButton';
 
 const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const { user } = useUser();
@@ -25,15 +26,10 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
         </button>
 
-        {/* Logo */}
         <Link to="/" className={`p-6 flex items-center ${isCollapsed ? 'justify-center' : ''} hover:opacity-80 transition-opacity overflow-hidden`}>
-          <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center shrink-0">
-            {/* Custom waveform logo icon */}
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2v20 M17 5v14 M22 10v4 M7 5v14 M2 10v4" />
-            </svg>
-          </div>
-          <span className={`font-display font-bold text-xl text-slate-900 tracking-tight whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out ${isCollapsed ? 'max-w-0 opacity-0 ml-0' : 'max-w-[100px] opacity-100 ml-3'}`}>jexy</span>
+          <span className={`font-display font-bold text-xl text-slate-900 tracking-tight whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out`}>
+            {isCollapsed ? 'j' : 'jexy'}
+          </span>
         </Link>
 
         {/* Navigation */}
@@ -64,7 +60,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between px-2'} py-2 transition-all duration-300`}>
             <div className="flex items-center truncate">
               <div className="shrink-0 flex items-center justify-center">
-                <UserButton appearance={{ elements: { userButtonAvatarBox: 'w-9 h-9' } }} />
+                <CustomUserButton />
               </div>
               <span className={`font-display font-semibold text-sm text-slate-900 truncate transition-all duration-300 ease-in-out ${isCollapsed ? 'max-w-0 opacity-0 ml-0' : 'max-w-[100px] opacity-100 ml-3'}`}>
                 {user?.firstName || 'User'}
@@ -76,17 +72,12 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
       {/* Mobile Top Navigation */}
       <div className="md:hidden fixed top-0 left-0 right-0 bg-white border-b border-slate-200 flex justify-between items-center h-16 px-5 z-50">
-        <Link to="/" className="flex items-center space-x-2.5 hover:opacity-80 transition-opacity">
-          <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2v20 M17 5v14 M22 10v4 M7 5v14 M2 10v4" />
-            </svg>
-          </div>
+        <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
           <span className="font-display font-bold text-xl text-slate-900 tracking-tight">jexy</span>
         </Link>
         <div className="flex items-center space-x-4">
           <div className="flex items-center">
-            <UserButton appearance={{ elements: { userButtonAvatarBox: 'w-8 h-8' } }} />
+            <CustomUserButton />
           </div>
         </div>
       </div>

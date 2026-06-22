@@ -208,7 +208,7 @@ const DashboardPage = () => {
           type: pipelineType,
           timestamp: new Date().toISOString()
         }));
-        navigate(pipelineType === 'speech' ? '/audio-enhancer' : '/track-separation', { state: { jobId } });
+        navigate(pipelineType === 'speech' ? '/audio-enhancer' : '/track-separation', { state: { jobId, filename: file?.name } });
       }
     } else {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -387,7 +387,7 @@ const DashboardPage = () => {
                     type: pipelineType,
                     timestamp: new Date().toISOString()
                   }));
-                  navigate(pipelineType === 'speech' ? '/audio-enhancer' : '/track-separation', { state: { jobId } });
+                  navigate(pipelineType === 'speech' ? '/audio-enhancer' : '/track-separation', { state: { jobId, filename: file?.name } });
                 }}
                 className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 px-8 rounded-full transition-all shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
               >

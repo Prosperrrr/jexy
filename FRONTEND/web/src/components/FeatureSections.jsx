@@ -2,12 +2,13 @@ import React, { useState, useRef } from 'react';
 import FadeIn from './FadeIn';
 import { motion, useInView } from 'framer-motion';
 import { Mic2, Drum, Speaker, VolumeX, Volume2 } from 'lucide-react';
+import mockupWaveforms from '../data/mockupWaveforms.json';
 
 export const InteractiveStems = () => {
   const [stems, setStems] = useState([
-    { id: 'bass', name: 'Bass', icon: Speaker, muted: true, soloed: false, volume: 80, gradient: '#3b82f6', phase: 0.2, freq: 0.5 },
-    { id: 'drums', name: 'Drums', icon: Drum, muted: true, soloed: false, volume: 80, gradient: '#3b82f6', phase: 0.8, freq: 0.1 },
-    { id: 'vocals', name: 'Vocals', icon: Mic2, muted: false, soloed: true, volume: 85, gradient: '#3b82f6', phase: 0.1, freq: 0.3 }
+    { id: 'bass', name: 'Bass', icon: Speaker, muted: true, soloed: false, volume: 80, gradient: '#3b82f6', peaks: mockupWaveforms.bass },
+    { id: 'drums', name: 'Drums', icon: Drum, muted: true, soloed: false, volume: 80, gradient: '#3b82f6', peaks: mockupWaveforms.drums },
+    { id: 'vocals', name: 'Vocals', icon: Mic2, muted: false, soloed: true, volume: 85, gradient: '#3b82f6', peaks: mockupWaveforms.vocals }
   ]);
 
   const toggleMute = (id) => {
@@ -50,15 +51,13 @@ export const InteractiveStems = () => {
 
         return (
           <div key={stem.id} className={`flex ${isSoloed ? 'bg-white/70 dark:bg-slate-900/70 border-blue-200/60 dark:border-blue-900/40 shadow-xl' : 'bg-white/70 dark:bg-slate-900/70 border-slate-200/60 dark:border-slate-700/60 shadow-sm'} backdrop-blur-xl rounded-2xl border overflow-hidden h-[72px] transition-all duration-300`}>
-            <div className={`w-[45%] sm:w-[35%] md:w-[30%] border-r border-slate-100/50 dark:border-slate-800 p-3 flex flex-col justify-center gap-3 ${isSoloed ? 'bg-white/90 dark:bg-[#1a1a1a]' : 'bg-white/60 dark:bg-[#151515]'} transition-colors duration-300`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className={`p-2 rounded-xl transition-all duration-300 ${isSoloed ? 'bg-blue-600 text-white shadow-[0_4px_15px_rgba(37,99,235,0.4)]' : isMuted ? 'bg-slate-100 text-slate-400 dark:bg-slate-800' : 'bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}>
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <span className={`font-display font-extrabold text-[12px] sm:text-[14px] transition-colors ${isSoloed ? 'text-slate-900 dark:text-white' : isMuted ? 'text-slate-400' : 'text-slate-700 dark:text-slate-300'}`}>{stem.name}</span>
+            <div className={`w-[150px] sm:w-[180px] shrink-0 border-r border-slate-100/50 dark:border-slate-800 p-3 flex flex-col justify-center gap-3 ${isSoloed ? 'bg-white/90 dark:bg-[#1a1a1a]' : 'bg-white/60 dark:bg-[#151515]'} transition-colors duration-300`}>
+              <div className="flex items-center gap-2 sm:gap-3 w-full">
+                <div className={`p-2 rounded-xl transition-all duration-300 shrink-0 ${isSoloed ? 'bg-blue-600 text-white shadow-[0_4px_15px_rgba(37,99,235,0.4)]' : isMuted ? 'bg-slate-100 text-slate-400 dark:bg-slate-800' : 'bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}>
+                  <Icon className="w-4 h-4" />
                 </div>
-                <div className="flex gap-1.5 z-20">
+                <span className={`font-display font-extrabold text-[12px] sm:text-[14px] truncate flex-1 min-w-0 transition-colors ${isSoloed ? 'text-slate-900 dark:text-white' : isMuted ? 'text-slate-400' : 'text-slate-700 dark:text-slate-300'}`}>{stem.name}</span>
+                <div className="flex gap-1.5 z-20 shrink-0">
                   <button onClick={() => toggleMute(stem.id)} className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center text-[9px] sm:text-[10px] font-black transition-all ${isMuted ? 'bg-red-50 text-red-600 ring-1 ring-red-500/30 dark:bg-red-900/20 dark:text-red-400 dark:ring-red-500/20 shadow-inner' : 'bg-slate-50 text-slate-400 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700'}`}>M</button>
                   <button onClick={() => toggleSolo(stem.id)} className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center text-[9px] sm:text-[10px] font-black transition-all ${isSoloed ? 'bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)] ring-1 ring-blue-500/50' : 'bg-slate-50 text-slate-400 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700'}`}>S</button>
                 </div>
@@ -71,7 +70,7 @@ export const InteractiveStems = () => {
                  </div>
               </div>
             </div>
-            <div className={`w-[55%] sm:w-[65%] md:w-[70%] relative flex items-center h-full overflow-hidden transition-all duration-300 ${isMuted ? 'opacity-30 grayscale' : 'opacity-100'}`}>
+            <div className={`flex-1 relative flex items-center h-full overflow-hidden transition-all duration-300 ${isMuted ? 'opacity-30 grayscale' : 'opacity-100'}`}>
                {isSoloed && <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/20 dark:via-blue-900/20 to-transparent pointer-events-none"></div>}
                <svg preserveAspectRatio="none" viewBox="0 0 1000 60" className="w-full h-14 drop-shadow-sm px-2 pointer-events-none" fill="none">
                  <defs>
@@ -80,13 +79,18 @@ export const InteractiveStems = () => {
                      <stop offset="100%" stopColor={stem.gradient} stopOpacity="0.2" />
                    </linearGradient>
                  </defs>
-                 <path d={Array.from({length: 80}).map((_, i) => {
-                   const x = (i * 12.5 + 6.25).toFixed(1);
-                   const baseHeight = stem.id === 'drums' ? Math.abs(Math.sin(i * stem.freq) * Math.sin(i * 0.1) * 38) + (i%5===0 ? 10 : 0) : Math.abs(Math.sin(i * stem.phase) * Math.cos(i * stem.freq) * 44);
-                   const h = Math.max(2, baseHeight);
-                   const y = (30 - h/2).toFixed(1);
-                   return `M ${x} ${y} v ${h.toFixed(1)} `;
-                 }).join('')} stroke={`url(#grad-${stem.id})`} strokeWidth="6" strokeLinecap="round" className="transition-all duration-150" />
+                 <path d={(() => {
+                   let d = "";
+                   const numBars = stem.peaks.length;
+                   const stepX = 1000 / numBars;
+                   stem.peaks.forEach((peak, i) => {
+                     const h = Math.max(2, peak * 44); // max height 44px
+                     const x = (i * stepX + stepX / 2).toFixed(1);
+                     const y = (30 - h / 2).toFixed(1);
+                     d += `M ${x} ${y} v ${h.toFixed(1)} `;
+                   });
+                   return d;
+                 })()} stroke={`url(#grad-${stem.id})`} strokeWidth={Math.max(1.5, (1000/stem.peaks.length) * 0.6)} strokeLinecap="round" className="transition-all duration-150" />
                </svg>
             </div>
           </div>
@@ -213,15 +217,16 @@ const SimpleDenoiseVisual = () => {
 export const KaraokeSyncVisual = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const containerRef = useRef(null);
+  const scrollRef = useRef(null);
   const isInView = useInView(containerRef, { once: false, margin: "-20%" });
   
   const lines = [
-    { text: "One more time", duration: 3000 },
-    { text: "We're like the legend of the Phoenix", duration: 4000 },
-    { text: "Yeah, our ins we're bikinins", duration: 3500 },
-    { text: "Oh, oh, oh, oh, it keeps the planets spinning", duration: 4500 },
-    { text: "The force will never be human", duration: 3500 },
-    { text: "We've come to fire", duration: 3000 }
+    { text: "He's putting on a drum show", duration: 3000 },
+    { text: "Even now, even now, even now", duration: 4000 },
+    { text: "He'll take the longer way home", duration: 3500 },
+    { text: "Even now, even now, even now", duration: 4500 },
+    { text: "He'll never ever say so", duration: 3500 },
+    { text: "He tries fastest to feel it, feel it", duration: 3000 }
   ];
 
   React.useEffect(() => {
@@ -243,25 +248,32 @@ export const KaraokeSyncVisual = () => {
     return () => clearTimeout(timeoutId);
   }, [isInView]);
 
+  React.useEffect(() => {
+    if (activeIndex !== -1 && scrollRef.current && scrollRef.current.parentElement) {
+      const activeElement = scrollRef.current.children[activeIndex];
+      const parent = scrollRef.current.parentElement;
+      if (activeElement && parent) {
+        const targetScrollTop = activeElement.offsetTop - parent.clientHeight / 2 + activeElement.clientHeight / 2;
+        parent.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
+      }
+    }
+  }, [activeIndex]);
+
   return (
     <div ref={containerRef} className="relative bg-slate-50 dark:bg-[#0f0f0f] rounded-2xl w-full h-[320px] sm:h-96 flex flex-col p-6 sm:p-8 transition-colors duration-300 overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm">
       
       {/* Label */}
-      <div className="mb-4 z-10 relative flex justify-between items-center">
+      <div className="mt-2 mb-4 z-10 relative flex justify-between items-center">
         <span className="text-slate-500 bg-white dark:bg-slate-900 px-3 py-1 rounded-full text-[10px] sm:text-xs font-mono uppercase border border-slate-200 dark:border-slate-800 shadow-sm">
           Lyrics
         </span>
       </div>
 
-      {/* Karaoke Lyrics (Spotify Style Vertical Scroll) */}
-      <div 
-        className="flex-1 relative w-full overflow-hidden" 
-        style={{ WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)' }}
-      >
-        <motion.div 
-          className="absolute w-full flex flex-col space-y-6 pt-32"
-          animate={{ y: activeIndex * -72 }}
-          transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
+      {/* Karaoke Lyrics (Native Scroll to match actual interface) */}
+      <div className="flex-1 overflow-y-hidden relative w-full flex flex-col text-left mt-2" style={{ WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)' }}>
+        <div 
+          className="w-full pb-[150px] pt-[80px] relative z-10 flex flex-col space-y-4 px-2"
+          ref={scrollRef}
         >
           {lines.map((line, idx) => {
             const isActive = idx === activeIndex;
@@ -269,19 +281,19 @@ export const KaraokeSyncVisual = () => {
             return (
               <p 
                 key={idx}
-                className={`font-display transition-all duration-700 ease-out tracking-tight origin-left
+                className={`font-display transition-all duration-500 ease-out tracking-tight
                   ${isActive 
-                    ? 'text-2xl sm:text-3xl lg:text-4xl font-black text-blue-600 dark:text-blue-500' 
+                    ? 'text-3xl sm:text-4xl font-black text-blue-600 dark:text-blue-500 scale-[1.01] origin-left' 
                     : isPast
-                      ? 'text-lg sm:text-xl lg:text-2xl text-slate-400/30 dark:text-slate-600/30 font-medium'
-                      : 'text-lg sm:text-xl lg:text-2xl text-slate-400 dark:text-slate-500 font-medium'}
+                      ? 'text-xl sm:text-2xl text-slate-400/50 dark:text-slate-500/50 font-medium'
+                      : 'text-xl sm:text-2xl text-slate-400 dark:text-slate-500 font-medium'}
                 `}
               >
                 {line.text}
               </p>
             );
           })}
-        </motion.div>
+        </div>
       </div>
 
       {/* Decorative Elements & Attribution */}
@@ -289,8 +301,8 @@ export const KaraokeSyncVisual = () => {
          <span className="text-[200px] font-black text-slate-900 dark:text-white leading-none">♪</span>
       </div>
       <div className="absolute bottom-4 right-6 z-20">
-        <span className="text-slate-400 dark:text-slate-500 text-[10px] sm:text-xs font-medium italic flex items-center gap-1.5">
-          <span className="text-blue-500">♪</span> Daft Punk - Pentatonix
+        <span className="text-slate-400 dark:text-slate-500 text-[10px] sm:text-xs font-medium italic flex items-center gap-1.5 bg-slate-50 dark:bg-[#0f0f0f] p-1 rounded">
+          <span className="text-blue-500">♪</span> Drum show - Twenty One pilots
         </span>
       </div>
 

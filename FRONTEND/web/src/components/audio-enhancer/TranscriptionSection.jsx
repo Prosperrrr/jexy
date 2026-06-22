@@ -6,7 +6,15 @@ const formatTime = (seconds) => {
   return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 };
 
-const TranscriptionSection = ({ transcript, currentTime, downloads }) => {
+const formatSrtTime = (seconds) => {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+  const millis = Math.floor((seconds % 1) * 1000);
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')},${millis.toString().padStart(3, '0')}`;
+};
+
+const TranscriptionSection = ({ transcript, currentTime, filename }) => {
   const scrollRef = useRef(null);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [isCopied, setIsCopied] = useState(false);
@@ -32,6 +40,35 @@ const TranscriptionSection = ({ transcript, currentTime, downloads }) => {
     } catch (err) {
       console.error('Failed to copy text', err);
     }
+  };
+
+  const handleDownload = (format) => {
+    let content = '';
+    let mimeType = 'text/plain';
+    const actualFilename = filename || 'track';
+    const cleanFilename = actualFilename.replace(/\.[^/.]+$/, "").replace(/\s+/g, '_');
+    let dlFilename = `jexy_transcription_${cleanFilename}.${format}`;
+
+    if (format === 'txt') {
+      content = transcript?.plain || segments.map(l => l.text).join('\n\n');
+    } else if (format === 'srt') {
+      content = segments.map((l, i) => {
+        return `${i + 1}\n${formatSrtTime(l.start)} --> ${formatSrtTime(l.end)}\n${l.text}\n\n`;
+      }).join('');
+    } else if (format === 'json') {
+      content = JSON.stringify(transcript, null, 2);
+      mimeType = 'application/json';
+    }
+
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = dlFilename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   // Auto-scroll only when active segment changes to prevent scroll locking
@@ -106,9 +143,9 @@ const TranscriptionSection = ({ transcript, currentTime, downloads }) => {
       </div>
 
       <div className="flex items-center justify-end gap-3 mt-4">
-        <a href={downloads.transcript_txt} title="Download TXT" download className="px-3 py-1.5 bg-white border border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-800 text-sm font-medium rounded-lg transition-colors shadow-sm focus:outline-none">TXT</a>
-        <a href={downloads.transcript_srt} title="Download SRT" download className="px-3 py-1.5 bg-white border border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-800 text-sm font-medium rounded-lg transition-colors shadow-sm focus:outline-none">SRT</a>
-        <a href={downloads.transcript_json} title="Download JSON" download className="px-3 py-1.5 bg-white border border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-800 text-sm font-medium rounded-lg transition-colors shadow-sm focus:outline-none">JSON</a>
+        <button onClick={() => handleDownload('txt')} title="Download TXT" className="px-3 py-1.5 bg-white border border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-800 text-sm font-medium rounded-lg transition-colors shadow-sm focus:outline-none">TXT</button>
+        <button onClick={() => handleDownload('srt')} title="Download SRT" className="px-3 py-1.5 bg-white border border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-800 text-sm font-medium rounded-lg transition-colors shadow-sm focus:outline-none">SRT</button>
+        <button onClick={() => handleDownload('json')} title="Download JSON" className="px-3 py-1.5 bg-white border border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-800 text-sm font-medium rounded-lg transition-colors shadow-sm focus:outline-none">JSON</button>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
-import { SignedIn, SignedOut, UserButton, useUser } from '@clerk/clerk-react';
-import { LayoutDashboard } from 'lucide-react';
+import { SignedIn, SignedOut, useUser } from '@clerk/clerk-react';
+import CustomUserButton from './CustomUserButton';
 
 export default function Navbar() {
   const { user, isLoaded } = useUser();
@@ -42,30 +42,7 @@ export default function Navbar() {
                   Sign in
                 </Link>
               ) : (
-                <UserButton afterSignOutUrl="/" appearance={{ elements: { userButtonAvatarBox: "w-8 h-8 md:w-9 md:h-9" } }}>
-                  <UserButton.MenuItems>
-                    <UserButton.Link 
-                      label="Dashboard" 
-                      labelIcon={<LayoutDashboard className="w-4 h-4" />} 
-                      href="/dashboard" 
-                    />
-                    <UserButton.Link 
-                      label="Models" 
-                      labelIcon={<span className="material-symbols-outlined text-sm">auto_awesome</span>} 
-                      href="/models" 
-                    />
-                    <UserButton.Link 
-                      label="Workflow" 
-                      labelIcon={<span className="material-symbols-outlined text-sm">schema</span>} 
-                      href="/workflow" 
-                    />
-                    <UserButton.Link 
-                      label="How it works" 
-                      labelIcon={<span className="material-symbols-outlined text-sm">help</span>} 
-                      href="/how-it-works" 
-                    />
-                  </UserButton.MenuItems>
-                </UserButton>
+                <CustomUserButton />
               )}
             </div>
           </div>

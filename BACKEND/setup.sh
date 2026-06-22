@@ -1,7 +1,6 @@
 #!/bin/bash
 # =============================================================================
 # JEXY Backend Server Setup Script
-# Run this ONCE on a fresh server/GPU instance before deploying.
 # Tested on Ubuntu 22.04
 # =============================================================================
 

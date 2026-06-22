@@ -17,6 +17,7 @@ const AudioEnhancerPage = () => {
   const navigate = useNavigate();
   const queryParams = new URLSearchParams(location.search);
   const jobId = location.state?.jobId || queryParams.get('jobId');
+  const stateFilename = location.state?.filename;
 
   useEffect(() => {
     if (isLoaded && !isSignedIn && !jobId) {
@@ -260,11 +261,17 @@ const AudioEnhancerPage = () => {
                 downloadUrl={fullUrlDownloads.clean_audio}
                 isRepeating={isRepeating}
               />
-              <TranscriptionSection
-                transcript={safeMetadata.transcript || []}
+              <TranscriptionSection 
+                transcript={safeMetadata.transcript || []} 
                 currentTime={currentTime}
-                downloads={fullUrlDownloads}
+                filename={safeMetadata.filename || stateFilename}
               />
+              {/* Transcription Disclaimer */}
+              <div className="pt-2 pb-8 text-center sm:text-left">
+                <p className="text-slate-400 dark:text-slate-500 text-sm italic font-medium">
+                  Note: The transcription might not be 100% accurate. The AI model can occasionally make mistakes or misinterpret words.
+                </p>
+              </div>
             </div>
           </div>
         </div>

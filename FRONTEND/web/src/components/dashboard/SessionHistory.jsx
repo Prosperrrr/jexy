@@ -84,9 +84,9 @@ const SessionHistory = ({ filterType = null, title = "Session History", emptyTit
     
     // Navigate to respective route
     if (job.job_type === 'music') {
-      navigate('/track-separation', { state: { jobId: job.id } });
+      navigate('/track-separation', { state: { jobId: job.id, filename: job.filename } });
     } else {
-      navigate('/audio-enhancer', { state: { jobId: job.id } });
+      navigate('/audio-enhancer', { state: { jobId: job.id, filename: job.filename } });
     }
   };
 
