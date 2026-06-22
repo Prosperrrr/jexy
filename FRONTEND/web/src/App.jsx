@@ -11,6 +11,9 @@ import HowItWorksPage from './pages/HowItWorksPage';
 import ModelsPage from './pages/ModelsPage';
 import WorkflowPage from './pages/WorkflowPage';
 import ChangelogPage from './pages/ChangelogPage';
+import ContactPage from './pages/ContactPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import CookiePolicyPage from './pages/CookiePolicyPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ScrollToTop from './components/ScrollToTop';
 
@@ -39,6 +42,9 @@ function App() {
           <Route path="/models" element={<ModelsPage />} />
           <Route path="/workflow" element={<WorkflowPage />} />
           <Route path="/changelog" element={<ChangelogPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/cookie-policy" element={<CookiePolicyPage />} />
           
           {/* SSO Callback */}
           <Route path="/sso-callback" element={

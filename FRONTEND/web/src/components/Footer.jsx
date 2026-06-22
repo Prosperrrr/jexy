@@ -27,6 +27,7 @@ export default function Footer() {
               <h4 className="font-medium mb-6 text-slate-900 dark:text-white">Project</h4>
               <ul className="space-y-3 text-sm text-slate-500 dark:text-slate-400 font-light">
                 <li><Link to="/changelog" className="hover:text-black dark:hover:text-white transition-colors">Changelog</Link></li>
+                <li><Link to="/contact" className="hover:text-black dark:hover:text-white transition-colors">Contact</Link></li>
               </ul>
             </div>
           </div>
@@ -34,7 +35,8 @@ export default function Footer() {
         <div className="pt-8 border-t border-slate-100 dark:border-slate-900 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-xs text-slate-400 font-mono">© 2026 <span className="font-display font-bold tracking-tight">jexy</span> Project. Open Source.</p>
           <div className="flex items-center gap-6 text-xs text-slate-400 font-mono">
-            <a href="#" className="hover:text-slate-800 dark:hover:text-white transition-colors">Privacy</a>
+            <Link to="/privacy" className="hover:text-slate-800 dark:hover:text-white transition-colors">Privacy</Link>
+            <Link to="/cookie-policy" className="hover:text-slate-800 dark:hover:text-white transition-colors">Cookie Policy</Link>
           </div>
         </div>
       </div>

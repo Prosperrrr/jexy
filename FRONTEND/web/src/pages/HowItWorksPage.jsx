@@ -17,21 +17,21 @@ export default function HowItWorksPage() {
   const steps = [
     {
       title: "1. Upload Your Audio",
-      description: "Simply drag and drop your audio or video file. We support all major formats including MP3, WAV, FLAC, and MP4.",
+      description: "Simply drag and drop your audio file. Supported formats include MP3, WAV, and FLAC.",
       icon: UploadCloud,
       color: "from-sky-400 to-blue-500",
       bgClass: "bg-sky-50 dark:bg-sky-900/10"
     },
     {
       title: "2. Cloud AI Processing",
-      description: "Our proprietary neural networks instantly analyze the waveform. They separate vocal stems from instruments, or scrub out background noise with surgical precision.",
+      description: "The proprietary neural networks instantly analyze the waveform. They separate vocal stems from instruments, or scrub out background noise with surgical precision.",
       icon: Cpu,
       color: "from-fuchsia-400 to-purple-500",
       bgClass: "bg-fuchsia-50 dark:bg-fuchsia-900/10"
     },
     {
       title: "3. Studio Quality Playback",
-      description: "Listen to the results instantly in our built-in web studio. Solo the vocals, mute the bass, or compare the enhanced speech against the noisy original in real-time.",
+      description: "Listen to the results instantly in the built-in web studio. Solo the vocals, mute the bass, or compare the enhanced speech against the noisy original in real-time.",
       icon: Headphones,
       color: "from-teal-400 to-emerald-500",
       bgClass: "bg-teal-50 dark:bg-teal-900/10"
