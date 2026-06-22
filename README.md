@@ -1,4 +1,4 @@
-# jexy — AI-Powered Audio Studio
+# jexy, an AI audio platform
 
 > Separate stems. Enhance speech. Transcribe audio. All in your browser.
 
@@ -42,7 +42,7 @@ No plugins. No installs. Just a browser.
 - Automatic file cleanup after 24 hours
 
 ### 🔐 Auth & Identity
-- **Clerk** authentication — sign in with Google, GitHub, or email
+- **Clerk** authentication — sign in with Google or email
 - Protected routes; dashboard redirects unauthenticated users to login
 - Custom user button with dark mode support
 
