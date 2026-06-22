@@ -1,7 +1,7 @@
 # Web Frameworks
-Flask==3.0.0
-flask-cors==4.0.0 #CORS for react frontend
-werkzeug==3.0.1 #web utility library, necessary for python web dev.
+Flask==3.1.3
+flask-cors==4.0.2  # Note: CVE-2024-6844/6866/6839 require 6.0.0 but may have breaking changes
+werkzeug==3.1.6  # Security patches for CVE-2024-34069, CVE-2024-49766/49767, CVE-2025-66221
 
 # Audio Processing libraries
 librosa==0.10.1
@@ -18,7 +18,7 @@ deepfilternet==0.5.6
 # Utilities
 numpy>=1.24.3
 scipy==1.11.4
-python-dotenv==1.0.0
+python-dotenv==1.2.2
 torch==2.2.0
 torchaudio==2.2.0  # Pinned — DeepFilterNet 0.5.6 requires torchaudio.backend, removed in 2.3+
 
