@@ -395,12 +395,27 @@ def mix_stems(job_id):
     import requests as http_requests
     import subprocess
 
+    # Whitelist of valid stem names — prevents path traversal and command injection
+    ALLOWED_STEMS = {'vocals', 'drums', 'bass', 'guitar', 'piano', 'other'}
+
     data = request.get_json() or {}
     selected_stems = data.get('stems', [])
     volumes = data.get('volumes', {})  # Optional: { stem_name: 0-100 }
 
     if not selected_stems:
         return jsonify({"error": "No stems provided"}), 400
+
+    # Validate all requested stems against the whitelist
+    invalid = [s for s in selected_stems if s not in ALLOWED_STEMS]
+    if invalid:
+        return jsonify({"error": f"Invalid stem name(s): {invalid}"}), 400
+
+    # Validate volumes are numeric floats between 0-100
+    for stem_name, vol in volumes.items():
+        if stem_name not in ALLOWED_STEMS:
+            return jsonify({"error": f"Invalid stem name in volumes: {stem_name}"}), 400
+        if not isinstance(vol, (int, float)) or not (0 <= vol <= 100):
+            return jsonify({"error": f"Invalid volume value for {stem_name}"}), 400
 
     # Fetch job from Supabase to get stems_data (Supabase URLs)
     try:
@@ -731,4 +746,4 @@ def realtime_transcription():
     return jsonify({"message": "Real-time transcription - Coming soon"}), 200
 
 if __name__ == '__main__':
-    app.run(debug=True, use_reloader=False, host='0.0.0.0', port=5000)
+    app.run(debug=os.environ.get('FLASK_DEBUG', 'false').lower() == 'true', use_reloader=False, host='0.0.0.0', port=5000)
