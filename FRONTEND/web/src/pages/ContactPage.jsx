@@ -129,6 +129,7 @@ export default function ContactPage() {
                   </motion.div>
                 ) : (
                   <form onSubmit={handleSubmit} className="space-y-5">
+                    <input type="hidden" name="access_key" value={import.meta.env.VITE_WEB3FORMS_KEY} />
                     {status === 'error' && (
                       <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl text-sm flex items-start space-x-3">
                         <AlertCircle className="w-5 h-5 shrink-0" />

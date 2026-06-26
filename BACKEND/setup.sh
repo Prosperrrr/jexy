@@ -44,6 +44,24 @@ source venv/bin/activate
 echo "[4/5] Installing Python requirements..."
 pip install --upgrade pip wheel
 pip install -r requirements.txt
+pip install gunicorn
+
+# ── Fix: pin setuptools to 68.0.0 — newer versions break pkg_resources on Python 3.12 ──
+echo "Pinning setuptools to 68.0.0 for Python 3.12 compatibility..."
+pip install "setuptools==68.0.0" --force-reinstall
+python -c "import pkg_resources; print('  pkg_resources OK')"
+
+
+# ── Fix: tensorflow_hub uses pkg_resources which is missing in Python 3.12 ──
+echo "Patching tensorflow_hub for Python 3.12 compatibility..."
+pip install packaging
+TF_HUB_INIT=$(python -c "import tensorflow_hub; import os; print(os.path.join(os.path.dirname(tensorflow_hub.__file__), '__init__.py'))")
+if grep -q 'from pkg_resources import parse_version' "$TF_HUB_INIT"; then
+    sed -i 's/from pkg_resources import parse_version/from packaging.version import parse as parse_version/' "$TF_HUB_INIT"
+    echo "  tensorflow_hub patched OK"
+else
+    echo "  tensorflow_hub already patched or uses different import"
+fi
 
 # ── 5. Verify critical packages ────────────────────────────────────────────
 echo "[5/5] Verifying installation..."
@@ -57,7 +75,9 @@ python -c "import flask; print(f'  flask: {flask.__version__}')"
 echo ""
 echo "=== Setup complete! ==="
 echo "Next steps:"
-echo "  1. Copy your .env file to ~/JEXY/BACKEND/.env"
-echo "  2. Run: sudo systemctl daemon-reload"
-echo "  3. Run: sudo systemctl enable jexy-celery gunicorn"
-echo "  4. Run: sudo systemctl start jexy-celery gunicorn"
+echo "  1. Create your .env file: nano ~/JEXY/BACKEND/.env"
+echo "  2. Start Redis:  redis-server --daemonize yes"
+echo "  3. Start Flask:  nohup gunicorn -w 1 -b 0.0.0.0:5000 --timeout 300 app:app > /var/log/jexy-api.log 2>&1 &"
+echo "  4. Start Celery: nohup celery -A celery_app worker --loglevel=info --concurrency=3 > /var/log/jexy-celery.log 2>&1 &"
+echo "  5. Start Tunnel: nohup cloudflared tunnel --url http://localhost:5000 --no-autoupdate > /var/log/jexy-tunnel.log 2>&1 &"
+echo "  6. Get URL:      grep -o 'https://[a-z0-9-]*\.trycloudflare\.com' /var/log/jexy-tunnel.log | tail -1"
