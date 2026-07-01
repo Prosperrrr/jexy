@@ -108,7 +108,7 @@ rate_limiter = RateLimiter(max_requests=5, time_window=60)
 # Configuration
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max file size
-ALLOWED_EXTENSIONS = {'mp3', 'wav', 'ogg', 'flac', 'm4a'}
+ALLOWED_EXTENSIONS = {'mp3', 'wav', 'ogg', 'flac', 'm4a', 'opus'}
 
 # Create folders
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -207,9 +207,9 @@ def upload_audio():
 @app.route('/api/process/<file_id>', methods=['POST'])
 def confirm_and_process(file_id):
     """
-    STAGE 2: User confirms content type and starts processing via Celery
+    STAGE 2: User confirms content type and starts processing via Celery worker
     """
-    # Look up file info from Redis (instead of in-memory dict)
+    # Look up file info from redis memory
     file_info_raw = redis_client.get(f"upload:{file_id}")
     if not file_info_raw:
         return jsonify({"error": "File ID not found or expired"}), 404
